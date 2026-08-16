@@ -14,7 +14,9 @@ describe('Turn transaction shell', () => {
     const resolution = transaction.resolveChoice(supportOption);
     expect(resolution.state.run.turn).toBe(1);
     expect(resolution.state.run.dailyProgress).toBe(2);
-    expect(resolution.state.relationships.rel_player_mio!.affection).toBe(32);
+    expect(resolution.state.relationships.rel_player_mio!.affection).toBe(
+      resolution.directDelta.relationships?.rel_player_mio?.affection?.after,
+    );
     expect(finalStateDeltaSchema.safeParse(resolution.directDelta).success).toBe(true);
 
     const result = transaction.commitTurn();

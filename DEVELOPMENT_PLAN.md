@@ -1,7 +1,7 @@
 # AI GALGAME Framework
-## 开发计划 Development Plan v1.3
+## 开发计划 Development Plan v1.4
 
-> 版本：v1.3 ｜ 依据：`AI_GALGAME_Master_Design_v1.0.md`（唯一权威设计基线，当前文档版本 v1.2）
+> 版本：v1.4 ｜ 依据：`AI_GALGAME_Master_Design_v1.0.md`（唯一权威设计基线，当前文档版本 v1.2）
 >
 > 本计划是**可执行的分阶段开发安排**。Claude Code（或任何开发执行者）应按阶段顺序推进：每阶段有明确目标、验收标准、任务清单、测试要求与验证命令，**验收通过后才进入下一阶段**。
 
@@ -241,6 +241,8 @@ pnpm --filter @ag/core test && pnpm --filter @ag/core build
 
 # 6. Phase 3 — State Resolver
 
+- **状态**：✅ 已完成（2026-08-16）。核心玩法/非法值/非线性/重复/Risk 测试全部通过。
+
 ## 6.1 目标
 完成 Modifier 引擎，实现"同行为不同角色不同结果"（Master Design §4.10）。
 
@@ -250,14 +252,14 @@ pnpm --filter @ag/core test && pnpm --filter @ag/core build
 - 非线性反馈与重复行为反馈生效（机械刷好感无效）。
 
 ## 6.3 任务清单
-- [ ] Delta 分层：`BaseDelta → Modifier 链 → FinalDelta`。
-- [ ] Modifier 引擎：`Personality / Relationship / Context / Emotion` 乘数计算。
-- [ ] 公式引擎：`ΔX = Base × Π modifiers` + 取整。
-- [ ] 非线性反馈：靠近上下限边际收益衰减（`f(Affection)` 曲线）。
-- [ ] 重复反馈：读 `recentBehaviorPattern` / `behavioralPatterns`，重复递减/转负。
-- [ ] Risk 分支：成功/失败结果经 RNG 决定（先接 RNG 接口，Phase 4 落地实现）。
-- [ ] 变量联动/冲突处理（如 independence 高时 help 行为收益方向反转）。
-- [ ] Resolver 签名：`resolveChoice(state, selectedOption, rng) → TurnDirectDelta`。
+- [x] Delta 分层：`BaseDelta → Modifier 链 → FinalDelta`。
+- [x] Modifier 引擎：`Personality / Relationship / Context / Emotion` 乘数计算。
+- [x] 公式引擎：`ΔX = Base × Π modifiers` + 取整。
+- [x] 非线性反馈：靠近上下限边际收益衰减（`f(Affection)` 曲线）。
+- [x] 重复反馈：读 `recentBehaviorPattern` / `behavioralPatterns`，重复递减/转负。
+- [x] Risk 分支：成功/失败结果经 RNG 决定（先接 RNG 接口，Phase 4 落地实现）。
+- [x] 变量联动/冲突处理（如 independence 高时 help 行为收益方向反转）。
+- [x] Resolver 签名：`resolveChoice(state, selectedOption, rng) → TurnDirectDelta`。
 
 ## 6.4 测试要求
 - Unit：公式/Clamp/非线性/重复递减/Risk。

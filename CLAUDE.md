@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **AI GALGAME Framework**（tavern-gal）：一个以 SillyTavern 为可选 AI Runtime、以 GALGAME 选择式交互为表现形式、以 Game State 为核心、由 AI 动态叙事 + Roguelike 机制驱动的 AI 叙事游戏框架。
 
-当前仓库处于**Phase 2 已完成（Pure Game Core）**阶段：权威架构由两份设计文档定义（见下），工程为 pnpm + TypeScript monorepo；`@ag/schemas` 数据契约已冻结，`@ag/core` 已具备无 LLM 的纯规则闭环（50+ Turn 模拟通过）。任何实现工作开始前，必须先读权威设计文档与开发计划，不要凭推测自行发明架构。
+当前仓库处于**Phase 3 已完成（State Resolver）**阶段：权威架构由两份设计文档定义（见下），工程为 pnpm + TypeScript monorepo；`@ag/schemas` 数据契约已冻结，`@ag/core` 已具备无 LLM 的纯规则闭环与 Modifier 结算引擎。任何实现工作开始前，必须先读权威设计文档与开发计划，不要凭推测自行发明架构。
 
 ### 权威文档（唯一事实来源）
 
@@ -126,7 +126,8 @@ Option 是 Behavior Object：`presentation`（玩家看到的语言）+ `behavio
 
 - **Phase 0.5 已完成**：pnpm TS monorepo 就绪，15 个包/应用骨架 + `packages/schemas` 独立构建/测试/类型检查全部通过。
 - **Phase 1 已完成（数据契约冻结）**：`@ag/schemas` 已落地全部 TS 类型 + Zod + JSON Schema（Draft 2020-12），由 Zod 同源生成。
-- **Phase 2 已完成（Pure Game Core）**：`@ag/core` 已实现 `createGameState / defaultCharacter / clone / clamp / applyDelta / diff / validateGameState`、ProgressEngine、RuleEngine、EndingEngine、Turn 事务外壳与 `simulateNTurns`。50 Turn 模拟保持 GameState 合法。
-- **下一阶段**：Phase 3 State Resolver（见 `DEVELOPMENT_PLAN.md` §6）——Modifier 引擎、公式、非线性反馈、重复行为反馈与 Risk 分支。
+- **Phase 2 已完成（Pure Game Core）**：`@ag/core` 已实现 GameState 工厂/applyDelta/diff、ProgressEngine、RuleEngine、EndingEngine、Turn 事务与 `simulateNTurns`。
+- **Phase 3 已完成（State Resolver）**：`resolveChoice(state, option, rng)` 实现 `BaseDelta → Modifier 链 → FinalDelta`，包含 Personality/Relationship/Context/Emotion/Repetition/Risk/Nonlinear 修正、非法 AI 值 fallback、Clamp 与 PlayerModel 行为观察。
+- **下一阶段**：Phase 4 Event + RNG（见 `DEVELOPMENT_PLAN.md` §7）——可复现随机世界：RNG 服务、EventPool、Event 选择与 WorldTick 骨架。
 
 验收基线（Phase 2 原则）：**核心玩法的纯文本闭环能连续跑几十个 Turn 而不破坏 GameState，且不接任何 LLM，才算 Game Core 成立。**

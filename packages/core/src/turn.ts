@@ -2,14 +2,18 @@ import {
   finalStateDeltaSchema,
   optionSchema,
   turnResultSchema,
+  type BaseStateDelta,
   type FinalStateDelta,
   type GameState,
+  type ModifierStateDelta,
   type Option,
   type RelationshipState,
   type TurnResult,
 } from '@ag/schemas';
 import { applyDelta, clamp, cloneGameState, validateGameState } from './game-state.js';
 import { advanceDay, isDayComplete } from './progress-engine.js';
+import { ALWAYS_SUCCESS_RNG, type RNG } from './rng.js';
+import { observePlayerChoice, resolveChoice as resolveChoiceEffects } from './state-resolver.js';
 
 export function formatTurnId(runId: string, day: number, turn: number): string {
   return `${runId}/day_${day.toString().padStart(3, '0')}/turn_${turn.toString().padStart(3, '0')}`;
@@ -27,6 +31,8 @@ export function findPrimaryRelationshipId(state: GameState): string | undefined 
 export interface ResolveChoiceOptions {
   targetRelationshipId?: string;
   nextDayStartTime?: string;
+  /** Phase 3 起用于 Risk 分支；缺省为永远成功。 */
+  rng?: RNG;
 }
 
 export interface ChoiceResolution {
@@ -35,14 +41,16 @@ export interface ChoiceResolution {
   directDelta: FinalStateDelta;
   crossedDayBoundary: boolean;
   targetRelationshipId?: string;
+  baseDelta: BaseStateDelta;
+  modifierDelta: ModifierStateDelta;
+  riskOutcome: 'success' | 'failure' | undefined;
 }
 
 /**
- * Phase 2 的确定性 Stub Resolver。
- * 它只做三件事：把 Option.effects.base 直接作为最终 delta、Clamp 到 0~100、
- * 以及推进 turn 与 Daily Progress。真正的 Modifier 链在 Phase 3 替换本函数。
+ * Turn 内的一次完整确定性结算：
+ * StateResolver 确认关系 delta → applyDelta → PlayerModel 观察 → 跨日推进。
  */
-export function resolveChoice(
+export function applyChoiceToState(
   state: GameState,
   option: Option,
   options: ResolveChoiceOptions = {},
@@ -50,6 +58,7 @@ export function resolveChoice(
   const parsedOption = optionSchema.parse(option);
   const before = cloneGameState(state);
   const targetRelationshipId = options.targetRelationshipId ?? findPrimaryRelationshipId(state);
+  const rng = options.rng ?? ALWAYS_SUCCESS_RNG;
 
   const nextTurn = before.run.turn + 1;
   const nextProgress = clamp(
@@ -58,40 +67,18 @@ export function resolveChoice(
     before.run.dailyProgressLimit,
   );
 
-  const runDelta: FinalStateDelta['run'] = {
-    turn: nextTurn,
-    dailyProgress: nextProgress,
-  };
-
-  const relationships: FinalStateDelta['relationships'] = {};
-  if (targetRelationshipId) {
-    const relationship = before.relationships[targetRelationshipId];
-    if (relationship) {
-      const metricChanges: Record<string, { before: number; after: number; delta: number }> = {};
-      for (const [metric, effect] of Object.entries(parsedOption.effects)) {
-        if (!(metric in relationship)) continue;
-        const beforeValue = (relationship as unknown as Record<string, unknown>)[metric];
-        if (typeof beforeValue !== 'number') continue;
-        const after = clamp(beforeValue + effect.base, 0, 100);
-        metricChanges[metric] = {
-          before: beforeValue,
-          after,
-          delta: after - beforeValue,
-        };
-      }
-      if (Object.keys(metricChanges).length > 0) {
-        relationships[targetRelationshipId] = metricChanges;
-      }
-    }
-  }
-
+  const resolved = resolveChoiceEffects(before, parsedOption, rng, { targetRelationshipId });
   const directDelta: FinalStateDelta = finalStateDeltaSchema.parse({
     phase: 'final',
-    run: runDelta,
-    relationships,
+    run: {
+      turn: nextTurn,
+      dailyProgress: nextProgress,
+    },
+    relationships: resolved.directDelta.relationships,
   });
 
   let nextState = applyDelta(before, directDelta);
+  nextState = observePlayerChoice(nextState, parsedOption);
   const crossedDayBoundary = isDayComplete(nextState);
   if (crossedDayBoundary) {
     // 天数推进只有 advanceDay 一条权威路径；weekday/time/progress 一并由它推进。
@@ -106,6 +93,9 @@ export function resolveChoice(
     directDelta,
     crossedDayBoundary,
     targetRelationshipId,
+    baseDelta: resolved.baseDelta,
+    modifierDelta: resolved.modifierDelta,
+    riskOutcome: resolved.riskOutcome,
   };
 }
 
@@ -148,7 +138,7 @@ export class TurnTransaction {
     if (this.committed) {
       throw new Error('Turn transaction already committed');
     }
-    const resolution = resolveChoice(this.currentState, option, options);
+    const resolution = applyChoiceToState(this.currentState, option, options);
     this.currentState = resolution.state;
     this.selectedOptionId = option.id;
     this.directDelta = resolution.directDelta;
