@@ -1,7 +1,7 @@
 # AI GALGAME Framework
-## 开发计划 Development Plan v1.2
+## 开发计划 Development Plan v1.3
 
-> 版本：v1.2 ｜ 依据：`AI_GALGAME_Master_Design_v1.0.md`（唯一权威设计基线，当前文档版本 v1.2）
+> 版本：v1.3 ｜ 依据：`AI_GALGAME_Master_Design_v1.0.md`（唯一权威设计基线，当前文档版本 v1.2）
 >
 > 本计划是**可执行的分阶段开发安排**。Claude Code（或任何开发执行者）应按阶段顺序推进：每阶段有明确目标、验收标准、任务清单、测试要求与验证命令，**验收通过后才进入下一阶段**。
 
@@ -208,6 +208,8 @@ pnpm --filter @ag/schemas test && pnpm --filter @ag/schemas build
 
 # 5. Phase 2 — Pure Game Core
 
+- **状态**：✅ 已完成（2026-08-16）。50 Turn 模拟验收通过。
+
 ## 5.1 目标
 完全不接 LLM 的纯规则闭环：`GameState → Option(手工构造) → StateDelta → StateResolver → New GameState` 可稳定运行（Master Design §9.1）。
 
@@ -216,12 +218,12 @@ pnpm --filter @ag/schemas test && pnpm --filter @ag/schemas build
 - State Snapshot / Diff 正确；Turn 事务可 Rollback。
 
 ## 5.3 任务清单
-- [ ] GameState 工厂：`createGameState()`、`defaultCharacter()`、深拷贝、`applyDelta()`、`diff()`、值 `clamp()`。
-- [ ] ProgressEngine：Daily Progress 推进与 Day 切换。
-- [ ] Turn 事务外壳：`startTurn / resolveChoice / commitTurn / rollback`（先以 stub 服务占位，Phase 3/5 填充）。
-- [ ] RuleEngine：数值范围、条件判断、Flag 读写。
-- [ ] EndingEngine：基于示例条件的 Good/Normal/Bad 判定（条件由 Project 配置）。
-- [ ] **内存模拟器**：`simulateNTurns(state, options, n)` 纯函数，供测试与 Phase 11 复用。
+- [x] GameState 工厂：`createGameState()`、`defaultCharacter()`、深拷贝、`applyDelta()`、`diff()`、值 `clamp()`。
+- [x] ProgressEngine：Daily Progress 推进与 Day 切换。
+- [x] Turn 事务外壳：`startTurn / resolveChoice / commitTurn / rollback`（先以 stub 服务占位，Phase 3/5 填充）。
+- [x] RuleEngine：数值范围、条件判断、Flag 读写。
+- [x] EndingEngine：基于示例条件的 Good/Normal/Bad 判定（条件由 Project 配置）。
+- [x] **内存模拟器**：`simulateNTurns(state, options, n)` 纯函数，供测试与 Phase 11 复用。
 
 ## 5.4 测试要求
 - Unit：create/diff/applyDelta/clamp/Progress/Day 切换/Ending 条件。

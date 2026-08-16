@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **AI GALGAME Framework**（tavern-gal）：一个以 SillyTavern 为可选 AI Runtime、以 GALGAME 选择式交互为表现形式、以 Game State 为核心、由 AI 动态叙事 + Roguelike 机制驱动的 AI 叙事游戏框架。
 
-当前仓库处于**设计冻结 / Phase 1 已完成（数据契约冻结）**阶段：权威架构由两份设计文档定义（见下），工程为 pnpm + TypeScript monorepo；`@ag/schemas` 已冻结全部跨模块数据契约，Game Core 业务实现尚未开始。任何实现工作开始前，必须先读权威设计文档与开发计划，不要凭推测自行发明架构。
+当前仓库处于**Phase 2 已完成（Pure Game Core）**阶段：权威架构由两份设计文档定义（见下），工程为 pnpm + TypeScript monorepo；`@ag/schemas` 数据契约已冻结，`@ag/core` 已具备无 LLM 的纯规则闭环（50+ Turn 模拟通过）。任何实现工作开始前，必须先读权威设计文档与开发计划，不要凭推测自行发明架构。
 
 ### 权威文档（唯一事实来源）
 
@@ -125,7 +125,8 @@ Option 是 Behavior Object：`presentation`（玩家看到的语言）+ `behavio
 ## 当前实现状态
 
 - **Phase 0.5 已完成**：pnpm TS monorepo 就绪，15 个包/应用骨架 + `packages/schemas` 独立构建/测试/类型检查全部通过。
-- **Phase 1 已完成（数据契约冻结）**：`@ag/schemas` 已落地共享基元、全部 GameState 状态结构、Option / StateDelta / Event / TurnResult / Context / SaveSnapshot / Project / CharacterDefinition 的 TS 类型 + Zod 校验 + JSON Schema（Draft 2020-12，`pnpm --filter @ag/schemas build` 从 Zod 同源生成）。61 个测试通过。
-- **下一阶段**：Phase 2 Pure Game Core（见 `DEVELOPMENT_PLAN.md` §5）——`GameState` 工厂、ProgressEngine、Turn 事务外壳、RuleEngine、EndingEngine 与 50+ Turn 模拟器（无 LLM）。
+- **Phase 1 已完成（数据契约冻结）**：`@ag/schemas` 已落地全部 TS 类型 + Zod + JSON Schema（Draft 2020-12），由 Zod 同源生成。
+- **Phase 2 已完成（Pure Game Core）**：`@ag/core` 已实现 `createGameState / defaultCharacter / clone / clamp / applyDelta / diff / validateGameState`、ProgressEngine、RuleEngine、EndingEngine、Turn 事务外壳与 `simulateNTurns`。50 Turn 模拟保持 GameState 合法。
+- **下一阶段**：Phase 3 State Resolver（见 `DEVELOPMENT_PLAN.md` §6）——Modifier 引擎、公式、非线性反馈、重复行为反馈与 Risk 分支。
 
 验收基线（Phase 2 原则）：**核心玩法的纯文本闭环能连续跑几十个 Turn 而不破坏 GameState，且不接任何 LLM，才算 Game Core 成立。**

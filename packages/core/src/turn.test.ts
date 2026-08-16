@@ -1,0 +1,51 @@
+import { describe, expect, it } from 'vitest';
+import { finalStateDeltaSchema } from '@ag/schemas';
+import { cloneGameState } from './game-state.js';
+import { makeCoreGameState, restOption, supportOption } from './test-data.js';
+import { findPrimaryRelationshipId, formatTurnId, startTurn } from './turn.js';
+
+describe('Turn transaction shell', () => {
+  it('resolves a choice with final deltas and commits a valid TurnResult', () => {
+    const state = makeCoreGameState();
+    const transaction = startTurn(state);
+    expect(transaction.turnId).toBe(formatTurnId('run_017', 1, 1));
+    expect(findPrimaryRelationshipId(state)).toBe('rel_player_mio');
+
+    const resolution = transaction.resolveChoice(supportOption);
+    expect(resolution.state.run.turn).toBe(1);
+    expect(resolution.state.run.dailyProgress).toBe(2);
+    expect(resolution.state.relationships.rel_player_mio!.affection).toBe(32);
+    expect(finalStateDeltaSchema.safeParse(resolution.directDelta).success).toBe(true);
+
+    const result = transaction.commitTurn();
+    expect(result.choice.optionId).toBe('option_support');
+    expect(result.finalState.run.turn).toBe(1);
+    expect(transaction.isCommitted).toBe(true);
+  });
+
+  it('rolls back to state before turn and allows re-resolution', () => {
+    const state = makeCoreGameState();
+    const transaction = startTurn(state);
+    transaction.resolveChoice(supportOption);
+    const rolledBack = transaction.rollback();
+    expect(rolledBack.run.turn).toBe(0);
+    expect(rolledBack.relationships.rel_player_mio!.affection).toBe(30);
+    expect(transaction.getState().run.turn).toBe(0);
+
+    const resolution = transaction.resolveChoice(restOption);
+    expect(resolution.state.run.turn).toBe(1);
+  });
+
+  it('rejects an invalid initial state', () => {
+    const state = makeCoreGameState();
+    state.schemaVersion = '0.0.1' as never;
+    expect(() => startTurn(state)).toThrow();
+  });
+
+  it('does not mutate the snapshot passed to startTurn', () => {
+    const state = makeCoreGameState();
+    const snapshot = cloneGameState(state);
+    startTurn(state).resolveChoice(supportOption);
+    expect(state).toEqual(snapshot);
+  });
+});

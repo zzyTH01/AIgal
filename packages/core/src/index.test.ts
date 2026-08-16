@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { PACKAGE_NAME } from './index.js';
+import { createGameState } from './index.js';
 
-describe('@ag/core placeholder', () => {
-  it('声明包身份', () => {
-    expect(PACKAGE_NAME).toBe('@ag/core');
+describe('@ag/core package entry', () => {
+  it('exports a working GameState factory', () => {
+    const state = createGameState();
+    expect(state.schemaVersion).toBe('0.1.0');
+    expect(state.run.day).toBe(1);
   });
 });

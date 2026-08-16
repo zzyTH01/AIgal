@@ -30,7 +30,8 @@ pnpm lint
 - ✅ Phase 0 — 设计冻结
 - ✅ Phase 0.5 — 工程初始化（pnpm + TypeScript monorepo）
 - ✅ Phase 1 — 数据契约冻结：`@ag/schemas` 已落地 TS 类型 + Zod 运行时校验 + JSON Schema（Draft 2020-12），全部 Schema 从 Zod 同源生成
-- ⏭️ 下一步 — Phase 2：Pure Game Core（无 LLM 纯规则闭环）
+- ✅ Phase 2 — Pure Game Core：`@ag/core` 已具备 GameState 工厂 / applyDelta / diff / Progress / Turn 事务 / Rule / Ending / 50+ Turn 模拟器
+- ⏭️ 下一步 — Phase 3：State Resolver（Modifier 引擎）
 
 ## 仓库结构
 
