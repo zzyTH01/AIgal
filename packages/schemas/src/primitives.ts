@@ -86,6 +86,7 @@ export const eventTypeSchema = z.enum([
 
 /** 事件稀有度（Common → Legendary，Phase 4 正式启用）。 */
 export const eventRaritySchema = z.enum(['common', 'uncommon', 'rare', 'legendary']);
+export type EventRarity = z.infer<typeof eventRaritySchema>;
 
 export const eventCategorySchema = eventTypeSchema;
 export const eventRarityTypeSchema = eventRaritySchema;

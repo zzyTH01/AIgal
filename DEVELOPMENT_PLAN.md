@@ -1,7 +1,7 @@
 # AI GALGAME Framework
-## 开发计划 Development Plan v1.5
+## 开发计划 Development Plan v1.6
 
-> 版本：v1.5 ｜ 依据：`AI_GALGAME_Master_Design_v1.0.md`（唯一权威设计基线，当前文档版本 v1.2）
+> 版本：v1.6 ｜ 依据：`AI_GALGAME_Master_Design_v1.0.md`（唯一权威设计基线，当前文档版本 v1.2）
 >
 > 本计划是**可执行的分阶段开发安排**。Claude Code（或任何开发执行者）应按阶段顺序推进：每阶段有明确目标、验收标准、任务清单、测试要求与验证命令，**验收通过后才进入下一阶段**。
 
@@ -279,6 +279,8 @@ pnpm --filter @ag/core test
 
 # 7. Phase 4 — Event + RNG
 
+- **状态**：✅ 已完成（2026-08-16）。RNG Replay、权重分布、条件/冷却/稀有度、WorldTick 骨架测试全部通过。
+
 ## 7.1 目标
 建立"无固定剧情但规则可控"的随机世界（Master Design §2.6）。
 
@@ -287,12 +289,12 @@ pnpm --filter @ag/core test
 - 事件分布可调（改权重即变分布）。
 
 ## 7.3 任务清单
-- [ ] RNG 服务：`seed + state + algorithm`（xorshift128 或等价），可 `save/restore`。
-- [ ] EventPool：EventDefinition 注册、EventInstance 实例化。
-- [ ] Event 选择：`EventScore = BaseWeight × ContextMod × CharacterMod × RelationshipMod × RandomFactor`。
-- [ ] Condition / Cooldown / Rarity（Common→Legendary 稀有度预留）。
-- [ ] WorldTick 接口：时间/天气/地点/NPC 位置/公共事件推进（World Engine 骨架）。
-- [ ] `selectEvent(state, rng) → EventInstance`。
+- [x] RNG 服务：`seed + state + algorithm`（xorshift128 或等价），可 `save/restore`。
+- [x] EventPool：EventDefinition 注册、EventInstance 实例化。
+- [x] Event 选择：`EventScore = BaseWeight × ContextMod × CharacterMod × RelationshipMod × RandomFactor`。
+- [x] Condition / Cooldown / Rarity（Common→Legendary 稀有度预留）。
+- [x] WorldTick 接口：时间/天气/地点/NPC 位置/公共事件推进（World Engine 骨架）。
+- [x] `selectEvent(state, rng) → EventInstance`。
 
 ## 7.4 测试要求
 - Unit：权重选择、条件过滤、冷却、稀有度。

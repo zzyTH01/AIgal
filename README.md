@@ -32,7 +32,8 @@ pnpm lint
 - ✅ Phase 1 — 数据契约冻结：`@ag/schemas` 已落地 TS 类型 + Zod 运行时校验 + JSON Schema（Draft 2020-12），全部 Schema 从 Zod 同源生成
 - ✅ Phase 2 — Pure Game Core：`@ag/core` 已具备 GameState 工厂 / applyDelta / diff / Progress / Turn 事务 / Rule / Ending / 50+ Turn 模拟器
 - ✅ Phase 3 — State Resolver：Modifier 链、非线性反馈、重复反馈、Risk 分支、非法 AI 值 fallback
-- ⏭️ 下一步 — Phase 4：Event + RNG（可复现随机世界）
+- ✅ Phase 4 — Event + RNG：xorshift128 可复现 RNG、EventPool、权重/条件/冷却/稀有度事件选择、WorldTick 骨架
+- ⏭️ 下一步 — Phase 5：Narrative / Option Engine（首次接入 LLM Port + TestProvider）
 
 ## 仓库结构
 

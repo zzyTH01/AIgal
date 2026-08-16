@@ -1,2 +1,6 @@
-// 占位实现 —— @ag/world 的正式逻辑在后续 Phase 实现。
-export const PACKAGE_NAME = '@ag/world';
+// @ag/world —— World Engine（Phase 4）。
+// 可复现 RNG、EventPool、事件选择与 WorldTick 骨架。无固定剧情，只有规则。
+export * from './rng-service.js';
+export * from './event-selection.js';
+export * from './event-pool.js';
+export * from './world-tick.js';
