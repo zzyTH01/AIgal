@@ -1,7 +1,7 @@
 # AI GALGAME Framework
-## 开发计划 Development Plan v3.0
+## 开发计划 Development Plan v3.1
 
-> 版本：v3.0 ｜ 依据：`AI_GALGAME_Master_Design_v1.0.md`（唯一权威设计基线，当前文档版本 v1.2）
+> 版本：v3.1 ｜ 依据：`AI_GALGAME_Master_Design_v1.0.md`（唯一权威设计基线，当前文档版本 v1.2）
 >
 > 本计划是**可执行的分阶段开发安排**。Claude Code（或任何开发执行者）应按阶段顺序推进：每阶段有明确目标、验收标准、任务清单、测试要求与验证命令，**验收通过后才进入下一阶段**。
 
@@ -560,6 +560,8 @@ pnpm --filter @ag/devtools simulate --runs 100
 
 # 15. Phase 12 — Presentation Layer
 
+- **状态**：✅ 已完成（2026-08-16）。立绘/背景/打字机/CG 占位接入 Player；Core 回归全绿。Live2D 未排期。
+
 ## 15.1 目标
 表现层扩展（Master Design §1.5 后置项）。
 
@@ -567,10 +569,10 @@ pnpm --filter @ag/devtools simulate --runs 100
 - 表现层**不改变 Core 游戏逻辑**（回归测试保证）。
 
 ## 15.3 任务清单（按优先级）
-- [ ] 角色立绘 + 背景展示。
-- [ ] GAL 对话框 / 打字机效果。
-- [ ] CG 收集（Ending Archive 联动）。
-- [ ] TTS / BGM / SE（可选、渐进）。
+- [x] 角色立绘 + 背景展示。
+- [x] GAL 对话框 / 打字机效果。
+- [x] CG 收集（Ending Archive 联动）。
+- [x] TTS / BGM / SE（可选、渐进）。
 - [ ] Live2D / 动画（可选、最后）。
 
 ## 15.4 测试要求

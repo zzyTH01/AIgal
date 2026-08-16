@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **AI GALGAME Framework**（tavern-gal）：一个以 SillyTavern 为可选 AI Runtime、以 GALGAME 选择式交互为表现形式、以 Game State 为核心、由 AI 动态叙事 + Roguelike 机制驱动的 AI 叙事游戏框架。
 
-当前仓库处于**Phase 11 已完成（Simulation / Debug）**阶段：权威架构由两份设计文档定义（见下），工程为 pnpm + TypeScript monorepo；批量模拟、Turn 回放与状态检查工具已就绪。任何实现工作开始前，必须先读权威设计文档与开发计划，不要凭推测自行发明架构。
+当前仓库处于**Phase 12 已完成（Presentation Layer，开发计划主线完成）**阶段：权威架构由两份设计文档定义（见下），工程为 pnpm + TypeScript monorepo；从 Pure Game Core 到可玩 UI、设计器、调试工具与表现层占位已全部贯通。任何实现工作开始前，必须先读权威设计文档与开发计划，不要凭推测自行发明架构。
 
 ### 权威文档（唯一事实来源）
 
@@ -135,7 +135,7 @@ Option 是 Behavior Object：`presentation`（玩家看到的语言）+ `behavio
 - **Phase 8 已完成（SillyTavern Adapter）**：Card/WorldBook/Context Bridge/Extension/Compiler。
 - **Phase 9 已完成（Minimal Play UI）**：Runtime 编排 + Application API + React Player。
 - **Phase 10 已完成（Designer Mode）**：最小设计器 + Project round-trip + Design→Play。
-- **Phase 11 已完成（Simulation / Debug）**：`apps/devtools` CLI（simulate/replay/inspect/debug-turn）、Simulation Engine 统计报告、Turn Debugger、State/Memory/Context Inspector、确定性 fingerprint 与 Memory 修剪策略。
-- **下一阶段**：Phase 12 Presentation Layer（见 `DEVELOPMENT_PLAN.md` §15）——立绘/背景、对话框打字机、CG 收集、TTS/BGM（可选）。
+- **Phase 11 已完成（Simulation / Debug）**：devtools CLI、统计报告、Turn Debugger、Inspectors、Golden/Replay 与 Memory 修剪。
+- **Phase 12 已完成（Presentation Layer）**：Player 已接入立绘/背景占位、GAL 打字机、CG 收集与音频占位面板；Core 逻辑回归全绿。Live2D/动画未排期。
 
 验收基线（Phase 2 原则）：**核心玩法的纯文本闭环能连续跑几十个 Turn 而不破坏 GameState，且不接任何 LLM，才算 Game Core 成立。**

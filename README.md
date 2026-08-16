@@ -40,7 +40,8 @@ pnpm lint
 - ✅ Phase 9 — Minimal Play UI：`@ag/runtime` 编排 + Application API + React Player（无输入框）
 - ✅ Phase 10 — Designer Mode：Character Creator、Project JSON 导入/导出、Design→Play 模拟
 - ✅ Phase 11 — Simulation / Debug：批量模拟统计、Turn Debugger、Inspectors、Replay/Golden、Memory 修剪
-- ⏭️ 下一步 — Phase 12：Presentation Layer（立绘 / 对话框 / CG / 音频）
+- ✅ Phase 12 — Presentation Layer：立绘/背景占位、打字机、CG 收集、音频占位面板
+- 🎉 开发计划 Phase 0–12 主线完成
 
 ## 仓库结构
 

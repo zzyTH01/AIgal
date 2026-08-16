@@ -6,6 +6,11 @@ import { OptionList } from './components/OptionList.js';
 import { RelationshipPanel } from './components/RelationshipPanel.js';
 import { SavePanel } from './components/SavePanel.js';
 import { StatusBar } from './components/StatusBar.js';
+import { CharacterPortrait } from './components/CharacterPortrait.js';
+import { Background } from './components/Background.js';
+import { Typewriter } from './components/Typewriter.js';
+import { CgGallery } from './components/CgGallery.js';
+import { AudioPanel } from './components/AudioPanel.js';
 
 export function App() {
   const api = useMemo(() => createPlayerApi(), []);
@@ -102,14 +107,23 @@ export function App() {
     void startGame();
   }, [startGame]);
 
+  const character = Object.values(state?.characters ?? {})[0];
+  const currentLocation = state?.world.locations[state.world.currentLocationId];
+
   return (
     <main style={{ padding: 16 }}>
+      <Background locationName={currentLocation?.name} />
       <h1>AI GALGAME Player</h1>
       <StatusBar state={state} />
+      {character ? (
+        <CharacterPortrait name={character.identity.name} emotion={character.emotion.primary} />
+      ) : null}
       <NarrativePanel entries={narrative} />
-      {lastReaction ? <p aria-live="polite">{lastReaction}</p> : null}
+      {lastReaction ? <Typewriter text={lastReaction} speed={20} /> : null}
       <OptionList options={options} onSelect={(id) => void chooseOption(id)} disabled={busy} />
       <RelationshipPanel state={state} />
+      <CgGallery endings={state?.meta.endingsDiscovered ?? []} />
+      <AudioPanel />
       <SavePanel
         onSave={() => void save()}
         onLoad={() => void load()}
