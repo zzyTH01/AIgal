@@ -8,11 +8,16 @@ import {
 import { LLMError, type LLMGateway, type LLMRequest } from '@ag/llm';
 import type { FinalStateDelta } from '@ag/schemas';
 import { parseStructuredResponse } from './structured-parser.js';
+import { checkNarrativeConsistency } from './consistency-check.js';
 
 export interface ReactionGeneratorOptions {
   /** 最多重试次数；实际总调用次数为 maxAttempts + 1。 */
   maxAttempts?: number;
   model?: string;
+  consistency?: {
+    forbiddenTopics?: string[];
+    allowedCharacters?: string[];
+  };
 }
 
 /**
@@ -34,7 +39,13 @@ export async function generateReaction(
       const response = await gateway.generate(
         buildReactionRequest(context, selectedOption, options, resolution),
       );
-      return { ...parseStructuredResponse(response.text, npcReactionSchema), source: 'llm' };
+      const reaction = parseStructuredResponse(response.text, npcReactionSchema);
+      const issues = checkNarrativeConsistency(reaction.narrative, {
+        forbiddenTopics: options.consistency?.forbiddenTopics,
+        allowedCharacters: options.consistency?.allowedCharacters,
+      });
+      if (issues.length > 0) throw new Error(`reaction consistency: ${issues.join('; ')}`);
+      return { ...reaction, source: 'llm' };
     } catch (error) {
       if (error instanceof LLMError && !error.retryable) break;
       // Retry; final fallback below.
@@ -54,7 +65,7 @@ function buildReactionRequest(
   return {
     model: options.model,
     temperature: 0.7,
-    maxTokens: 512,
+    maxTokens: 768,
     messages: [
       { role: 'system', content: context.systemRules },
       {
@@ -62,8 +73,9 @@ function buildReactionRequest(
         content: [
           `玩家选择了行为：${selectedOption.behavior.actions.join('/')}（意图：${selectedOption.behavior.intent.join('/')}）。`,
           ...(resolutionSummary ? [`结算结果：${resolutionSummary}`] : []),
-          '请依据结算结果生成 NPC 反应，严格输出 JSON：',
-          '{"narrative":"NPC台词/反应","structured":{"emotion":{"type":"...","intensity":0},"intent":{"type":"...","intensity":0},"memoryCandidates":[]}}',
+          '请依据结算结果生成 NPC 反应。如果本轮有值得角色记住的事，请在 memoryCandidates 给出候选（没有则为空数组）。',
+          '严格输出 JSON：',
+          '{"narrative":"NPC台词/反应","structured":{"emotion":{"type":"...","intensity":0},"intent":{"type":"...","intensity":0},"memoryCandidates":[{"type":"episodic","content":"玩家做了什么/角色感受","importance":40,"emotionalIntensity":25,"valence":10,"tags":["help"],"relatedCharacters":["char_mio"],"sourceTurnId":"当前 turnId"}]}}',
         ].join('\n'),
       },
     ],

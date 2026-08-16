@@ -4,6 +4,7 @@ import { gameStateSchema, turnResultSchema, type GameState, type TurnResult } fr
 import { simulateRuns, fingerprint } from './simulation-engine.js';
 import { inspectMemory, inspectState } from './inspectors.js';
 import { TurnDebugger } from './turn-debugger.js';
+import { runV1Acceptance } from './acceptance.js';
 
 async function main(): Promise<void> {
   const [command, ...args] = process.argv.slice(2);
@@ -32,6 +33,10 @@ async function main(): Promise<void> {
       );
       return;
     }
+    case 'acceptance': {
+      console.log(JSON.stringify(await runV1Acceptance(), null, 2));
+      return;
+    }
     case 'debug-turn': {
       const [file, turnId] = args;
       if (!file || !turnId) throw new Error('usage: debug-turn <history.json> <turnId>');
@@ -43,7 +48,7 @@ async function main(): Promise<void> {
     }
     default:
       console.log(
-        'Usage:\n  ag-devtools simulate --runs 100 [--turns 50] [--seed 1000]\n  ag-devtools replay --seed 42\n  ag-devtools inspect <state.json>\n  ag-devtools debug-turn <history.json> <turnId>',
+        'Usage:\n  ag-devtools simulate --runs 100 [--turns 50] [--seed 1000]\n  ag-devtools replay --seed 42\n  ag-devtools inspect <state.json>\n  ag-devtools debug-turn <history.json> <turnId>\n  ag-devtools acceptance',
       );
   }
 }

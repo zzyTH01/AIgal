@@ -11,6 +11,7 @@ import { Background } from './components/Background.js';
 import { Typewriter } from './components/Typewriter.js';
 import { CgGallery } from './components/CgGallery.js';
 import { AudioPanel } from './components/AudioPanel.js';
+import { StrategyHint } from './components/StrategyHint.js';
 
 export function App() {
   const api = useMemo(() => createPlayerApi(), []);
@@ -116,7 +117,13 @@ export function App() {
       <h1>AI GALGAME Player</h1>
       <StatusBar state={state} />
       {character ? (
-        <CharacterPortrait name={character.identity.name} emotion={character.emotion.primary} />
+        <>
+          <CharacterPortrait name={character.identity.name} emotion={character.emotion.primary} />
+          <StrategyHint
+            independence={character.personality.independence}
+            empathy={character.personality.empathy}
+          />
+        </>
       ) : null}
       <NarrativePanel entries={narrative} />
       {lastReaction ? <Typewriter text={lastReaction} speed={20} /> : null}

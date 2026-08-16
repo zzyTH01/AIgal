@@ -11,3 +11,4 @@ export * from './components/Background.js';
 export * from './components/Typewriter.js';
 export * from './components/CgGallery.js';
 export * from './components/AudioPanel.js';
+export * from './components/StrategyHint.js';

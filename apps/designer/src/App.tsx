@@ -17,6 +17,7 @@ export function App() {
     dayLength: 12,
     eventTitle: '安静的图书馆',
     endingTitle: '普通结局',
+    optionTemplateActions: 'support,care',
     prompt: '保持角色一致性；输出双通道结构。',
   });
   const [project, setProject] = useState<GameProject>(() => createBlankProject());
@@ -65,6 +66,31 @@ export function App() {
             },
           ]
         : [];
+    const optionTemplateActions = form.optionTemplateActions
+      .split(',')
+      .map((action) => action.trim())
+      .filter(Boolean);
+    const optionTemplates =
+      optionTemplateActions.length > 0
+        ? [
+            {
+              templateId: 'template_support',
+              behavior: {
+                actions: optionTemplateActions,
+                intent: ['care'],
+                risk: 0.15,
+              },
+              effects: { affection: { base: 2 } },
+              conditions: {},
+              generation: {
+                must_fit_character: true,
+                must_fit_context: true,
+                variation: 'high' as const,
+              },
+              presentationVariants: ['需要我帮忙吗？'],
+            },
+          ]
+        : [];
     const endings =
       form.endingTitle.trim().length > 0
         ? [
@@ -88,6 +114,7 @@ export function App() {
       characters: [character],
       events,
       endings,
+      optionTemplates,
     };
   }, [form]);
 

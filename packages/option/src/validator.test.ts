@@ -30,6 +30,28 @@ describe('OptionValidator', () => {
     expect(result.issues.some((issue) => issue.code === 'diversity_missing')).toBe(true);
   });
 
+  it('treats missing diversity as a warning in soft mode', () => {
+    const options = renderOptions(planDiverseOptions(4));
+    options[1] = {
+      ...options[0]!,
+      id: 'option_active_2',
+      behavior: { ...options[0]!.behavior, actions: ['help', 'protect'] },
+    };
+    options[2] = {
+      ...options[0]!,
+      id: 'option_active_3',
+      behavior: { ...options[0]!.behavior, actions: ['initiate', 'lead'] },
+    };
+    options[3] = {
+      ...options[0]!,
+      id: 'option_active_4',
+      behavior: { ...options[0]!.behavior, actions: ['support', 'respect'] },
+    };
+    const result = validateOptions(options, { diversityMode: 'soft' });
+    expect(result.valid).toBe(true);
+    expect(result.warnings.some((warning) => warning.code === 'diversity_missing')).toBe(true);
+  });
+
   it('rejects forbidden actions for character consistency', () => {
     const options = renderOptions(planDiverseOptions(4));
     const result = validateOptions(options, { forbiddenActions: ['approach'] });

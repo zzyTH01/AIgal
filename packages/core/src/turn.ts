@@ -106,6 +106,7 @@ export class TurnTransaction {
   private currentState: GameState;
   private selectedOptionId?: string;
   private directDelta?: FinalStateDelta;
+  private secondaryDelta?: FinalStateDelta;
   private committed = false;
 
   private constructor(state: GameState) {
@@ -145,6 +146,10 @@ export class TurnTransaction {
     return resolution;
   }
 
+  setSecondaryDelta(delta: FinalStateDelta): void {
+    this.secondaryDelta = finalStateDeltaSchema.parse(delta);
+  }
+
   commitTurn(): TurnResult {
     if (!this.selectedOptionId || !this.directDelta) {
       throw new Error('Cannot commit a turn before resolveChoice');
@@ -157,7 +162,7 @@ export class TurnTransaction {
       choice: { turnId: this.turnId, optionId: this.selectedOptionId },
       directDelta: cloneGameState(this.directDelta),
       reaction: { narrative: '', structured: {} },
-      secondaryDelta: { phase: 'final' },
+      secondaryDelta: cloneGameState(this.secondaryDelta ?? { phase: 'final' }),
       newMemories: [],
       playerModel: cloneGameState(this.currentState.playerModel),
       worldUpdate: cloneGameState(this.currentState.world),
@@ -180,6 +185,7 @@ export class TurnTransaction {
     this.committed = false;
     this.selectedOptionId = undefined;
     this.directDelta = undefined;
+    this.secondaryDelta = undefined;
     this.currentState = cloneGameState(this.stateBefore);
     return cloneGameState(this.currentState);
   }

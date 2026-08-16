@@ -2,11 +2,16 @@ import type { ModelContext } from '@ag/schemas';
 import { LLMError, type LLMGateway, type LLMRequest } from '@ag/llm';
 import { generatedScenarioSchema, type GeneratedScenario } from './scenario.js';
 import { parseStructuredResponse } from './structured-parser.js';
+import { checkNarrativeConsistency } from './consistency-check.js';
 
 export interface ScenarioGeneratorOptions {
   /** 最多重试次数；实际总调用次数为 maxAttempts + 1。 */
   maxAttempts?: number;
   model?: string;
+  consistency?: {
+    forbiddenTopics?: string[];
+    allowedCharacters?: string[];
+  };
 }
 
 /** 05 Scenario Generation：输入 ModelContext，输出自然语言 + 情绪/意图结构化。 */
@@ -20,7 +25,13 @@ export async function generateScenario(
   for (let attempt = 0; attempt <= maxAttempts; attempt += 1) {
     try {
       const response = await gateway.generate(buildScenarioRequest(context, options));
-      return { ...parseStructuredResponse(response.text, generatedScenarioSchema), source: 'llm' };
+      const scenario = parseStructuredResponse(response.text, generatedScenarioSchema);
+      const issues = checkNarrativeConsistency(scenario.narrative, {
+        forbiddenTopics: options.consistency?.forbiddenTopics,
+        allowedCharacters: options.consistency?.allowedCharacters,
+      });
+      if (issues.length > 0) throw new Error(`narrative consistency: ${issues.join('; ')}`);
+      return { ...scenario, source: 'llm' };
     } catch (error) {
       if (error instanceof LLMError && !error.retryable) break;
       // Retry; final fallback below.

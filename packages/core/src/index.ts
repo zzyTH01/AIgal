@@ -9,3 +9,6 @@ export * from './rng.js';
 export * from './state-resolver.js';
 export * from './turn.js';
 export * from './simulate.js';
+export * from './secondary-resolution.js';
+export * from './player-model-update.js';
+export * from './meta-progression.js';

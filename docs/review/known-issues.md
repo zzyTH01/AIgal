@@ -5,86 +5,79 @@
 
 ---
 
-## 🔴 高优先级 —— 真实 LLM 联调阻断体验（本轮真实运行新发现）
+## 🔴 高优先级
 
-### 1. `optionConditionsSchema` 过严，导致真实 LLM 合并生成高概率回退
-- 位置：`packages/schemas/src/option.ts:4-9,42`（`optionConditionValueSchema` 联合 + `optionConditionsSchema`）；`packages/narrative/src/combined-generator.ts`（prompt 未约束 `conditions` 形状）
-- **现象**（用 DeepSeek 真实跑 3 Turn + 探针复现）：
-  - DeepSeek 返回**合法 JSON**（scenario + 4 选项完整，`JSON.parse` 通过）；
-  - 但 `parseStructuredResponse` 报 `options.3.conditions.requires: Invalid input`——LLM 生成的某选项 `conditions` 值（数组 / `null` / 带额外键如 `{requires: ...}`）不在联合类型 `boolean|number|string|{min,max}` 内；
-  - `.strict()` + 联合校验**拒绝整份响应** → Retry → 回退确定性选项。
-- **实测影响**：场景+选项**每轮都 fallback**（机械文本"approach / support"），NPC 反应约 **2/3 fallback**（"……（NPC 没有回应。）"）——真实 LLM 的动态叙事/选项体验失效。
-- **但路径本身可工作**：探针第二次调用 `source: llm`，输出流畅自然语言（"走过去坐在Mio身边，轻轻问她相册里有什么故事"）——证明是校验脆性，非集成失败。
-- **修复建议**（择一或组合）：
-  - **A**：`plannedOptionSchema`（LLM 侧）的 `conditions` 放宽——联合加 `z.array(z.string())` / `z.null()`，或 `.passthrough()`；只在最终 `optionSchema`（入库）用严格版；
-  - **B**：prompt 显式约束 `conditions` 只允许 `{}` 或 `{"<flag>": bool|number|"字符串"}`，并给正例；
-  - **C**：解析前宽容处理——过滤/剥离不合规的 `conditions` 键。
-- **验证**：修后复跑真实 LLM 一轮，确认 scenario/options/reaction 均 `source: llm`。
+### 1. `optionConditionsSchema` 过严导致真实 LLM 高概率回退 —— ✅ 已修复（2026-08-16）
+- 修复：`@ag/schemas` 新增 LLM 侧宽松 schema（`llmOptionConditionValueSchema`，允许数组/null/带额外键）；`@ag/option` 的 `renderOption` 用 `sanitizeOptionConditions` 清洗为严格 `OptionConditions`；两个 prompt 约束 conditions 形状。
+- 测试：`sanitizes messy LLM conditions instead of falling back` 覆盖 `{min,extra}` / `requires:[...]` / `null`，断言 `source: llm`。
+
+### 2. 多样性校验瓶颈 —— 真实 LLM 合并生成仍高概率回退（本次完整一局新确认）
+- 位置：`packages/option/src/validator.ts:28-31`（`ACTIVE/CONSERVATIVE/SOCIAL/RISK_ACTIONS` 硬编码动作表）+ `packages/narrative/src/combined-generator.ts`（`validateOptions` 强校验）
+- **现象**（用 DeepSeek + 明日香跑完整一局，20 Turn）：
+  - 🔴 #1 修复后，conditions 已不再是主因；
+  - 但 `validateOptions` 要求选项**必须覆盖 4 类**（active/conservative/social/risk），类别靠**硬编码动作列表**映射；
+  - DeepSeek 生成的动作（如 `approach`、`physical_comfort`、`tease` 等）常不在表内 → 4 类覆盖不足 → **整份合并响应（场景 + 选项一起）回退**。
+- **实测影响**：真实 LLM 下**场景+选项几乎每轮 fallback**（"场景生成回退"）；NPC 反应约 50% 真实 / 50% fallback。
+- **修复方向**（择一或组合）：
+  - **A**：扩充 4 类动作表，覆盖更常见的 LLM 动作词；
+  - **B**：LLM 选项的多样性校验降级为"软约束"——缺失时不回退整份响应，仅记录/提示；
+  - **C**：场景与选项解耦回退——场景生成失败不回退选项，反之亦然（当前合并生成是"一损俱损"）。
+
+### 3. Bad End → Punishment → Meta Progression → New Run 跨局引擎未实现（设计有、计划漏排）
+- 设计依据：`AI_GALGAME_Master_Design_v1.0.md` §2.5（跨 Run 保留 Knowledge/Meta Memories/Unlocks/Achievements/Ending Archive/Permanent Modifiers）与 §9.1 验收（…Ending → Punishment → Meta Progression → New Run）。
+- **现状**：`MetaState` 数据契约与 `applyDelta` 的 `knowledge/permanentModifiers` 写入已实现（Phase 1）；但 **Punishment 引擎（Bad End 叙事、Debuff/知识/解锁/永久修正的生成）与跨 Run 继承流程（新 Run 以继承的 MetaState 开局）未实现**。
+- 根因：Master Design **有设计**（§2.5 等），但 `DEVELOPMENT_PLAN` 的 Phase 0.5–12 **没有排任何阶段/任务**负责实现这条闭环 → 实现到 Phase 12 后仍是空白。
+- 修复方向：新增实现——`punishment-engine`（Bad End → 生成惩罚/知识/解锁）+ 跨局流程（Run 结束时把 `MetaState` 持久化，新 Run 初始化时继承）。
 
 ---
 
 ## 🟠 应修 / 待排期（既有 review 标记的 TODO）
 
-### 2. Memory / 平衡参数为经验值，未校准
-- `formMemory` 初始 strength、阈值（`formation.ts:60,78`）；重复反馈转负轮次（`state-resolver.ts`）。
-- 已记 `TODO(Phase 11)` 与 DEVELOPMENT_PLAN 校准任务；需用 100 Runs 仿真校准。
+### 4. Memory / 平衡参数为经验值，未校准
+- `formMemory` 初始 strength、阈值（`formation.ts`）；重复反馈转负轮次（`state-resolver.ts`）。
+- 已记 `TODO(Phase 11)` 与 DEVELOPMENT_PLAN 校准任务。
 
-### 3. 成本估算为启发式
-- `simulation-engine.ts` 用 `turns×1200/400` token 估算，非真实用量。
-- 已标 `TODO(真实 LLM)`；接入 `usageListener` 后替换。
+### 5. 成本估算为启发式
+- `simulation-engine.ts` 用 `turns×1200/400` token 估算，非真实用量；已标 `TODO(真实 LLM)`，接入 `usageListener` 后替换。
 
-### 4. 设计器为最小版
-- World Builder / Parameter / Event / OptionTemplate / Ending 编辑器未实现（schema 已就绪），`apps/designer` 仅 ProjectForm。
-- 交付口径已在 DEVELOPMENT_PLAN §13 注明"最小设计器"。
+### 6. 设计器为最小版
+- World Builder / Parameter / Event / OptionTemplate / Ending 编辑器未实现（schema 已就绪）；`apps/designer` 已增强（地点/进度/事件/Ending 标题字段），OptionTemplate 编辑器仍缺。
 
 ---
 
 ## 🟢 低优先级（随资源接入 / 部署覆盖）
 
-### 5. 立绘/背景为 CSS 占位
+### 7. 立绘/背景为 CSS 占位
 - 真实资源应从 `GameProject.assets`（schema 已就绪）接入；`CharacterPortrait` 已带情绪，可作"情绪换立绘"挂点。
 
-### 6. TTS / BGM / SE 为 disabled 占位
+### 8. TTS / BGM / SE 为 disabled 占位
 - 符合 V1"全语音暂不作核心"；接入时在 `AudioPanel` 接线。
 
-### 7. PNG 元数据卡嵌入 / 真实 SillyTavern 实例联调未做
+### 9. PNG 元数据卡嵌入 / 真实 SillyTavern 实例联调未做
 - `@ag/st-adapter` 提供 JSON Card 编解码与 Extension 协议，但"加载进运行中的 ST / PNG 卡"是部署层工作。
 
-### 8. Application API 为进程内调用
+### 10. Application API 为进程内调用
 - 设计 §5.4 为 `POST /turn/choice` HTTP 形态；当前 `ApplicationApi` 是程序化 API，HTTP 包装留待部署。
 
-### 9. `pruneMemories` 为硬删除修剪
-- 超容量记忆直接删除，不进 `forgottenIds`（语义"修剪"≠"遗忘"）；已 JSDoc 标注，如需"遗忘"语义再调。
+### 11. `pruneMemories` 为硬删除修剪
+- 超容量记忆直接删除，不进 `forgottenIds`（语义"修剪"≠"遗忘"）；已 JSDoc 标注。
+
+---
+
+## 真实 LLM 完整一局验证记录（2026-08-16）
+
+用 DeepSeek（openai-compatible）+ 明日香预设跑完整一局（20 Turn）：
+- ✅ **完整游戏循环到 Ending 成立**：触发 Normal End（Day 3），`run.status = completed`。
+- ✅ 明日香的**ツンデレ 反应忠实**（"哈？你该不会是想说什么奇怪的话吧？" / "…总比一个人待着强"）。
+- ❌ 场景+选项几乎全 fallback（🔴 #2）；NPC 反应约 50% 真实；记忆 0 条（真实反应未带 `memoryCandidates`）。
 
 ---
 
 ## 修复优先级建议
 
-1. **🔴 #1 优先**：这是真实 LLM 体验的当前最大瓶颈，改动小（schemas + prompt 或宽容解析），修后即恢复"AI 动态叙事"。
-2. 🟠 #2/#3 随 Phase 11 仿真/真实 LLM 联调自然落地。
-3. 🟢 随资源与部署推进。
+1. **🔴 #2 优先**：这是真实 LLM"AI 动态叙事"体验的当前最大瓶颈（场景+选项回退），改动集中在 validator/combined-generator。
+2. **🔴 #3 次之**：Punishment/Meta 跨局闭环是设计核心循环的一环，需在计划中补排实现。
+3. 🟠 随 Phase 11 仿真/真实 LLM 联调自然落地。
+4. 🟢 随资源与部署推进。
 
-> 触发本清单的审查对应：`docs/review/phase5-review.md`（#1 相关 Option 契约）、`phase6-review.md`（#2）、`phase11-review.md`（#3）、`phase10-review.md`（#4）、`phase12-review.md`（#5/#6）、`phase8-review.md`（#7）、`phase9-review.md`（#8）。
-
-
----
-
-## ✅ 修订记录（实现侧，2026-08-16）
-
-### 🔴 #1 已修复：真实 LLM 合并生成条件过严
-- `@ag/schemas` 新增 LLM 侧宽松条件 schema：`llmOptionConditionValueSchema / llmOptionConditionsSchema`（允许 array/null/带额外键的对象）。
-- `@ag/option`：`renderOption` 通过 `sanitizeOptionConditions` 把宽松条件清洗为最终严格 `OptionConditions`（只保留标量或 `{min,max}`）。
-- `@ag/narrative`：`plannedOptionSchema` 改用宽松 schema；Scenario+Options 与 OptionPlanner prompt 显式约束 conditions 形状。
-- 新增测试：带 `{requires:[...]}`、`null`、`{min, extra}` 的 LLM 输出不再触发 fallback，清洗后仍 `source: llm`。
-
-### 🟠 #2 记忆/平衡参数
-- 保留 Phase 11 仿真校准基线：100 runs → normal 100%、avgDay 5 / avgTurn 40、avgMemoryRecords 16、avgContextMemories 3。参数后续随真实 LLM 联调再校准。
-
-### 🟠 #3 成本启发式
-- 保留 `TODO(真实 LLM)`，接入 usageListener 后替换。
-
-### 🟠 #4 最小设计器已增强
-- `apps/designer` 表单新增：地点名、每日进度上限、事件标题、Ending 标题；构建 Project 时生成对应 world location / parameters / event / ending。OptionTemplate 仍待后续编辑器。
-
-### 🟢 #5–#9
-- 立绘/背景、音频、PNG 卡、HTTP 包装、prune 语义：维持 V1 占位/部署边界，已记录，不阻塞。
+> 触发本清单的审查对应：`phase5-review.md`（#1/#2 相关 Option 契约与多样性）、`phase6-review.md`（#4）、`phase11-review.md`（#5）、`phase10-review.md`（#6）、`phase12-review.md`（#7/#8）、`phase8-review.md`（#9）、`phase9-review.md`（#10）。

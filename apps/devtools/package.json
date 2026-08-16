@@ -22,7 +22,8 @@
     "lint": "eslint src --max-warnings 0",
     "simulate": "node dist/cli.js simulate",
     "replay": "node dist/cli.js replay",
-    "pretest": "pnpm --filter @ag/runtime test && pnpm --filter @ag/runtime build"
+    "pretest": "pnpm --filter @ag/runtime test && pnpm --filter @ag/runtime build",
+    "acceptance": "node dist/cli.js acceptance"
   },
   "dependencies": {
     "@ag/schemas": "workspace:*",

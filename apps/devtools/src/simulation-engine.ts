@@ -30,6 +30,9 @@ export interface SimulationOptions {
   costPerOutputToken?: number;
   /** 模拟世界使用的事件定义；缺省 demoEvents。 */
   eventDefinitions?: readonly EventDefinition[];
+  /** 真实 LLM 联调时注入每 Turn 的 token 估算。 */
+  inputTokensPerTurn?: number;
+  outputTokensPerTurn?: number;
 }
 
 export interface RunSimulationResult {
@@ -233,8 +236,8 @@ function aggregateReport(
   const completedTurns = results.reduce((sum, result) => sum + result.turnResults.length, 0);
   // TODO(真实 LLM)：当前为启发式成本估算；接入 usageListener 后替换为真实 token 用量。
   const estimatedCalls = completedTurns * 2;
-  const estimatedInputTokens = completedTurns * 1200;
-  const estimatedOutputTokens = completedTurns * 400;
+  const estimatedInputTokens = completedTurns * (options.inputTokensPerTurn ?? 1200);
+  const estimatedOutputTokens = completedTurns * (options.outputTokensPerTurn ?? 400);
   const estimatedCostUsd =
     (estimatedInputTokens / 1000) * (options.costPerInputToken ?? 0) +
     (estimatedOutputTokens / 1000) * (options.costPerOutputToken ?? 0);

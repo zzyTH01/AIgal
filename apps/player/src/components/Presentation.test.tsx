@@ -7,6 +7,7 @@ import { Background } from './Background.js';
 import { CgGallery } from './CgGallery.js';
 import { CharacterPortrait } from './CharacterPortrait.js';
 import { Typewriter } from './Typewriter.js';
+import { StrategyHint } from './StrategyHint.js';
 
 describe('Presentation components', () => {
   it('renders portrait and background placeholders', () => {
@@ -14,7 +15,10 @@ describe('Presentation components', () => {
     expect(screen.getByTestId('character-portrait')).toHaveTextContent('Mio · calm');
 
     render(<Background locationName="图书馆" />);
-    expect(screen.getByTestId('background')).toHaveAttribute('aria-label', '背景：图书馆');
+    expect(screen.getAllByTestId('background').at(-1)).toHaveAttribute(
+      'aria-label',
+      '背景：图书馆',
+    );
   });
 
   it('renders CG gallery from ending archive', () => {
@@ -31,6 +35,21 @@ describe('Presentation components', () => {
     act(() => vi.advanceTimersByTime(10));
     expect(screen.getByTestId('typewriter')).toHaveTextContent('你好');
     vi.useRealTimers();
+  });
+
+  it('renders strategy hint for independent characters', () => {
+    render(<StrategyHint independence={90} empathy={40} />);
+    expect(screen.getByTestId('strategy-hint')).toHaveTextContent('独立性很强');
+  });
+
+  it('supports image asset sources for portrait/background', () => {
+    render(<CharacterPortrait name="Mio" src="assets/mio.png" />);
+    expect(screen.getByRole('img')).toHaveAttribute('src', 'assets/mio.png');
+    render(<Background locationName="图书馆" src="assets/bg.png" />);
+    expect(screen.getAllByTestId('background').at(-1)).toHaveAttribute(
+      'aria-label',
+      '背景：图书馆',
+    );
   });
 
   it('renders audio placeholders', () => {

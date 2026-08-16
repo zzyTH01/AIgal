@@ -12,6 +12,7 @@ export interface OptionValidationIssue {
 export interface OptionValidationResult {
   valid: boolean;
   issues: OptionValidationIssue[];
+  warnings: OptionValidationIssue[];
   options: Option[];
 }
 
@@ -19,6 +20,8 @@ export interface OptionValidationOptions {
   gameState?: GameState;
   /** 要求四类多样性覆盖。 */
   requireDiversity?: boolean;
+  /** strict：缺类整份失败；soft：仅记录 warning，不触发回退。 */
+  diversityMode?: 'strict' | 'soft';
   /** 角色一致性：这些行为不被当前角色允许。 */
   forbiddenActions?: string[];
   /** 允许的最大选项数。 */
@@ -46,6 +49,7 @@ export function validateOptions(
   validation: OptionValidationOptions = {},
 ): OptionValidationResult {
   const issues: OptionValidationIssue[] = [];
+  const warnings: OptionValidationIssue[] = [];
   const parsedOptions: Option[] = [];
   const seenSignatures = new Set<string>();
   const coveredCategories = new Set<OptionCategory>();
@@ -114,14 +118,19 @@ export function validateOptions(
   if ((validation.requireDiversity ?? true) && options.length >= 4) {
     for (const required of ['active', 'conservative', 'social', 'risk'] as const) {
       if (!coveredCategories.has(required)) {
-        issues.push({
+        const issue: OptionValidationIssue = {
           optionId: 'options',
           code: 'diversity_missing',
           message: `Missing required option category: ${required}`,
-        });
+        };
+        if ((validation.diversityMode ?? 'strict') === 'soft') {
+          warnings.push(issue);
+        } else {
+          issues.push(issue);
+        }
       }
     }
   }
 
-  return { valid: issues.length === 0, issues, options: parsedOptions };
+  return { valid: issues.length === 0, issues, warnings, options: parsedOptions };
 }

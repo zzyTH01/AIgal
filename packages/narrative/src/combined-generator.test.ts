@@ -26,6 +26,20 @@ describe('combined Scenario + Options generation', () => {
     expect(result.options[1]?.conditions).toEqual({});
   });
 
+  it('keeps LLM options when diversity is incomplete (soft constraint)', async () => {
+    const parsed = JSON.parse(combinedJson);
+    parsed.options[1].behavior.actions = ['help', 'protect'];
+    parsed.options[1].conditions = {};
+    parsed.options[2].behavior.actions = ['initiate', 'lead'];
+    parsed.options[2].conditions = {};
+    parsed.options[3].behavior.actions = ['support', 'respect'];
+    parsed.options[3].conditions = {};
+    const provider = TestProvider.fromText(JSON.stringify(parsed));
+    const result = await generateScenarioAndOptions(makeNarrativeContext(), provider);
+    expect(result.source).toBe('llm');
+    expect(result.options).toHaveLength(4);
+  });
+
   it('falls back without calling LLM again after retries', async () => {
     const provider = TestProvider.fromText('not-json');
     const result = await generateScenarioAndOptions(makeNarrativeContext(), provider, {

@@ -9,6 +9,7 @@ export interface ProjectFormData {
   dayLength: number;
   eventTitle: string;
   endingTitle: string;
+  optionTemplateActions: string;
   prompt: string;
 }
 

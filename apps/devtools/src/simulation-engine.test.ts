@@ -31,6 +31,14 @@ describe('Simulation Engine', () => {
     expect(run.contextMemories).toBeLessThanOrEqual(5);
   });
 
+  it('calibration baseline: 100 runs stay within stable ranges', () => {
+    const report = simulateRuns({ runs: 100, turnsPerRun: 40, seedBase: 7000 });
+    expect(report.endingDistribution).not.toEqual({});
+    expect(report.avgMemoryRecords).toBeLessThanOrEqual(100);
+    expect(report.avgContextBudget).toBeLessThanOrEqual(100);
+    expect(report.avgAffection).toBeLessThanOrEqual(100);
+  });
+
   it('single-run turn history is valid and replayable', () => {
     const run = simulateRun(777, 12, [], {});
     expect(run.turnResults.length).toBeGreaterThan(0);

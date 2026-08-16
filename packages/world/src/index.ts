@@ -4,4 +4,5 @@ export * from './rng-service.js';
 export * from './event-selection.js';
 export * from './event-pool.js';
 export * from './event-trigger.js';
+export * from './weather-calendar-schedule.js';
 export * from './world-tick.js';

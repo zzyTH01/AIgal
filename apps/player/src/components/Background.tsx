@@ -1,4 +1,4 @@
-export function Background({ locationName }: { locationName?: string }) {
+export function Background({ locationName, src }: { locationName?: string; src?: string }) {
   return (
     <div
       data-testid="background"
@@ -7,7 +7,9 @@ export function Background({ locationName }: { locationName?: string }) {
         position: 'fixed',
         inset: 0,
         zIndex: -1,
-        background: 'linear-gradient(180deg, #0f2027, #203a43, #2c5364)',
+        background: src
+          ? `url("${src}") center/cover no-repeat`
+          : 'linear-gradient(180deg, #0f2027, #203a43, #2c5364)',
       }}
     />
   );

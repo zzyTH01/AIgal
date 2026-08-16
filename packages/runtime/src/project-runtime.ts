@@ -11,5 +11,6 @@ export function projectToRuntimeConfig(project: GameProject): RuntimeConfig {
   return {
     character,
     eventDefinitions: parsed.events,
+    policy: parsed.policy,
   };
 }

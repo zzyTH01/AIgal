@@ -46,7 +46,10 @@ export async function generateScenarioAndOptions(
       const rendered = renderOptions(parsed.options);
       if (
         rendered.length >= minOptions &&
-        validateOptions(rendered, { gameState: context.currentState }).valid
+        validateOptions(rendered, {
+          gameState: context.currentState,
+          diversityMode: 'soft',
+        }).valid
       ) {
         return { scenario: parsed.scenario, options: rendered, source: 'llm' };
       }
@@ -70,7 +73,7 @@ function buildCombinedRequest(
   return {
     model: options.model,
     temperature: 0.8,
-    maxTokens: 1024,
+    maxTokens: 1536,
     messages: [
       { role: 'system', content: context.systemRules },
       {

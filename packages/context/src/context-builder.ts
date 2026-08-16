@@ -7,11 +7,13 @@ import {
 } from '@ag/schemas';
 import { retrieveMemories, type RetrievalQuery, type RetrievalWeights } from '@ag/memory';
 import { allocateContextBudget } from './budget.js';
+import { ContextCache } from './cache.js';
 import { summarizeGameState } from './summarizer.js';
 
 export interface ContextBuilderOptions {
   characterId?: string;
   systemRules?: string;
+  cache?: ContextCache;
   currentEvent?: EventInstance;
   recentEvents?: EventInstance[];
   generationTask?: GenerationTask;
@@ -47,6 +49,15 @@ export function buildContext(state: GameState, options: ContextBuilderOptions = 
       })
     : [];
 
+  const systemRules = options.systemRules
+    ? (options.cache?.getSystemRules(characterId ?? 'default', () => options.systemRules!) ??
+      options.systemRules)
+    : (options.cache?.getSystemRules(
+        characterId ?? 'default',
+        () => '你是当前世界中的角色。保持角色一致性；输出双通道结构。',
+      ) ?? '你是当前世界中的角色。保持角色一致性；输出双通道结构。');
+  options.cache?.getStableSummary(state, characterId ?? 'default');
+
   const turnNumber = state.run.turn + 1;
   const turnId =
     options.turnId ??
@@ -60,7 +71,7 @@ export function buildContext(state: GameState, options: ContextBuilderOptions = 
     turnId,
     day: state.run.day,
     time: state.run.time,
-    systemRules: options.systemRules ?? '你是当前世界中的角色。保持角色一致性；输出双通道结构。',
+    systemRules,
     currentState: state,
     currentEvent: options.currentEvent,
     recentEvents: options.recentEvents ?? [],

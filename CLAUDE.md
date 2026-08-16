@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **AI GALGAME Framework**（tavern-gal）：一个以 SillyTavern 为可选 AI Runtime、以 GALGAME 选择式交互为表现形式、以 Game State 为核心、由 AI 动态叙事 + Roguelike 机制驱动的 AI 叙事游戏框架。
 
-当前仓库处于**Phase 12 已完成（Presentation Layer，开发计划主线完成）**阶段：权威架构由两份设计文档定义（见下），工程为 pnpm + TypeScript monorepo；从 Pure Game Core 到可玩 UI、设计器、调试工具与表现层占位已全部贯通。任何实现工作开始前，必须先读权威设计文档与开发计划，不要凭推测自行发明架构。
+当前仓库处于**Completion Plan v1.1 已执行**阶段：权威架构由 `AI_GALGAME_Master_Design_v1.0.md` 定义，`COMPLETION_PLAN.md` 记录 Phase A–H 补全结果；Phase 0.5–12 与补全计划均已落地并通过自动化验收。任何实现工作开始前，必须先读权威设计文档与开发计划，不要凭推测自行发明架构。
 
 ### 权威文档（唯一事实来源）
 
@@ -136,6 +136,8 @@ Option 是 Behavior Object：`presentation`（玩家看到的语言）+ `behavio
 - **Phase 9 已完成（Minimal Play UI）**：Runtime 编排 + Application API + React Player。
 - **Phase 10 已完成（Designer Mode）**：最小设计器 + Project round-trip + Design→Play。
 - **Phase 11 已完成（Simulation / Debug）**：devtools CLI、统计报告、Turn Debugger、Inspectors、Golden/Replay 与 Memory 修剪。
-- **Phase 12 已完成（Presentation Layer）**：Player 已接入立绘/背景占位、GAL 打字机、CG 收集与音频占位面板；Core 逻辑回归全绿。Live2D/动画未排期。
+- **Phase 12 已完成（Presentation Layer）**：立绘/背景、打字机、CG 与音频占位。
+- **Completion Plan 已执行**：二次结算、PlayerModel 更新、记忆触发、Bad End→Meta Progression、LLM 软多样性、一致性检查、Context Cache、天气/日历/NPC 日程、Project Policy 运行时、设计器/校准/资源接口与自动化 V1 验收均已完成。
+- **下一步**：真实 LLM 手动联调（DeepSeek 等）复验 source 占比与记忆形成；部署层 HTTP/PNG 卡/音频资源接入。
 
 验收基线（Phase 2 原则）：**核心玩法的纯文本闭环能连续跑几十个 Turn 而不破坏 GameState，且不接任何 LLM，才算 Game Core 成立。**

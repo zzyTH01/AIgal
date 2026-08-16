@@ -1,16 +1,23 @@
 import {
   type CharacterDefinition,
+  type EndingDefinition,
   type EventDefinition,
   type GameState,
   type ModelContext,
   type Option,
+  type ProjectPolicy,
   type TurnResult,
 } from '@ag/schemas';
 import {
+  applyBadEndPunishment,
+  applyDelta,
+  applyMetaProgression,
   createGameState,
   defaultRelationship,
   definitionToGameCharacter,
+  resolveSecondaryDelta,
   startTurn,
+  updatePlayerModelFromTurn,
   type RNG,
 } from '@ag/core';
 import { EventPool, XorShift128Rng, commitTriggeredEvent } from '@ag/world';
@@ -41,6 +48,8 @@ export interface RuntimeConfig {
   rng?: RNG;
   /** Node 环境可注入 JsonDirectorySaveRepository；浏览器默认 Memory 仓库。 */
   persistence?: SaveRepository;
+  /** Project Policy：进入 system prompt 与生成约束。 */
+  policy?: ProjectPolicy;
 }
 
 export interface StartTurnView {
@@ -104,7 +113,27 @@ const DEMO_LLM: LLMGateway = new TestProvider((request) => {
       }),
     };
   }
-  return { text: JSON.stringify({ narrative: '……嗯，你来了。', structured: {} }) };
+  return {
+    text: JSON.stringify({
+      narrative: '……嗯，你来了。',
+      structured: {
+        emotion: { type: 'relief', intensity: 70 },
+        intent: { type: 'seek_closeness', intensity: 50 },
+        memoryCandidates: [
+          {
+            type: 'episodic',
+            content: '玩家主动靠近并表达了关心。',
+            importance: 40,
+            emotionalIntensity: 25,
+            valence: 10,
+            tags: ['care'],
+            relatedCharacters: ['char_mio'],
+            sourceTurnId: 'run_001/day_001/turn_001',
+          },
+        ],
+      },
+    }),
+  };
 });
 
 export class GameRuntime {
@@ -112,6 +141,7 @@ export class GameRuntime {
   readonly character: CharacterDefinition;
   readonly eventDefinitions: EventDefinition[];
   readonly persistence: SaveRepository;
+  readonly policy?: ProjectPolicy;
 
   private rng: RNG;
   private readonly configuredRng?: RNG;
@@ -133,6 +163,7 @@ export class GameRuntime {
           ? createGateway(loadProviderConfigFromEnv(config.env))
           : DEMO_LLM);
     this.persistence = config.persistence ?? new MemorySaveRepository();
+    this.policy = config.policy;
     this.configuredRng = config.rng;
     this.rng = config.rng ?? new XorShift128Rng(20260816);
     this.eventPool = new EventPool(this.eventDefinitions);
@@ -204,7 +235,7 @@ export class GameRuntime {
 
     const context = buildContext(next, {
       characterId: this.character.characterId,
-      systemRules: `你是${this.character.identity.name}，保持角色一致性。`,
+      systemRules: buildSystemRules(this.character.identity.name, this.policy),
       currentEvent: selectedEvent,
       query: { tags: selectedEvent ? [selectedEvent.eventId] : ['library'] },
     });
@@ -243,7 +274,10 @@ export class GameRuntime {
       resolution,
     );
 
-    let next = transaction.getState();
+    const secondaryDelta = resolveSecondaryDelta(state, option, reaction.structured);
+    let next = applyDelta(transaction.getState(), secondaryDelta);
+    next = updatePlayerModelFromTurn(next, option, reaction.structured);
+
     const cognition = next.characters[this.character.characterId]?.cognition;
     if (cognition) {
       for (const candidate of reaction.structured.memoryCandidates ?? []) {
@@ -255,6 +289,7 @@ export class GameRuntime {
       }
     }
     transaction.settle(() => next);
+    transaction.setSecondaryDelta(secondaryDelta);
 
     const scenarioText = this.currentScenario?.narrative ?? '';
     const turnResult = transaction.commitTurn();
@@ -270,6 +305,60 @@ export class GameRuntime {
       reactionText: reaction.narrative,
       state: this.getState(),
     };
+  }
+
+  endRun(ending: EndingDefinition): GameState {
+    const current = this.getState();
+    const next =
+      ending.kind === 'bad'
+        ? applyBadEndPunishment(current, ending)
+        : applyMetaProgression(current, ending);
+    this.state = next;
+    this.currentOptions = [];
+    this.currentScenario = undefined;
+    this.context = undefined;
+    return this.getState();
+  }
+
+  setPermanentModifier(key: string, value: number): GameState {
+    const next = this.getState();
+    next.meta.permanentModifiers[key] = value;
+    this.state = next;
+    return this.getState();
+  }
+
+  startNewRun(seed = 20260817): GameState {
+    const definition = this.character;
+    const previousMeta = this.state?.meta;
+    const state = createGameState({
+      runId: `run_${previousMeta ? previousMeta.runCount + 1 : 1}`,
+      seed,
+    });
+    if (previousMeta) {
+      state.meta = structuredClone(previousMeta);
+      state.meta.runCount += 1;
+    }
+    state.characters[definition.characterId] = definitionToGameCharacter(definition);
+    const relationship = defaultRelationship(
+      'player',
+      definition.characterId,
+      `rel_player_${definition.characterId}`,
+      {
+        type: definition.relationshipDefaults.initialType,
+        affection: Math.max(
+          0,
+          Math.min(100, state.meta.permanentModifiers.starting_affection ?? 0),
+        ),
+        trust: Math.max(0, Math.min(100, state.meta.permanentModifiers.starting_trust ?? 0)),
+      },
+    );
+    state.relationships[relationship.relationshipId] = relationship;
+    this.state = state;
+    this.currentOptions = [];
+    this.currentScenario = undefined;
+    this.context = undefined;
+    this.lastTurn = undefined;
+    return this.getState();
   }
 
   async save(saveId: string): Promise<GameState> {
@@ -289,4 +378,20 @@ export class GameRuntime {
   export(): string {
     return JSON.stringify({ gameState: this.getState(), lastTurn: this.lastTurn }, null, 2);
   }
+}
+
+function buildSystemRules(characterName: string, policy?: ProjectPolicy): string {
+  const constraints = Object.entries(policy?.generationConstraints ?? {}).map(
+    ([key, value]) => `${key}: ${value}`,
+  );
+  const content = [
+    `你是${characterName}，保持角色一致性。`,
+    policy ? `语气：${policy.narrativeTone}` : '',
+    policy?.contentTags.length ? `允许标签：${policy.contentTags.join('、')}` : '',
+    policy?.matureThemes.length
+      ? `成熟主题（需符合项目政策）：${policy.matureThemes.join('、')}`
+      : '',
+    constraints.length ? `生成约束：${constraints.join('；')}` : '',
+  ].filter(Boolean);
+  return content.join('\n');
 }

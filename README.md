@@ -41,7 +41,9 @@ pnpm lint
 - ✅ Phase 10 — Designer Mode：Character Creator、Project JSON 导入/导出、Design→Play 模拟
 - ✅ Phase 11 — Simulation / Debug：批量模拟统计、Turn Debugger、Inspectors、Replay/Golden、Memory 修剪
 - ✅ Phase 12 — Presentation Layer：立绘/背景占位、打字机、CG 收集、音频占位面板
-- 🎉 开发计划 Phase 0–12 主线完成
+- 🎉 Phase 0–12 主线完成
+- ✅ Completion Plan A–H 已执行：核心循环补全、Roguelike 跨局、LLM 稳定性、可靠性/缓存、World 演化、Policy 执行、校准与自动化验收
+- ⏭️ 待办：真实 LLM 手动联调、部署层 HTTP / PNG Card / 音频资源接入
 
 ## 仓库结构
 
