@@ -33,7 +33,8 @@ pnpm lint
 - ✅ Phase 2 — Pure Game Core：`@ag/core` 已具备 GameState 工厂 / applyDelta / diff / Progress / Turn 事务 / Rule / Ending / 50+ Turn 模拟器
 - ✅ Phase 3 — State Resolver：Modifier 链、非线性反馈、重复反馈、Risk 分支、非法 AI 值 fallback
 - ✅ Phase 4 — Event + RNG：xorshift128 可复现 RNG、EventPool、权重/条件/冷却/稀有度事件选择、WorldTick 骨架
-- ⏭️ 下一步 — Phase 5：Narrative / Option Engine（首次接入 LLM Port + TestProvider）
+- ✅ Phase 5 — Narrative / Option Engine：LLM Port + TestProvider、Scenario/Option/Reaction 生成、非法输出 Retry→Fallback
+- ⏭️ 下一步 — Phase 6：Memory / Context（角色记忆与上下文构建）
 
 ## 仓库结构
 

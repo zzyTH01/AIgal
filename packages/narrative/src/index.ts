@@ -1,2 +1,7 @@
-// 占位实现 —— @ag/narrative 的正式逻辑在后续 Phase 实现。
-export const PACKAGE_NAME = '@ag/narrative';
+// @ag/narrative —— Scenario/Option/Reaction 生成（Phase 5，消费 LLM Port）。
+export * from './structured-parser.js';
+export * from './scenario.js';
+export * from './scenario-generator.js';
+export * from './option-planner.js';
+export * from './reaction-generator.js';
+export * from './turn-pipeline.js';

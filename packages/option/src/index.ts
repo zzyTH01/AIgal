@@ -1,2 +1,4 @@
-// 占位实现 —— @ag/option 的正式逻辑在后续 Phase 实现。
-export const PACKAGE_NAME = '@ag/option';
+// @ag/option —— Option Planner / Validator / Renderer（Phase 5）。
+export * from './planner.js';
+export * from './validator.js';
+export * from './renderer.js';

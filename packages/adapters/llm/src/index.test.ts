@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { PACKAGE_NAME } from './index.js';
+import { TestProvider } from './index.js';
 
-describe('@ag/llm placeholder', () => {
-  it('声明包身份', () => {
-    expect(PACKAGE_NAME).toBe('@ag/llm');
+describe('@ag/llm package entry', () => {
+  it('exports a working TestProvider', async () => {
+    const provider = TestProvider.fromText('hello');
+    expect(await provider.generate({ messages: [] })).toEqual({ text: 'hello' });
   });
 });

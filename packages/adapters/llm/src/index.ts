@@ -1,2 +1,4 @@
-// 占位实现 —— @ag/llm 的正式逻辑在后续 Phase 实现。
-export const PACKAGE_NAME = '@ag/llm';
+// @ag/llm —— LLM Gateway（Phase 5：Port + TestProvider）。
+// 真实 Provider（OpenAI/Anthropic/OpenAI-Compatible/Local）在 Phase 7 落地。
+export * from './llm-port.js';
+export * from './test-provider.js';

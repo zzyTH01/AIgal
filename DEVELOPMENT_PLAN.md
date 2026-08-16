@@ -1,7 +1,7 @@
 # AI GALGAME Framework
-## 开发计划 Development Plan v1.7
+## 开发计划 Development Plan v1.8
 
-> 版本：v1.7 ｜ 依据：`AI_GALGAME_Master_Design_v1.0.md`（唯一权威设计基线，当前文档版本 v1.2）
+> 版本：v1.8 ｜ 依据：`AI_GALGAME_Master_Design_v1.0.md`（唯一权威设计基线，当前文档版本 v1.2）
 >
 > 本计划是**可执行的分阶段开发安排**。Claude Code（或任何开发执行者）应按阶段顺序推进：每阶段有明确目标、验收标准、任务清单、测试要求与验证命令，**验收通过后才进入下一阶段**。
 
@@ -312,6 +312,8 @@ pnpm --filter @ag/world test && pnpm --filter @ag/core test
 
 # 8. Phase 5 — Narrative / Option Engine（首次接入 LLM）
 
+- **状态**：✅ 已完成（2026-08-16）。LLM Port/TestProvider、Scenario、Option、Reaction 与完整链路测试通过。
+
 ## 8.1 目标
 LLM 生成场景与选项，但 **StateResolver 仍掌握最终状态权**（Master Design §3）。
 
@@ -323,15 +325,15 @@ LLM 生成场景与选项，但 **StateResolver 仍掌握最终状态权**（Mas
 - 非法结构化输出（坏 JSON / 越界数值）触发 Retry → Fallback，不破坏状态。
 
 ## 8.4 任务清单
-- [ ] LLM Port：`LLMGateway.generate(req): Promise<res>` + `LLMRequest/LLMResponse` 类型 + `TestProvider`（fixture 驱动）。
-- [ ] ScenarioGenerator：输入 ModelContext → 输出 `GeneratedScenario`（场景 + 情绪/意图结构化）。
-- [ ] OptionPlanner：按约束生成行为类型（`support/low risk` 等）。
-- [ ] OptionValidator：多样性 / 条件 / 角色一致性校验。
-- [ ] OptionRenderer：行为 → 自然语言（表面语言）。
-- [ ] ReactionGenerator：玩家选择后生成 NPC 反应（双通道）。
-- [ ] 结构化输出解析与校验：Schema → 非法 Retry → Fallback 模板。
-- [ ] 与 Turn 生命周期接线：05/06/07/10 阶段调用对应生成器。
-- [ ] **事件触发接线（Phase 4 review 必做项）**：事件选择成功后，Turn 编排必须把 EventInstance 写入 `world.activeEvents`（设置 `lastTriggeredDay = 当前 day`）并调用 `EventPool.recordTriggered`；补端到端天数/回合冷却测试。
+- [x] LLM Port：`LLMGateway.generate(req): Promise<res>` + `LLMRequest/LLMResponse` 类型 + `TestProvider`（fixture 驱动）。
+- [x] ScenarioGenerator：输入 ModelContext → 输出 `GeneratedScenario`（场景 + 情绪/意图结构化）。
+- [x] OptionPlanner：按约束生成行为类型（`support/low risk` 等）。
+- [x] OptionValidator：多样性 / 条件 / 角色一致性校验。
+- [x] OptionRenderer：行为 → 自然语言（表面语言）。
+- [x] ReactionGenerator：玩家选择后生成 NPC 反应（双通道）。
+- [x] 结构化输出解析与校验：Schema → 非法 Retry → Fallback 模板。
+- [x] 与 Turn 生命周期接线：05/06/07/10 阶段调用对应生成器。
+- [x] **事件触发接线（Phase 4 review 必做项）**：事件选择成功后，Turn 编排必须把 EventInstance 写入 `world.activeEvents`（设置 `lastTriggeredDay = 当前 day`）并调用 `EventPool.recordTriggered`；补端到端天数/回合冷却测试。
 
 ## 8.5 测试要求
 - Integration：用 TestProvider 覆盖完整 Turn 的 Scenario→Option→Choice→Reaction 链路。
