@@ -1,7 +1,7 @@
 # AI GALGAME Framework
-## 开发计划 Development Plan v2.7
+## 开发计划 Development Plan v2.8
 
-> 版本：v2.7 ｜ 依据：`AI_GALGAME_Master_Design_v1.0.md`（唯一权威设计基线，当前文档版本 v1.2）
+> 版本：v2.8 ｜ 依据：`AI_GALGAME_Master_Design_v1.0.md`（唯一权威设计基线，当前文档版本 v1.2）
 >
 > 本计划是**可执行的分阶段开发安排**。Claude Code（或任何开发执行者）应按阶段顺序推进：每阶段有明确目标、验收标准、任务清单、测试要求与验证命令，**验收通过后才进入下一阶段**。
 
@@ -489,7 +489,7 @@ pnpm dev   # 手动冒烟
 
 # 13. Phase 10 — Designer Mode
 
-- **状态**：✅ 已完成（2026-08-16）。Designer 构建、Project round-trip 与 Design→Play 模拟测试通过。
+- **状态**：✅ 已完成（2026-08-16）；审查反馈（`docs/review/phase10-review.md`）已修订：明确本阶段交付为最小设计器（完整编辑器留待后续 Phase），`definitionToGameCharacter` 移入 `@ag/core`，消除 runtime→st-adapter 反向依赖。
 
 ## 13.1 目标
 创建角色 / 世界 / 规则的设计器（Master Design §5.9）。
@@ -503,6 +503,8 @@ pnpm dev   # 手动冒烟
 - [x] Project 包创建 / 导入 / 导出（`projects/` 落盘）。
 - [x] `apps/designer` UI 骨架与表单组件。
 - [x] Design→Play 联动：设计器产出 Project 直接被运行时加载。
+
+> **Phase 10 交付口径**：本阶段交付“最小设计器”——Character Creator、Project JSON 导入/导出、Card/WorldBook 编译预览与 Design→Play 一回合模拟。World Builder（地点）、Parameter、Event、OptionTemplate、Ending 等完整编辑器留待后续 Phase 在现有 schema 上补齐。
 
 ## 13.4 测试要求
 - Project round-trip（创建→导出→导入→内容一致）。

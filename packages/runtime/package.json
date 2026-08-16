@@ -2,7 +2,7 @@
   "name": "@ag/runtime",
   "version": "0.1.0",
   "private": true,
-  "description": "Application \u5c42\uff1aTurn Orchestrator\u3001\u6e38\u620f/\u53d9\u4e8b/\u8bb0\u5fc6\u670d\u52a1\u7f16\u6392\u3001Application API",
+  "description": "Application 层：Turn Orchestrator、游戏/叙事/记忆服务编排、Application API",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -32,7 +32,6 @@
     "@ag/option": "workspace:*",
     "@ag/persistence": "workspace:*",
     "@ag/schemas": "workspace:*",
-    "@ag/st-adapter": "workspace:*",
     "@ag/world": "workspace:*"
   }
 }

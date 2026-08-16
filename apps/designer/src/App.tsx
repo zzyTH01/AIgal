@@ -24,7 +24,7 @@ export function App() {
   const buildProject = useMemo<GameProject>(() => {
     const blank = createBlankProject();
     const character = structuredClone(blank.characters[0]!);
-    character.characterId = `char_${form.characterName.toLowerCase() || 'character'}`;
+    character.characterId = `char_${sanitizeId(form.characterName)}`;
     character.identity = {
       ...character.identity,
       name: form.characterName,
@@ -32,14 +32,14 @@ export function App() {
       role: form.role,
       description: form.description,
     };
-    return gameProjectSafe({
+    return {
       ...blank,
       projectId: `project_${form.projectName}`,
       name: form.projectName,
       world: { ...blank.world, name: form.worldName },
       prompts: { system: form.prompt },
       characters: [character],
-    });
+    };
   }, [form]);
 
   const compile = () => {
@@ -109,6 +109,7 @@ export function App() {
   );
 }
 
-function gameProjectSafe(project: GameProject): GameProject {
-  return project;
+function sanitizeId(value: string): string {
+  const sanitized = value.trim().replace(/\s+/g, '_');
+  return sanitized || 'character';
 }

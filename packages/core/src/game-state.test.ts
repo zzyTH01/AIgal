@@ -7,6 +7,7 @@ import {
   cloneGameState,
   createGameState,
   defaultCharacter,
+  definitionToGameCharacter,
   diffGameStates,
   validateGameState,
 } from './game-state.js';
@@ -25,6 +26,28 @@ describe('GameState factory', () => {
     const character = defaultCharacter('char_test');
     expect(character.identity.age).toBe(18);
     expect(character.status).toBe('active');
+  });
+
+  it('converts CharacterDefinition into CharacterState in Core', () => {
+    const state = makeCoreGameState();
+    const definition = {
+      schemaVersion: '0.1.0' as const,
+      characterId: 'char_mio',
+      identity: state.characters.char_mio!.identity,
+      personality: state.characters.char_mio!.personality,
+      preferences: { likes: [], dislikes: [], interests: [] },
+      speech: { style: 'calm', tone: 'soft', vocabulary: [], examples: [] },
+      psychologyDefaults: state.characters.char_mio!.psychology,
+      cognition: state.characters.char_mio!.cognition,
+      relationshipDefaults: { initialType: 'stranger' as const, metrics: {}, tags: [] },
+      secrets: [],
+      goals: [],
+      boundaries: [],
+      gameParameters: {},
+    };
+    const character = definitionToGameCharacter(definition);
+    expect(character.identity.name).toBe('Mio');
+    expect(character.psychology.dependence).toBe(state.characters.char_mio!.psychology.dependence);
   });
 });
 

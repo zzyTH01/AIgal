@@ -1,7 +1,9 @@
 import {
+  characterDefinitionSchema,
   finalStateDeltaSchema,
   gameStateSchema,
   type CharacterActivityState,
+  type CharacterDefinition,
   type CharacterState,
   type FinalStateDelta,
   type FlagsPatch,
@@ -541,6 +543,27 @@ function diffNumericObject(before: object, after: object): Record<string, Metric
     }
   }
   return diff;
+}
+
+/** CharacterDefinition → CharacterState 的纯转换（Core 能力，Adapter 可复用）。 */
+export function definitionToGameCharacter(definition: CharacterDefinition): CharacterState {
+  const parsed = characterDefinitionSchema.parse(definition);
+  return {
+    characterId: parsed.characterId,
+    identity: parsed.identity,
+    personality: parsed.personality,
+    psychology: parsed.psychologyDefaults,
+    emotion: { primary: 'neutral', intensity: 30, valence: 0, energy: 50 },
+    cognition: parsed.cognition,
+    physical: { energy: 70, fatigue: 20, health: 90, hunger: 20, sleepiness: 10 },
+    activity: {
+      locationId: 'loc_start',
+      activity: 'idle',
+      availability: 100,
+      currentGoal: parsed.goals[0]?.description,
+    },
+    status: 'active',
+  };
 }
 
 export function withCharacter(state: GameState, character: CharacterState): GameState {

@@ -6,10 +6,15 @@ import {
   type Option,
   type TurnResult,
 } from '@ag/schemas';
-import { createGameState, defaultRelationship, startTurn, type RNG } from '@ag/core';
+import {
+  createGameState,
+  defaultRelationship,
+  definitionToGameCharacter,
+  startTurn,
+  type RNG,
+} from '@ag/core';
 import { EventPool, XorShift128Rng, commitTriggeredEvent } from '@ag/world';
 import { MemorySaveRepository, type SaveRepository } from '@ag/persistence';
-import { definitionToGameCharacter } from '@ag/st-adapter';
 import { buildContext } from '@ag/context';
 import { formMemory, consolidateMemories } from '@ag/memory';
 import {

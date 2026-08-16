@@ -1,8 +1,5 @@
-import {
-  characterDefinitionSchema,
-  type CharacterDefinition,
-  type CharacterState,
-} from '@ag/schemas';
+import { characterDefinitionSchema, type CharacterDefinition } from '@ag/schemas';
+import { definitionToGameCharacter as coreDefinitionToGameCharacter } from '@ag/core';
 import {
   AG_EXTENSION_KEY,
   type AgCardExtension,
@@ -118,25 +115,7 @@ export function cardToDefinition(
   });
 }
 
-export function definitionToGameCharacter(definition: CharacterDefinition): CharacterState {
-  const parsed = characterDefinitionSchema.parse(definition);
-  return {
-    characterId: parsed.characterId,
-    identity: parsed.identity,
-    personality: parsed.personality,
-    psychology: parsed.psychologyDefaults,
-    emotion: { primary: 'neutral', intensity: 30, valence: 0, energy: 50 },
-    cognition: parsed.cognition,
-    physical: { energy: 70, fatigue: 20, health: 90, hunger: 20, sleepiness: 10 },
-    activity: {
-      locationId: 'loc_start',
-      activity: 'idle',
-      availability: 100,
-      currentGoal: parsed.goals[0]?.description,
-    },
-    status: 'active',
-  } satisfies CharacterState;
-}
+export { coreDefinitionToGameCharacter as definitionToGameCharacter };
 
 function formatPersonality(definition: CharacterDefinition): string {
   const p = definition.personality;

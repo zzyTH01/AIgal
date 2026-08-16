@@ -287,9 +287,6 @@ importers:
       '@ag/schemas':
         specifier: workspace:*
         version: link:../schemas
-      '@ag/st-adapter':
-        specifier: workspace:*
-        version: link:../adapters/sillytavern
       '@ag/world':
         specifier: workspace:*
         version: link:../world
