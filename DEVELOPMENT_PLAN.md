@@ -1,7 +1,7 @@
 # AI GALGAME Framework
-## 开发计划 Development Plan v1.4
+## 开发计划 Development Plan v1.5
 
-> 版本：v1.4 ｜ 依据：`AI_GALGAME_Master_Design_v1.0.md`（唯一权威设计基线，当前文档版本 v1.2）
+> 版本：v1.5 ｜ 依据：`AI_GALGAME_Master_Design_v1.0.md`（唯一权威设计基线，当前文档版本 v1.2）
 >
 > 本计划是**可执行的分阶段开发安排**。Claude Code（或任何开发执行者）应按阶段顺序推进：每阶段有明确目标、验收标准、任务清单、测试要求与验证命令，**验收通过后才进入下一阶段**。
 
@@ -241,7 +241,7 @@ pnpm --filter @ag/core test && pnpm --filter @ag/core build
 
 # 6. Phase 3 — State Resolver
 
-- **状态**：✅ 已完成（2026-08-16）。核心玩法/非法值/非线性/重复/Risk 测试全部通过。
+- **状态**：✅ 已完成（2026-08-16）；审查反馈（`docs/review/phase3-review.md`）已修订：重复反馈仅按主导行为计数，避免同一观察被 recent/historical 双计。
 
 ## 6.1 目标
 完成 Modifier 引擎，实现"同行为不同角色不同结果"（Master Design §4.10）。
@@ -260,6 +260,8 @@ pnpm --filter @ag/core test && pnpm --filter @ag/core build
 - [x] Risk 分支：成功/失败结果经 RNG 决定（先接 RNG 接口，Phase 4 落地实现）。
 - [x] 变量联动/冲突处理（如 independence 高时 help 行为收益方向反转）。
 - [x] Resolver 签名：`resolveChoice(state, selectedOption, rng) → TurnDirectDelta`。
+
+> **Phase 3 范围说明**：`Option.effects` 当前只结算 relationship 数值；character / world / run effects 将在后续 Phase 显式接入。个性-行为映射与风险倍率当前为硬编码，Phase 10/11 转为 CharacterDefinition / Project 参数数据驱动。
 
 ## 6.4 测试要求
 - Unit：公式/Clamp/非线性/重复递减/Risk。

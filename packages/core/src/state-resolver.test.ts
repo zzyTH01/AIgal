@@ -95,8 +95,8 @@ describe('StateResolver modifier engine', () => {
   it('reduces repeated support behaviors and can turn them negative', () => {
     const state = makeDependentState();
     const repeated = makeDependentState();
-    repeated.playerModel.recentBehaviorPattern = ['support', 'support', 'support', 'support'];
-    repeated.playerModel.behavioralPatterns.player_support = 6;
+    repeated.playerModel.recentBehaviorPattern = Array.from({ length: 10 }, () => 'support');
+    repeated.playerModel.behavioralPatterns.player_support = 10;
 
     const freshResult = resolveChoice(state, supportOption, ALWAYS_SUCCESS_RNG);
     const repeatedResult = resolveChoice(repeated, supportOption, ALWAYS_SUCCESS_RNG);

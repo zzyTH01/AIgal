@@ -61,6 +61,9 @@ export interface ResolveChoiceResult {
  * State Resolver —— 唯一有权确认关系数值的确定性引擎。
  * `ΔX = round(Base × Personality × Relationship × Context × Emotion × Repetition × Risk × Nonlinear)`
  * 结果再由 Clamp 保证 0~100。AI/选项只提供 base 倾向。
+ *
+ * Phase 3 范围：仅解析 relationship 数值效果（Option.effects）。
+ * character/world/run 的 effects 尚未接入，将在后续 Phase 显式实现，不在本模块隐式处理。
  */
 export function resolveChoice(
   state: GameState,
@@ -246,6 +249,7 @@ function calculatePersonalityModifier(
 
   if (metric === 'affection' || metric === 'attraction') {
     if (isSupport) {
+      // TODO(Phase 10/11)：当前映射为硬编码，后续应由 CharacterDefinition/Project 参数数据驱动。
       if (personality.independence >= 75) return -0.5;
       return clamp(
         1 + (personality.empathy - 50) / 200 + (personality.sensitivity - 50) / 200,
@@ -317,17 +321,16 @@ function calculateEmotionModifier(character: ReturnType<typeof findTargetCharact
 }
 
 function calculateRepetitionModifier(playerModel: PlayerModel, option: Option): number {
-  const recent = option.behavior.actions.reduce(
-    (sum, action) =>
-      sum + playerModel.recentBehaviorPattern.filter((entry) => entry === action).length,
-    0,
-  );
-  const historical = option.behavior.actions.reduce(
-    (sum, action) => sum + (playerModel.behavioralPatterns[`player_${action}`] ?? 0),
-    0,
-  );
-  const count = recent + historical;
+  // 只按主导行为计数；recent/historical 两个流取 max，避免同一观察被重复计算。
+  const dominantAction = option.behavior.actions[0] ?? option.behavior.intent[0];
+  if (!dominantAction) return 1;
+  const recent = playerModel.recentBehaviorPattern.filter(
+    (entry) => entry === dominantAction,
+  ).length;
+  const historical = playerModel.behavioralPatterns[`player_${dominantAction}`] ?? 0;
+  const count = Math.max(recent, historical);
   if (count <= 1) return 1;
+  // 斜率保留 -0.2；Phase 11 用 100 Runs 仿真校准“几次后转负”的目标手感。
   return Math.max(-1, 1 - (count - 1) * 0.2);
 }
 
@@ -344,12 +347,13 @@ function calculateNonlinearFactor(current: number, base: number): number {
  */
 export function observePlayerChoice(state: GameState, option: Option): GameState {
   const parsedOption = optionSchema.parse(option);
+  const dominantAction = parsedOption.behavior.actions[0] ?? parsedOption.behavior.intent[0];
   const next: GameState = structuredClone(state);
-  for (const action of parsedOption.behavior.actions) {
-    next.playerModel.recentBehaviorPattern.push(action);
-    next.playerModel.behavioralPatterns[`player_${action}`] =
-      (next.playerModel.behavioralPatterns[`player_${action}`] ?? 0) + 1;
+  if (dominantAction) {
+    next.playerModel.recentBehaviorPattern.push(dominantAction);
+    next.playerModel.behavioralPatterns[`player_${dominantAction}`] =
+      (next.playerModel.behavioralPatterns[`player_${dominantAction}`] ?? 0) + 1;
+    next.playerModel.recentBehaviorPattern = next.playerModel.recentBehaviorPattern.slice(-20);
   }
-  next.playerModel.recentBehaviorPattern = next.playerModel.recentBehaviorPattern.slice(-20);
   return next;
 }
