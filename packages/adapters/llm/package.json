@@ -23,6 +23,7 @@
     "pretest": "pnpm --filter @ag/schemas build"
   },
   "dependencies": {
-    "@ag/schemas": "workspace:*"
+    "@ag/schemas": "workspace:*",
+    "zod": "^3.25.76"
   }
 }

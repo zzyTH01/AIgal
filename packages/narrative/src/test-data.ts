@@ -114,3 +114,8 @@ export const reactionJson = JSON.stringify({
     memoryCandidates: [],
   },
 });
+
+export const combinedJson = JSON.stringify({
+  scenario: JSON.parse(scenarioJson),
+  options: JSON.parse(optionPlansJson),
+});

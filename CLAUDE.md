@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **AI GALGAME Framework**（tavern-gal）：一个以 SillyTavern 为可选 AI Runtime、以 GALGAME 选择式交互为表现形式、以 Game State 为核心、由 AI 动态叙事 + Roguelike 机制驱动的 AI 叙事游戏框架。
 
-当前仓库处于**Phase 6 已完成（Memory / Context）**阶段：权威架构由两份设计文档定义（见下），工程为 pnpm + TypeScript monorepo；纯规则闭环、LLM 生成链路、记忆生命周期与 Context 组装均已就绪。任何实现工作开始前，必须先读权威设计文档与开发计划，不要凭推测自行发明架构。
+当前仓库处于**Phase 7 已完成（LLM Gateway 落地）**阶段：权威架构由两份设计文档定义（见下），工程为 pnpm + TypeScript monorepo；纯规则闭环、记忆/上下文、LLM 生成链路与可配置真实 Provider 网关均已就绪。任何实现工作开始前，必须先读权威设计文档与开发计划，不要凭推测自行发明架构。
 
 ### 权威文档（唯一事实来源）
 
@@ -130,7 +130,8 @@ Option 是 Behavior Object：`presentation`（玩家看到的语言）+ `behavio
 - **Phase 3 已完成（State Resolver）**：`resolveChoice(state, option, rng)` 实现 `BaseDelta → Modifier 链 → FinalDelta`。
 - **Phase 4 已完成（Event + RNG）**：`@ag/world` 已实现可复现 RNG、EventPool、事件选择与 WorldTick；事件触发接线已落地并测试。
 - **Phase 5 已完成（Narrative / Option Engine）**：LLM Port/TestProvider、Option Planner/Validator/Renderer、Scenario/Reaction 生成与 Retry→Fallback 链路。
-- **Phase 6 已完成（Memory / Context）**：`@ag/memory` 实现 Store/Formation/Decay/Retrieval/Reinforcement/Consolidation；`@ag/context` 实现 Budget、StateSummarizer、MemoryRanker、PromptComposer 与 ContextBuilder。不同认知 Profile 生成不同 Context。
-- **下一阶段**：Phase 7 LLM Gateway 落地（见 `DEVELOPMENT_PLAN.md` §10）——真实 Provider、重试/超时/Token 成本，以及 Scenario+Options 合并调用。
+- **Phase 6 已完成（Memory / Context）**：记忆全生命周期 + ContextBuilder/Budget。
+- **Phase 7 已完成（LLM Gateway 落地）**：`@ag/llm` 实现 OpenAI/Anthropic/OpenAI-Compatible 适配器、Provider 注册表、重试/超时/退避、错误分类、Token 成本记录、ModelContext→请求转换与结构化校验入口；`@ag/narrative` 已把 Scenario+Options 合并为 1 次调用（Turn 3→2）。
+- **下一阶段**：Phase 8 SillyTavern Adapter（见 `DEVELOPMENT_PLAN.md` §11）——Character Card / World Book / Context Bridge / Character Compiler。
 
 验收基线（Phase 2 原则）：**核心玩法的纯文本闭环能连续跑几十个 Turn 而不破坏 GameState，且不接任何 LLM，才算 Game Core 成立。**

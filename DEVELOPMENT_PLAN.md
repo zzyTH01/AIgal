@@ -1,7 +1,7 @@
 # AI GALGAME Framework
-## 开发计划 Development Plan v2.1
+## 开发计划 Development Plan v2.2
 
-> 版本：v2.1 ｜ 依据：`AI_GALGAME_Master_Design_v1.0.md`（唯一权威设计基线，当前文档版本 v1.2）
+> 版本：v2.2 ｜ 依据：`AI_GALGAME_Master_Design_v1.0.md`（唯一权威设计基线，当前文档版本 v1.2）
 >
 > 本计划是**可执行的分阶段开发安排**。Claude Code（或任何开发执行者）应按阶段顺序推进：每阶段有明确目标、验收标准、任务清单、测试要求与验证命令，**验收通过后才进入下一阶段**。
 
@@ -388,6 +388,8 @@ pnpm --filter @ag/memory test && pnpm --filter @ag/context test && pnpm --filter
 
 # 10. Phase 7 — LLM Gateway 落地
 
+- **状态**：✅ 已完成（2026-08-16）。OpenAI/Anthropic/OpenAI-Compatible 适配器、重试/超时/成本日志、Scenario+Options 合并调用与回归测试通过。
+
 ## 10.1 目标
 接入真实 LLM Provider，切换模型不改核心逻辑（Master Design §5.5）。
 
@@ -396,12 +398,12 @@ pnpm --filter @ag/memory test && pnpm --filter @ag/context test && pnpm --filter
 - 重试 / 超时 / Token 计数 / 成本日志可用；失败有明确错误类型。
 
 ## 10.3 任务清单
-- [ ] OpenAIAdapter / AnthropicAdapter / OpenAICompatibleAdapter（Local 作为 OpenAI-compatible 变体预留）。
-- [ ] Provider 注册表与配置加载（API key / baseURL / model / 参数）。
-- [ ] 重试 / 超时 / 退避策略；错误分类（parse/rate-limit/timeout/refusal）。
-- [ ] Token 计数与成本日志（供 Phase 11 的成本分析）。
-- [ ] **LLM Call Minimization（Phase 5 review）**：将 Scenario + Options 合并为 1 次调用，使每个 Turn 从 3 次降为 2 次。
-- [ ] `ModelContext → Provider 请求` 转换；Provider 响应 → 结构化校验入口。
+- [x] OpenAIAdapter / AnthropicAdapter / OpenAICompatibleAdapter（Local 作为 OpenAI-compatible 变体预留）。
+- [x] Provider 注册表与配置加载（API key / baseURL / model / 参数）。
+- [x] 重试 / 超时 / 退避策略；错误分类（parse/rate-limit/timeout/refusal）。
+- [x] Token 计数与成本日志（供 Phase 11 的成本分析）。
+- [x] **LLM Call Minimization（Phase 5 review）**：将 Scenario + Options 合并为 1 次调用，使每个 Turn 从 3 次降为 2 次。
+- [x] `ModelContext → Provider 请求` 转换；Provider 响应 → 结构化校验入口。
 
 ## 10.4 测试要求
 - Mock provider 适配测试：请求形状、重试、错误分类。

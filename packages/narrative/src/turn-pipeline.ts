@@ -1,8 +1,7 @@
 import type { GameState, ModelContext, NPCReaction, Option } from '@ag/schemas';
 import { ALWAYS_SUCCESS_RNG, resolveChoice, type RNG, type ResolveChoiceResult } from '@ag/core';
 import type { LLMGateway } from '@ag/llm';
-import { generateScenario, type ScenarioGeneratorOptions } from './scenario-generator.js';
-import { planAndRenderOptions, type LLMOptionPlannerOptions } from './option-planner.js';
+import { generateScenarioAndOptions, type CombinedGeneratorOptions } from './combined-generator.js';
 import { generateReaction, type ReactionGeneratorOptions } from './reaction-generator.js';
 import type { GeneratedScenario } from './scenario.js';
 
@@ -17,8 +16,7 @@ export interface NarrativeTurnResult {
 export interface NarrativeTurnOptions {
   selectedOption?: Option;
   rng?: RNG;
-  scenario?: ScenarioGeneratorOptions;
-  options?: LLMOptionPlannerOptions;
+  combined?: CombinedGeneratorOptions;
   reaction?: ReactionGeneratorOptions;
 }
 
@@ -32,13 +30,10 @@ export async function runNarrativeTurn(
   gateway: LLMGateway,
   options: NarrativeTurnOptions = {},
 ): Promise<NarrativeTurnResult> {
-  // TODO(Phase 7 成本优化)：Scenario + Options 可合并为 1 次 LLM 调用，将 Turn 从 3 次降为 2 次。
-  const [scenario, planning] = await Promise.all([
-    generateScenario(context, gateway, options.scenario),
-    planAndRenderOptions(context, gateway, options.options),
-  ]);
+  // Phase 7：Scenario + Options 已合并为 1 次 LLM 调用；Turn = 2 次调用。
+  const generated = await generateScenarioAndOptions(context, gateway, options.combined);
 
-  const selectedOption = options.selectedOption ?? planning.options[0];
+  const selectedOption = options.selectedOption ?? generated.options[0];
   if (!selectedOption) {
     throw new Error('Narrative turn requires at least one Option');
   }
@@ -55,8 +50,8 @@ export async function runNarrativeTurn(
   );
 
   return {
-    scenario,
-    options: planning.options,
+    scenario: { ...generated.scenario, source: generated.source },
+    options: generated.options,
     selectedOption,
     resolution,
     reaction,

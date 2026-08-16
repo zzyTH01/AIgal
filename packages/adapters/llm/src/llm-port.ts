@@ -37,10 +37,18 @@ export interface LLMGateway {
 }
 
 export type LLMErrorCode =
-  'parse_error' | 'rate_limit' | 'timeout' | 'refusal' | 'provider_error' | 'invalid_response';
+  | 'parse_error'
+  | 'rate_limit'
+  | 'timeout'
+  | 'refusal'
+  | 'provider_error'
+  | 'invalid_response'
+  | 'invalid_request'
+  | 'network_error'
+  | 'auth_error';
 
 export class LLMError extends Error {
-  override readonly name = 'LLMError';
+  override readonly name: string = 'LLMError';
   readonly code: LLMErrorCode;
   readonly retryable: boolean;
   readonly request?: LLMRequest;

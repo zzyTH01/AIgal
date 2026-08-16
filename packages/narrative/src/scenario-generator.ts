@@ -61,7 +61,7 @@ function buildScenarioRequest(
   };
 }
 
-function fallbackScenario(context: ModelContext): GeneratedScenario {
+export function fallbackScenario(context: ModelContext): GeneratedScenario {
   const character = Object.values(context.currentState.characters)[0];
   return {
     narrative: '（场景生成回退）你来到了当前地点，周围安静下来。',

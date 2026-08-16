@@ -35,7 +35,8 @@ pnpm lint
 - ✅ Phase 4 — Event + RNG：xorshift128 可复现 RNG、EventPool、权重/条件/冷却/稀有度事件选择、WorldTick 骨架
 - ✅ Phase 5 — Narrative / Option Engine：LLM Port + TestProvider、Scenario/Option/Reaction 生成、非法输出 Retry→Fallback
 - ✅ Phase 6 — Memory / Context：记忆全生命周期、ContextBuilder + ContextBudget、不同认知 Profile 不同 Context
-- ⏭️ 下一步 — Phase 7：LLM Gateway 落地（真实 Provider + 成本控制）
+- ✅ Phase 7 — LLM Gateway：OpenAI / Anthropic / OpenAI-Compatible 适配器、重试/超时/成本日志、Scenario+Options 合并调用
+- ⏭️ 下一步 — Phase 8：SillyTavern Adapter（Character Card / World Book / Context Bridge）
 
 ## 仓库结构
 
