@@ -6,15 +6,15 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **AI GALGAME Framework**（tavern-gal）：一个以 SillyTavern 为可选 AI Runtime、以 GALGAME 选择式交互为表现形式、以 Game State 为核心、由 AI 动态叙事 + Roguelike 机制驱动的 AI 叙事游戏框架。
 
-当前仓库处于**设计冻结 / 起步阶段**：架构由两份权威文档定义（见下），代码目前是占位的 Python 包骨架，**尚未进入实现**。任何实现工作开始前，必须先读权威设计文档与开发计划，不要凭推测自行发明架构。
+当前仓库处于**设计冻结 / Phase 0.5 已完成**阶段：权威架构由两份设计文档定义（见下），工程已切换为 pnpm + TypeScript monorepo 占位骨架，业务实现尚未开始。任何实现工作开始前，必须先读权威设计文档与开发计划，不要凭推测自行发明架构。
 
 ### 权威文档（唯一事实来源）
 
-| 文档 | 内容 |
-|---|---|
+| 文档                               | 内容                                                                                                                                                                      |
+| ---------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `AI_GALGAME_Master_Design_v1.0.md` | **唯一权威设计基线（最优先读）**。对六份 v0.1 设计文档的分析综合与定案：设计哲学、核心玩法闭环、职责边界、领域模型/数据契约、分层架构、数据所有权、技术栈定案、验收标准。 |
-| `DEVELOPMENT_PLAN.md` | **可执行的分阶段开发计划**。Phase 0–12，每阶段含目标/验收标准/任务清单/测试/验证命令。执行开发时按此推进。 |
-| `docs/design-history/` | 六份 v0.1 设计文档归档区，仅供追溯，**不以之为实现依据**。 |
+| `DEVELOPMENT_PLAN.md`              | **可执行的分阶段开发计划**。Phase 0–12，每阶段含目标/验收标准/任务清单/测试/验证命令。执行开发时按此推进。                                                                |
+| `docs/design-history/`             | 六份 v0.1 设计文档归档区，仅供追溯，**不以之为实现依据**。                                                                                                                |
 
 文档均为中文，正文技术术语请沿用原文（如 `StateResolver`、`Daily Progress`、`Memory Candidate`）。
 
@@ -27,11 +27,12 @@ pnpm install                    # 安装依赖
 pnpm build                      # 构建全部包（tsup，拓扑顺序）
 pnpm test                       # 全部测试（Vitest workspace，每个包独立项目）
 pnpm typecheck                  # 逐包类型检查（tsc --noEmit）
-pnpm lint                       # ESLint（flat config）+ Prettier
+pnpm lint                       # ESLint（flat config）+ Prettier 检查
+pnpm format                     # Prettier 自动格式化
 pnpm --filter @ag/<pkg> test    # 只跑某包测试
 ```
 
-仓库仍非 git 仓库（建议尽快 `git init`，否则阶段改动无法追溯）。
+仓库已初始化 git（当前分支 `main`，并已推送 `origin/main`）。阶段改动请继续以 git commit 追溯。
 
 ## 核心架构（跨文档的"大图"）
 
@@ -72,28 +73,34 @@ Experience（Player UI / Designer UI）
 
 ### 数据所有权（每个核心状态只有一条权威写入路径）
 
-| 数据 | 权威模块 |
-|---|---|
-| Day/Time | Time Engine |
-| Daily Progress | Progress Engine |
-| Affection/Trust | State Resolver |
-| Relationship | Relationship Engine |
-| World State | World Engine |
-| Memory | Memory Engine |
-| RNG | RNG Service |
-| Ending | Ending Engine |
-| Save | Persistence |
-| LLM Context | Context Builder |
+| 数据            | 权威模块            |
+| --------------- | ------------------- |
+| Day/Time        | Time Engine         |
+| Daily Progress  | Progress Engine     |
+| Affection/Trust | State Resolver      |
+| Relationship    | Relationship Engine |
+| World State     | World Engine        |
+| Memory          | Memory Engine       |
+| RNG             | RNG Service         |
+| Ending          | Ending Engine       |
+| Save            | Persistence         |
+| LLM Context     | Context Builder     |
 
 ### GameState 根结构
 
 ```typescript
 GameState = {
-  schemaVersion, run: RunState, world: WorldState,
+  schemaVersion,
+  run: RunState,
+  world: WorldState,
   characters: Record<CharacterId, CharacterState>,
   relationships: Record<RelationshipId, RelationshipState>,
-  flags, playerModel, memories: MemoryState, meta: MetaState, rng: RNGState
-}
+  flags,
+  playerModel,
+  memories: MemoryState,
+  meta: MetaState,
+  rng: RNGState,
+};
 ```
 
 CharacterState = identity / personality / psychology / emotion / cognition / physical / activity / status。`memoryCapacity` 是**角色的抽象认知能力**，不是 LLM 真实 Context Window。`PlayerModel` 是"角色对玩家的主观认知"，不同角色可以对同一玩家形成不同判断。**原则：状态值（`affection=63`）与历史事件（`AffectionChanged{...}`）分离。**
@@ -113,13 +120,12 @@ Option 是 Behavior Object：`presentation`（玩家看到的语言）+ `behavio
 
 ### 技术栈现状（已定案）
 
-**技术栈已定案：TypeScript + React + Zod + JSON Schema（Draft 2020-12）**，`schemas/` 是数据契约单一事实来源（Master Design §4.12、§8）。当前 Python 脚手架只是占位，`DEVELOPMENT_PLAN.md` Phase 0.5 会将其替换为 pnpm TS monorepo。
+**技术栈已定案：TypeScript + React + Zod + JSON Schema（Draft 2020-12）**，`packages/schemas/schemas/` 是 JSON Schema 数据契约单一事实来源目录（Master Design §4.12、§8）。Python 脚手架已在 Phase 0.5 移除，当前为 pnpm TS monorepo。
 
 ## 当前实现状态
 
-- **Phase 0.5 已完成**：pnpm TS monorepo 就绪，15 个包/应用占位骨架 + `packages/schemas` 共享类型占位，`pnpm install/build/test/typecheck/lint` 全部通过（15 测试全绿）。
-- 全局已安装 pnpm（11.22.0）；`.bootstrap/` 旧引导目录已不再需要（gitignored，可删除）。
-- 仍非 git 仓库（建议 git init）。
+- **Phase 0.5 已完成**：pnpm TS monorepo 就绪，15 个包/应用占位骨架 + `packages/schemas` 共享类型占位与 `schemas/` JSON Schema 占位目录，`pnpm install/build/test/typecheck/lint` 全部通过（15 测试全绿）。
+- pnpm 11.22.0 已全局可用；Python 脚手架与旧 `.bootstrap/` / `.npm-cache/` 引导缓存均已移除。
 - **下一阶段**：Phase 1 数据契约冻结（见 `DEVELOPMENT_PLAN.md` §4）——在 `packages/schemas` 实现 Option/Event/StateDelta/TurnResult/Context/SaveSnapshot/Project/CharacterDefinition 的 TS 类型 + Zod 校验。
 
 验收基线（Phase 2 原则）：**核心玩法的纯文本闭环能连续跑几十个 Turn 而不破坏 GameState，且不接任何 LLM，才算 Game Core 成立。**

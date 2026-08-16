@@ -13,8 +13,9 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "pnpm -r --if-present run typecheck",
-    "lint": "eslint .",
+    "lint": "eslint . --max-warnings=0 && prettier --check .",
     "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "dev": "pnpm -r --parallel --if-present run dev"
   },
   "devDependencies": {

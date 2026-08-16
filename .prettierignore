@@ -1,0 +1,23 @@
+# Generated / third-party
+node_modules/
+dist/
+coverage/
+.git/
+.bootstrap/
+.npm-cache/
+.pnpm-store/
+
+# Lock files
+pnpm-lock.yaml
+
+# Authoritative Chinese design docs (not Prettier-managed)
+docs/
+AI_GALGAME_Master_Design_v1.0.md
+DEVELOPMENT_PLAN.md
+
+# Local / runtime
+.claude/
+saves/
+projects/
+*.log
+.DS_Store
