@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { validateGameState } from '@ag/core';
 import { TestProvider } from '@ag/llm';
-import { JsonDirectorySaveRepository } from '@ag/persistence';
+import { JsonDirectorySaveRepository } from '@ag/persistence/json-directory';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';

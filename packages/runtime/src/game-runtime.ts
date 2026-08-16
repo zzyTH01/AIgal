@@ -8,11 +8,7 @@ import {
 } from '@ag/schemas';
 import { createGameState, defaultRelationship, startTurn, type RNG } from '@ag/core';
 import { EventPool, XorShift128Rng, commitTriggeredEvent } from '@ag/world';
-import {
-  MemorySaveRepository,
-  JsonDirectorySaveRepository,
-  type SaveRepository,
-} from '@ag/persistence';
+import { MemorySaveRepository, type SaveRepository } from '@ag/persistence';
 import { definitionToGameCharacter } from '@ag/st-adapter';
 import { buildContext } from '@ag/context';
 import { formMemory, consolidateMemories } from '@ag/memory';
@@ -38,9 +34,8 @@ export interface RuntimeConfig {
   env?: Record<string, string | undefined>;
   combinedOptions?: CombinedGeneratorOptions;
   rng?: RNG;
+  /** Node 环境可注入 JsonDirectorySaveRepository；浏览器默认 Memory 仓库。 */
   persistence?: SaveRepository;
-  /** 若提供，使用 JSON Directory 落盘（Node 环境）。 */
-  savesDir?: string;
 }
 
 export interface StartTurnView {
@@ -132,11 +127,7 @@ export class GameRuntime {
         : config.env
           ? createGateway(loadProviderConfigFromEnv(config.env))
           : DEMO_LLM);
-    this.persistence =
-      config.persistence ??
-      (config.savesDir
-        ? new JsonDirectorySaveRepository({ baseDir: config.savesDir })
-        : new MemorySaveRepository());
+    this.persistence = config.persistence ?? new MemorySaveRepository();
     this.configuredRng = config.rng;
     this.rng = config.rng ?? new XorShift128Rng(20260816);
     this.eventPool = new EventPool(this.eventDefinitions);
@@ -170,18 +161,21 @@ export class GameRuntime {
         trust: 0,
       },
     );
-    state = commitTriggeredEvent(state, this.eventDefinitions[0]!, {
-      instanceId: 'event_boot',
-      eventId: this.eventDefinitions[0]!.eventId,
-      runId: state.run.runId,
-      day: 1,
-      turn: 0,
-      locationId: state.world.currentLocationId,
-      title: this.eventDefinitions[0]!.title,
-      description: this.eventDefinitions[0]!.description,
-      status: 'resolved',
-      createdAt: { day: 1, time: '09:00' },
-    });
+    const bootEvent = this.eventDefinitions[0];
+    if (bootEvent) {
+      state = commitTriggeredEvent(state, bootEvent, {
+        instanceId: 'event_boot',
+        eventId: bootEvent.eventId,
+        runId: state.run.runId,
+        day: 1,
+        turn: 0,
+        locationId: state.world.currentLocationId,
+        title: bootEvent.title,
+        description: bootEvent.description,
+        status: 'resolved',
+        createdAt: { day: 1, time: '09:00' },
+      });
+    }
     this.state = state;
     this.currentOptions = [];
     this.currentScenario = undefined;

@@ -1,7 +1,7 @@
 # AI GALGAME Framework
-## 开发计划 Development Plan v2.6
+## 开发计划 Development Plan v2.7
 
-> 版本：v2.6 ｜ 依据：`AI_GALGAME_Master_Design_v1.0.md`（唯一权威设计基线，当前文档版本 v1.2）
+> 版本：v2.7 ｜ 依据：`AI_GALGAME_Master_Design_v1.0.md`（唯一权威设计基线，当前文档版本 v1.2）
 >
 > 本计划是**可执行的分阶段开发安排**。Claude Code（或任何开发执行者）应按阶段顺序推进：每阶段有明确目标、验收标准、任务清单、测试要求与验证命令，**验收通过后才进入下一阶段**。
 
@@ -489,6 +489,8 @@ pnpm dev   # 手动冒烟
 
 # 13. Phase 10 — Designer Mode
 
+- **状态**：✅ 已完成（2026-08-16）。Designer 构建、Project round-trip 与 Design→Play 模拟测试通过。
+
 ## 13.1 目标
 创建角色 / 世界 / 规则的设计器（Master Design §5.9）。
 
@@ -496,11 +498,11 @@ pnpm dev   # 手动冒烟
 - 创建角色 → 生成酒馆资源 → 配置世界/参数/事件/选项模板/Ending/Prompt → 模拟 Run → 导出 Project。
 
 ## 13.3 任务清单
-- [ ] Character Creator：CharacterDefinition 表单 → 编译到 Card/WorldBook/Prompt/GameCharacter。
-- [ ] World Builder / Parameter Designer / Event Editor / Option Template Editor / Ending Editor / Prompt Editor。
-- [ ] Project 包创建 / 导入 / 导出（`projects/` 落盘）。
-- [ ] `apps/designer` UI 骨架与表单组件。
-- [ ] Design→Play 联动：设计器产出 Project 直接被运行时加载。
+- [x] Character Creator：CharacterDefinition 表单 → 编译到 Card/WorldBook/Prompt/GameCharacter。
+- [x] World Builder / Parameter Designer / Event Editor / Option Template Editor / Ending Editor / Prompt Editor。
+- [x] Project 包创建 / 导入 / 导出（`projects/` 落盘）。
+- [x] `apps/designer` UI 骨架与表单组件。
+- [x] Design→Play 联动：设计器产出 Project 直接被运行时加载。
 
 ## 13.4 测试要求
 - Project round-trip（创建→导出→导入→内容一致）。

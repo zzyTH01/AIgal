@@ -1,8 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { PACKAGE_NAME } from './index.js';
+import { createBlankProject } from './index.js';
 
-describe('@ag/designer placeholder', () => {
-  it('声明包身份', () => {
-    expect(PACKAGE_NAME).toBe('@ag/designer');
+describe('@ag/designer package entry', () => {
+  it('creates a valid blank project', () => {
+    expect(createBlankProject().characters).toHaveLength(1);
   });
 });

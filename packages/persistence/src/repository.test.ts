@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { join } from 'node:path';
 import { tmpdir } from 'node:os';
-import { JsonDirectorySaveRepository } from './json-directory-repository.js';
+import { JsonDirectorySaveRepository } from './json-directory.js';
 import { MemorySaveRepository } from './repository.js';
 
 describe('SaveRepository', () => {
