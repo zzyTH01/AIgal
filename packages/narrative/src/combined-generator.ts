@@ -70,6 +70,17 @@ function buildCombinedRequest(
   context: ModelContext,
   options: CombinedGeneratorOptions,
 ): LLMRequest {
+  const npcName = Object.values(context.currentState.characters)[0]?.identity.name ?? '当前角色';
+  const memoryLines = context.retrievedMemories.map(
+    (memory, index) => `[检索记忆${index + 1}] ${memory.content}（重要度 ${memory.importance}）`,
+  );
+  const eventLines = [
+    ...(context.currentEvent
+      ? [`[当前事件] ${context.currentEvent.title}：${context.currentEvent.description}`]
+      : []),
+    ...context.recentEvents.map((event) => `[近期事件] ${event.title}：${event.description}`),
+  ];
+
   return {
     model: options.model,
     temperature: 0.8,
@@ -79,7 +90,13 @@ function buildCombinedRequest(
       {
         role: 'user',
         content: [
+          `【角色定位】你是玩家，正在与「${npcName}」互动。场景用第二人称描写玩家眼前所见；所有选项必须是玩家对「${npcName}」采取的行动，不要写 NPC 对玩家或第三方的行动。`,
           `Day ${context.day} ${context.time}，生成当前场景和 4 个行为选项。`,
+          ...eventLines,
+          ...memoryLines,
+          ...(memoryLines.length > 0
+            ? ['如果上述检索记忆与本轮相关，请在场景或选项文本中自然呼应。']
+            : []),
           '必须覆盖：主动 / 保守 / 社交关系 / 风险。',
           'conditions 只允许 {} 或 {"<flag>": boolean|number|"字符串"}；不要输出数组/null/嵌套对象。',
           '严格输出 JSON：',

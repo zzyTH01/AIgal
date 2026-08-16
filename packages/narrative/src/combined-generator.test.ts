@@ -40,6 +40,37 @@ describe('combined Scenario + Options generation', () => {
     expect(result.options).toHaveLength(4);
   });
 
+  it('establishes player POV and injects retrieved memories', async () => {
+    const context = makeNarrativeContext();
+    context.retrievedMemories = [
+      {
+        id: 'mem_rain',
+        type: 'episodic',
+        content: '玩家曾在雨天陪 Mio 整理旧报刊。',
+        createdAt: { day: 1, time: '09:00' },
+        importance: 70,
+        emotionalIntensity: 60,
+        valence: 25,
+        strength: 80,
+        accuracy: 90,
+        tags: ['rain', 'help'],
+        relatedCharacters: ['char_mio'],
+        sourceTurnId: 'run_017/day_001/turn_001',
+        retrievalCount: 0,
+      },
+    ];
+    let captured = '';
+    const provider = new TestProvider((request) => {
+      captured = request.messages[1]?.content ?? '';
+      return { text: combinedJson };
+    });
+    await generateScenarioAndOptions(context, provider);
+    expect(captured).toContain('【角色定位】你是玩家');
+    expect(captured).toContain('「Mio」');
+    expect(captured).toContain('[检索记忆1]');
+    expect(captured).toContain('玩家曾在雨天陪 Mio 整理旧报刊');
+  });
+
   it('falls back without calling LLM again after retries', async () => {
     const provider = TestProvider.fromText('not-json');
     const result = await generateScenarioAndOptions(makeNarrativeContext(), provider, {

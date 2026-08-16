@@ -8,76 +8,81 @@
 ## 🔴 高优先级
 
 ### 1. `optionConditionsSchema` 过严导致真实 LLM 高概率回退 —— ✅ 已修复（2026-08-16）
-- 修复：`@ag/schemas` 新增 LLM 侧宽松 schema（`llmOptionConditionValueSchema`，允许数组/null/带额外键）；`@ag/option` 的 `renderOption` 用 `sanitizeOptionConditions` 清洗为严格 `OptionConditions`；两个 prompt 约束 conditions 形状。
-- 测试：`sanitizes messy LLM conditions instead of falling back` 覆盖 `{min,extra}` / `requires:[...]` / `null`，断言 `source: llm`。
+- 修复：`@ag/schemas` 新增 LLM 侧宽松 schema；`renderOption` 用 `sanitizeOptionConditions` 清洗；prompt 约束 conditions 形状。测试覆盖通过。
 
-### 2. 多样性校验瓶颈 —— 真实 LLM 合并生成仍高概率回退（本次完整一局新确认）
-- 位置：`packages/option/src/validator.ts:28-31`（`ACTIVE/CONSERVATIVE/SOCIAL/RISK_ACTIONS` 硬编码动作表）+ `packages/narrative/src/combined-generator.ts`（`validateOptions` 强校验）
-- **现象**（用 DeepSeek + 明日香跑完整一局，20 Turn）：
-  - 🔴 #1 修复后，conditions 已不再是主因；
-  - 但 `validateOptions` 要求选项**必须覆盖 4 类**（active/conservative/social/risk），类别靠**硬编码动作列表**映射；
-  - DeepSeek 生成的动作（如 `approach`、`physical_comfort`、`tease` 等）常不在表内 → 4 类覆盖不足 → **整份合并响应（场景 + 选项一起）回退**。
-- **实测影响**：真实 LLM 下**场景+选项几乎每轮 fallback**（"场景生成回退"）；NPC 反应约 50% 真实 / 50% fallback。
-- **修复方向**（择一或组合）：
-  - **A**：扩充 4 类动作表，覆盖更常见的 LLM 动作词；
-  - **B**：LLM 选项的多样性校验降级为"软约束"——缺失时不回退整份响应，仅记录/提示；
-  - **C**：场景与选项解耦回退——场景生成失败不回退选项，反之亦然（当前合并生成是"一损俱损"）。
+### 2. 多样性校验瓶颈 —— ✅ 已修复（Completion Plan Phase C，2026-08-16）
+- 修复：`validateOptions` 新增 `diversityMode: 'soft'`（LLM 选项缺类仅记录 warning，不回退整份）；`combined-generator` 用 soft + maxTokens 1536。
+- 真实 LLM 复跑验证：**场景 90–100% llm、反应 100% llm**。
 
-### 3. Bad End → Punishment → Meta Progression → New Run 跨局引擎未实现（设计有、计划漏排）
-- 设计依据：`AI_GALGAME_Master_Design_v1.0.md` §2.5（跨 Run 保留 Knowledge/Meta Memories/Unlocks/Achievements/Ending Archive/Permanent Modifiers）与 §9.1 验收（…Ending → Punishment → Meta Progression → New Run）。
-- **现状**：`MetaState` 数据契约与 `applyDelta` 的 `knowledge/permanentModifiers` 写入已实现（Phase 1）；但 **Punishment 引擎（Bad End 叙事、Debuff/知识/解锁/永久修正的生成）与跨 Run 继承流程（新 Run 以继承的 MetaState 开局）未实现**。
-- 根因：Master Design **有设计**（§2.5 等），但 `DEVELOPMENT_PLAN` 的 Phase 0.5–12 **没有排任何阶段/任务**负责实现这条闭环 → 实现到 Phase 12 后仍是空白。
-- 修复方向：新增实现——`punishment-engine`（Bad End → 生成惩罚/知识/解锁）+ 跨局流程（Run 结束时把 `MetaState` 持久化，新 Run 初始化时继承）。
+### 3. Bad End → Punishment → Meta Progression → New Run 跨局引擎 —— ✅ 已实现（Completion Plan Phase B）
+- 实现：`meta-progression.ts`（applyBadEndPunishment / startNewRunFromMeta）+ `GameRuntime.endRun/setPermanentModifier/startNewRun`。测试通过。
+
+### 4. POV / 角色定位缺失 —— ✅ 已修复（2026-08-16）
+- 位置：`packages/narrative/src/combined-generator.ts`（`buildCombinedRequest` prompt 未确立角色关系）
+- **现象**：真实 LLM 把"你"写成**明日香本人**——场景以明日香第一人称叙述（"你坐在NERV宿舍的床边…"），生成的选项是**明日香对真嗣的动作**（"冲去真嗣的住处把他拽出来"、"找真嗣挑战"），而非**玩家对明日香的互动**。
+- **影响**：核心交互（玩家↔NPC）失效——叙事漂移到明日香与第三方角色，选项不合逻辑，**关系数值几乎不动**（30 Turn 后 affection=6 / trust=0）。
+- **修复方向**：prompt 明确角色定位——"你是【玩家】，明日香是你正在互动的角色；用第二人称描写玩家眼前的场景；玩家可选的行动对象是明日香"，并给正例。
 
 ---
 
-## 🟠 应修 / 待排期（既有 review 标记的 TODO）
+## 🟠 应修 / 待排期
 
-### 4. Memory / 平衡参数为经验值，未校准
-- `formMemory` 初始 strength、阈值（`formation.ts`）；重复反馈转负轮次（`state-resolver.ts`）。
-- 已记 `TODO(Phase 11)` 与 DEVELOPMENT_PLAN 校准任务。
+### 5. 检索到的记忆未注入 LLM prompt —— ✅ 已修复（2026-08-16）
+- 位置：`packages/narrative/src/combined-generator.ts` / `reaction-generator.ts`（`build*Request` 只注入 `systemRules`）
+- **现象**：`buildContext` 每轮检索出 0.7 条记忆进 `ModelContext`，但生成 prompt **不含 `retrievedMemories`**（也不含 recentEvents / currentEvent / internalState）。
+- **影响**：明日香的文本**从不引用过去的事** → V1 成功标准"角色真的记得你"（E-5）仍无法在对话中体现。
+- **修复方向**：在 combined / reaction prompt 中加入 `[检索记忆]` 段（复用 `modelContextToRequest` 的记忆/事件行），并说明"若记忆与本轮相关，在言行中自然呼应"。
 
-### 5. 成本估算为启发式
-- `simulation-engine.ts` 用 `turns×1200/400` token 估算，非真实用量；已标 `TODO(真实 LLM)`，接入 `usageListener` 后替换。
+### 6. Memory / 平衡参数为经验值，未校准
+- `formMemory` 初始 strength、阈值；重复反馈转负轮次。已记 `TODO(Phase 11)`。
 
-### 6. 设计器为最小版
-- World Builder / Parameter / Event / OptionTemplate / Ending 编辑器未实现（schema 已就绪）；`apps/designer` 已增强（地点/进度/事件/Ending 标题字段），OptionTemplate 编辑器仍缺。
+### 7. 成本估算为启发式
+- `simulation-engine.ts` 用 `turns×1200/400` token 估算；已标 `TODO(真实 LLM)`，接入 `usageListener` 后替换。
+
+### 8. 设计器为最小版
+- World Builder / Parameter / Event / OptionTemplate / Ending 编辑器未实现（schema 已就绪）；已增强（地点/进度/事件/Ending 标题）。
 
 ---
 
 ## 🟢 低优先级（随资源接入 / 部署覆盖）
 
-### 7. 立绘/背景为 CSS 占位
-- 真实资源应从 `GameProject.assets`（schema 已就绪）接入；`CharacterPortrait` 已带情绪，可作"情绪换立绘"挂点。
+### 9. 立绘/背景为 CSS 占位
+- 真实资源应从 `GameProject.assets`（schema 已就绪）接入；`CharacterPortrait` 已带情绪。
 
-### 8. TTS / BGM / SE 为 disabled 占位
-- 符合 V1"全语音暂不作核心"；接入时在 `AudioPanel` 接线。
+### 10. TTS / BGM / SE 为 disabled 占位
+- 符合 V1"全语音暂不作核心"。
 
-### 9. PNG 元数据卡嵌入 / 真实 SillyTavern 实例联调未做
+### 11. PNG 元数据卡嵌入 / 真实 SillyTavern 实例联调未做
 - `@ag/st-adapter` 提供 JSON Card 编解码与 Extension 协议，但"加载进运行中的 ST / PNG 卡"是部署层工作。
 
-### 10. Application API 为进程内调用
-- 设计 §5.4 为 `POST /turn/choice` HTTP 形态；当前 `ApplicationApi` 是程序化 API，HTTP 包装留待部署。
+### 12. Application API 为进程内调用
+- 设计 §5.4 为 `POST /turn/choice` HTTP 形态；当前为程序化 API，HTTP 包装留待部署。
 
-### 11. `pruneMemories` 为硬删除修剪
-- 超容量记忆直接删除，不进 `forgottenIds`（语义"修剪"≠"遗忘"）；已 JSDoc 标注。
+### 13. `pruneMemories` 为硬删除修剪
+- 超容量记忆直接删除，不进 `forgottenIds`（语义"修剪"≠"遗忘"）。
 
 ---
 
-## 真实 LLM 完整一局验证记录（2026-08-16）
+## 真实 LLM 联调验证记录（2026-08-16）
 
-用 DeepSeek（openai-compatible）+ 明日香预设跑完整一局（20 Turn）：
-- ✅ **完整游戏循环到 Ending 成立**：触发 Normal End（Day 3），`run.status = completed`。
-- ✅ 明日香的**ツンデレ 反应忠实**（"哈？你该不会是想说什么奇怪的话吧？" / "…总比一个人待着强"）。
-- ❌ 场景+选项几乎全 fallback（🔴 #2）；NPC 反应约 50% 真实；记忆 0 条（真实反应未带 `memoryCandidates`）。
+- **完整一局**（DeepSeek + 明日香，20 Turn）：✅ 触发 Normal End；场景/选项曾因多样性校验全回退（#2）。
+- **#2 修复后**（10 Turn）：✅ 场景 100% llm、反应 100% llm、记忆 3 条。
+- **长对话**（30 Turn / 跨 6 天）：✅ 场景 90% llm、反应 100% llm、记忆 10 条（每轮检索 0.7 条）、二次结算让 stress 65→74、PlayerModel 缓慢演化；❌ 但暴露 #4（POV 缺失）与 #5（记忆未注入）。
 
 ---
 
 ## 修复优先级建议
 
-1. **🔴 #2 优先**：这是真实 LLM"AI 动态叙事"体验的当前最大瓶颈（场景+选项回退），改动集中在 validator/combined-generator。
-2. **🔴 #3 次之**：Punishment/Meta 跨局闭环是设计核心循环的一环，需在计划中补排实现。
-3. 🟠 随 Phase 11 仿真/真实 LLM 联调自然落地。
-4. 🟢 随资源与部署推进。
+1. **🔴 #4 最优先**：POV/角色定位是核心交互的根基，改动小（prompt 补一句角色定位），修后玩家↔明日香的互动才成立。
+2. **🟠 #5 次之**：注入检索记忆，"角色真的记得你"（E-5）才有演示可能。
+3. 其余随资源/部署推进。
 
-> 触发本清单的审查对应：`phase5-review.md`（#1/#2 相关 Option 契约与多样性）、`phase6-review.md`（#4）、`phase11-review.md`（#5）、`phase10-review.md`（#6）、`phase12-review.md`（#7/#8）、`phase8-review.md`（#9）、`phase9-review.md`（#10）。
+> 触发本清单的审查对应：`phase5-review.md`（#1/#2 相关 Option 契约与多样性）、`phase6-review.md`（#6）、`phase11-review.md`（#7）、`phase10-review.md`（#8）、`phase12-review.md`（#9/#10）、`phase8-review.md`（#11）、`phase9-review.md`（#12）；#3/#4/#5 来自本轮 Completion Plan 与长对话实测。
+
+
+## ✅ 修订记录（2026-08-16 第二轮）
+
+- **#4 POV/角色定位**：`combined-generator` prompt 新增【角色定位】段——“你是玩家，正在与「NPC」互动；场景用第二人称描写玩家眼前所见；选项是玩家对 NPC 的行动”；`reaction-generator` 新增“你现在扮演「NPC」，回应玩家；不要替玩家说话”。
+- **#5 检索记忆注入**：combined / reaction prompt 均注入 `[检索记忆N]`、`[当前事件]`、`[近期事件]`，并要求相关时自然呼应。
+- 新增测试：断言 prompt 包含玩家 POV、NPC 名、检索记忆内容。
+- 回归：`pnpm --filter @ag/narrative test` 20/20 通过。

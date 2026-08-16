@@ -62,6 +62,17 @@ function buildReactionRequest(
   resolution?: { directDelta: FinalStateDelta },
 ): LLMRequest {
   const resolutionSummary = summarizeResolution(resolution);
+  const npcName = Object.values(context.currentState.characters)[0]?.identity.name ?? '当前角色';
+  const memoryLines = context.retrievedMemories.map(
+    (memory, index) => `[检索记忆${index + 1}] ${memory.content}（重要度 ${memory.importance}）`,
+  );
+  const eventLines = [
+    ...(context.currentEvent
+      ? [`[当前事件] ${context.currentEvent.title}：${context.currentEvent.description}`]
+      : []),
+    ...context.recentEvents.map((event) => `[近期事件] ${event.title}：${event.description}`),
+  ];
+
   return {
     model: options.model,
     temperature: 0.7,
@@ -71,7 +82,13 @@ function buildReactionRequest(
       {
         role: 'user',
         content: [
+          `【角色定位】你现在扮演「${npcName}」，回应玩家。不要替玩家说话，也不要描写玩家未选择的行动。`,
           `玩家选择了行为：${selectedOption.behavior.actions.join('/')}（意图：${selectedOption.behavior.intent.join('/')}）。`,
+          ...eventLines,
+          ...memoryLines,
+          ...(memoryLines.length > 0
+            ? ['如果检索记忆与本轮相关，请在言行中自然呼应，但不要逐字背诵。']
+            : []),
           ...(resolutionSummary ? [`结算结果：${resolutionSummary}`] : []),
           '请依据结算结果生成 NPC 反应。如果本轮有值得角色记住的事，请在 memoryCandidates 给出候选（没有则为空数组）。',
           '严格输出 JSON：',
