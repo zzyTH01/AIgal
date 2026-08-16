@@ -19,7 +19,8 @@
     "build": "tsup src/index.ts --format esm --dts --sourcemap --clean",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint src --max-warnings 0"
+    "lint": "eslint src --max-warnings 0",
+    "pretest": "pnpm --filter @ag/schemas build && pnpm --filter @ag/core build && pnpm --filter @ag/llm build"
   },
   "dependencies": {
     "@ag/schemas": "workspace:*",

@@ -36,7 +36,8 @@ pnpm lint
 - ✅ Phase 5 — Narrative / Option Engine：LLM Port + TestProvider、Scenario/Option/Reaction 生成、非法输出 Retry→Fallback
 - ✅ Phase 6 — Memory / Context：记忆全生命周期、ContextBuilder + ContextBudget、不同认知 Profile 不同 Context
 - ✅ Phase 7 — LLM Gateway：OpenAI / Anthropic / OpenAI-Compatible 适配器、重试/超时/成本日志、Scenario+Options 合并调用
-- ⏭️ 下一步 — Phase 8：SillyTavern Adapter（Character Card / World Book / Context Bridge）
+- ✅ Phase 8 — SillyTavern Adapter：Character Card V2 / World Book / Context Bridge / Extension / Character Compiler
+- ⏭️ 下一步 — Phase 9：Minimal Play UI（Runtime Orchestrator + Application API + React Player）
 
 ## 仓库结构
 

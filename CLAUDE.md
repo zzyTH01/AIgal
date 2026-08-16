@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **AI GALGAME Framework**（tavern-gal）：一个以 SillyTavern 为可选 AI Runtime、以 GALGAME 选择式交互为表现形式、以 Game State 为核心、由 AI 动态叙事 + Roguelike 机制驱动的 AI 叙事游戏框架。
 
-当前仓库处于**Phase 7 已完成（LLM Gateway 落地）**阶段：权威架构由两份设计文档定义（见下），工程为 pnpm + TypeScript monorepo；纯规则闭环、记忆/上下文、LLM 生成链路与可配置真实 Provider 网关均已就绪。任何实现工作开始前，必须先读权威设计文档与开发计划，不要凭推测自行发明架构。
+当前仓库处于**Phase 8 已完成（SillyTavern Adapter）**阶段：权威架构由两份设计文档定义（见下），工程为 pnpm + TypeScript monorepo；核心闭环、LLM 网关与 SillyTavern 互操作层均已就绪。任何实现工作开始前，必须先读权威设计文档与开发计划，不要凭推测自行发明架构。
 
 ### 权威文档（唯一事实来源）
 
@@ -131,7 +131,8 @@ Option 是 Behavior Object：`presentation`（玩家看到的语言）+ `behavio
 - **Phase 4 已完成（Event + RNG）**：`@ag/world` 已实现可复现 RNG、EventPool、事件选择与 WorldTick；事件触发接线已落地并测试。
 - **Phase 5 已完成（Narrative / Option Engine）**：LLM Port/TestProvider、Option Planner/Validator/Renderer、Scenario/Reaction 生成与 Retry→Fallback 链路。
 - **Phase 6 已完成（Memory / Context）**：记忆全生命周期 + ContextBuilder/Budget。
-- **Phase 7 已完成（LLM Gateway 落地）**：`@ag/llm` 实现 OpenAI/Anthropic/OpenAI-Compatible 适配器、Provider 注册表、重试/超时/退避、错误分类、Token 成本记录、ModelContext→请求转换与结构化校验入口；`@ag/narrative` 已把 Scenario+Options 合并为 1 次调用（Turn 3→2）。
-- **下一阶段**：Phase 8 SillyTavern Adapter（见 `DEVELOPMENT_PLAN.md` §11）——Character Card / World Book / Context Bridge / Character Compiler。
+- **Phase 7 已完成（LLM Gateway 落地）**：真实 Provider 适配器、重试/成本与 Scenario+Options 合并调用。
+- **Phase 8 已完成（SillyTavern Adapter）**：`@ag/st-adapter` 实现 Character Card V2 生成/解析、World Book 生成、ModelContext↔ST Prompt、Extension 协议桥与 Character Compiler（Card + WorldBook + Prompt + GameCharacter，round-trip 无损）。
+- **下一阶段**：Phase 9 Minimal Play UI（见 `DEVELOPMENT_PLAN.md` §12）——`@ag/runtime` Turn Orchestrator、Application API、React Player 与真实 LLM 冒烟。
 
 验收基线（Phase 2 原则）：**核心玩法的纯文本闭环能连续跑几十个 Turn 而不破坏 GameState，且不接任何 LLM，才算 Game Core 成立。**

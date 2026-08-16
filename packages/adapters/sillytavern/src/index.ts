@@ -1,2 +1,7 @@
-// 占位实现 —— @ag/st-adapter 的正式逻辑在后续 Phase 实现。
-export const PACKAGE_NAME = '@ag/st-adapter';
+// @ag/st-adapter —— SillyTavern Adapter（Phase 8）。
+export * from './types.js';
+export * from './character-card.js';
+export * from './world-book.js';
+export * from './context-bridge.js';
+export * from './extension.js';
+export * from './character-compiler.js';

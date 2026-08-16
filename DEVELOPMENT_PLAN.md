@@ -1,7 +1,7 @@
 # AI GALGAME Framework
-## 开发计划 Development Plan v2.3
+## 开发计划 Development Plan v2.4
 
-> 版本：v2.3 ｜ 依据：`AI_GALGAME_Master_Design_v1.0.md`（唯一权威设计基线，当前文档版本 v1.2）
+> 版本：v2.4 ｜ 依据：`AI_GALGAME_Master_Design_v1.0.md`（唯一权威设计基线，当前文档版本 v1.2）
 >
 > 本计划是**可执行的分阶段开发安排**。Claude Code（或任何开发执行者）应按阶段顺序推进：每阶段有明确目标、验收标准、任务清单、测试要求与验证命令，**验收通过后才进入下一阶段**。
 
@@ -421,6 +421,8 @@ pnpm --filter @ag/llm test
 
 # 11. Phase 8 — SillyTavern Adapter
 
+- **状态**：✅ 已完成（2026-08-16）。Card/WorldBook round-trip、Context Bridge 与 Extension 协议测试通过。
+
 ## 11.1 目标
 与 SillyTavern 打通（Master Design §5.6）：Character Card / World Book / Context Bridge / Extension。
 
@@ -429,11 +431,11 @@ pnpm --filter @ag/llm test
 - ModelContext 可桥接为 ST Prompt。
 
 ## 11.3 任务清单
-- [ ] Character Card 生成 / 解析（PNG 元数据卡或 ST JSON 格式）。
-- [ ] World Book / Lorebook 生成 / 解析。
-- [ ] Context Bridge：`ModelContext ↔ ST Prompt` 映射。
-- [ ] Extension 通信协议（ST API / extension API）定义与基础实现。
-- [ ] Character Compiler：`CharacterDefinition → Card + WorldBook + Prompt + GameCharacter`（双向）。
+- [x] Character Card 生成 / 解析（PNG 元数据卡或 ST JSON 格式）。
+- [x] World Book / Lorebook 生成 / 解析。
+- [x] Context Bridge：`ModelContext ↔ ST Prompt` 映射。
+- [x] Extension 通信协议（ST API / extension API）定义与基础实现。
+- [x] Character Compiler：`CharacterDefinition → Card + WorldBook + Prompt + GameCharacter`（双向）。
 
 ## 11.4 测试要求
 - 导出 / 导入 round-trip fixture 测试。

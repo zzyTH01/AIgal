@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { PACKAGE_NAME } from './index.js';
+import { compileCharacter } from './index.js';
+import { makeDefinition } from './test-data.js';
 
-describe('@ag/st-adapter placeholder', () => {
-  it('声明包身份', () => {
-    expect(PACKAGE_NAME).toBe('@ag/st-adapter');
+describe('@ag/st-adapter package entry', () => {
+  it('compiles a CharacterDefinition', () => {
+    expect(compileCharacter(makeDefinition()).card.data.name).toBe('Mio');
   });
 });
