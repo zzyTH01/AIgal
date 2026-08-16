@@ -1,7 +1,7 @@
 # AI GALGAME Framework
-## 开发计划 Development Plan v2.5
+## 开发计划 Development Plan v2.6
 
-> 版本：v2.5 ｜ 依据：`AI_GALGAME_Master_Design_v1.0.md`（唯一权威设计基线，当前文档版本 v1.2）
+> 版本：v2.6 ｜ 依据：`AI_GALGAME_Master_Design_v1.0.md`（唯一权威设计基线，当前文档版本 v1.2）
 >
 > 本计划是**可执行的分阶段开发安排**。Claude Code（或任何开发执行者）应按阶段顺序推进：每阶段有明确目标、验收标准、任务清单、测试要求与验证命令，**验收通过后才进入下一阶段**。
 
@@ -452,7 +452,7 @@ pnpm --filter @ag/st-adapter test
 
 # 12. Phase 9 — Minimal Play UI
 
-- **状态**：✅ 已完成（2026-08-16）。Runtime 编排 + Application API + React Player 构建与组件测试通过；手动冒烟命令 `pnpm dev`。
+- **状态**：✅ 已完成（2026-08-16）；审查反馈（`docs/review/phase9-review.md`）已修订：存档接入 `@ag/persistence`（Memory/JSON Directory）、Runtime 使用可复现 `XorShift128Rng`、UI 增加读档入口。
 
 ## 12.1 目标
 第一版可玩 UI（Master Design §1.5）：文本闭环完整呈现。

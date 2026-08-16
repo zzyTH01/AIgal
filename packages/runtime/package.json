@@ -2,7 +2,7 @@
   "name": "@ag/runtime",
   "version": "0.1.0",
   "private": true,
-  "description": "Application 层：Turn Orchestrator、游戏/叙事/记忆服务编排、Application API",
+  "description": "Application \u5c42\uff1aTurn Orchestrator\u3001\u6e38\u620f/\u53d9\u4e8b/\u8bb0\u5fc6\u670d\u52a1\u7f16\u6392\u3001Application API",
   "type": "module",
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
@@ -20,18 +20,19 @@
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src --max-warnings 0",
-    "pretest": "pnpm --filter @ag/schemas build && pnpm --filter @ag/core build && pnpm --filter @ag/world build && pnpm --filter @ag/memory build && pnpm --filter @ag/context build && pnpm --filter @ag/option build && pnpm --filter @ag/llm build && pnpm --filter @ag/narrative build"
+    "pretest": "pnpm --filter @ag/schemas build && pnpm --filter @ag/core build && pnpm --filter @ag/world build && pnpm --filter @ag/memory build && pnpm --filter @ag/context build && pnpm --filter @ag/option build && pnpm --filter @ag/llm build && pnpm --filter @ag/narrative build && pnpm --filter @ag/persistence build && pnpm --filter @ag/st-adapter build"
   },
   "dependencies": {
-    "@ag/schemas": "workspace:*",
-    "@ag/core": "workspace:*",
-    "@ag/world": "workspace:*",
     "@ag/character": "workspace:*",
-    "@ag/option": "workspace:*",
-    "@ag/memory": "workspace:*",
     "@ag/context": "workspace:*",
+    "@ag/core": "workspace:*",
+    "@ag/llm": "workspace:*",
+    "@ag/memory": "workspace:*",
     "@ag/narrative": "workspace:*",
+    "@ag/option": "workspace:*",
     "@ag/persistence": "workspace:*",
-    "@ag/llm": "workspace:*"
+    "@ag/schemas": "workspace:*",
+    "@ag/st-adapter": "workspace:*",
+    "@ag/world": "workspace:*"
   }
 }

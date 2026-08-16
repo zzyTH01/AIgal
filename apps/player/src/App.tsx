@@ -15,6 +15,7 @@ export function App() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastReaction, setLastReaction] = useState<string>('');
+  const [lastSaveId, setLastSaveId] = useState<string | null>(null);
 
   const startGame = useCallback(async () => {
     setBusy(true);
@@ -70,9 +71,26 @@ export function App() {
   );
 
   const save = useCallback(async () => {
-    const result = await api.save(`save_${Date.now()}`);
+    const saveId = `save_${Date.now()}`;
+    const result = await api.save(saveId);
+    if (result.ok) setLastSaveId(saveId);
     setError(result.ok ? '已保存' : (result.error ?? '保存失败'));
   }, [api]);
+
+  const load = useCallback(async () => {
+    if (!lastSaveId) {
+      setError('暂无存档');
+      return;
+    }
+    const result = await api.load(lastSaveId);
+    if (result.ok && result.data) {
+      setState(result.data);
+      setOptions([]);
+      setNarrative([]);
+      setLastReaction('');
+    }
+    setError(result.ok ? '已读档' : (result.error ?? '读档失败'));
+  }, [api, lastSaveId]);
 
   const exportGame = useCallback(async () => {
     const result = await api.exportGame();
@@ -92,7 +110,12 @@ export function App() {
       {lastReaction ? <p aria-live="polite">{lastReaction}</p> : null}
       <OptionList options={options} onSelect={(id) => void chooseOption(id)} disabled={busy} />
       <RelationshipPanel state={state} />
-      <SavePanel onSave={() => void save()} onExport={() => void exportGame()} disabled={!state} />
+      <SavePanel
+        onSave={() => void save()}
+        onLoad={() => void load()}
+        onExport={() => void exportGame()}
+        disabled={!state}
+      />
       {!options.length && !busy && state ? (
         <button type="button" onClick={() => void nextTurn()}>
           下一回合

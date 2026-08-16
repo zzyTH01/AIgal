@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { validateGameState } from '@ag/core';
 import { TestProvider } from '@ag/llm';
+import { JsonDirectorySaveRepository } from '@ag/persistence';
+import { mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { ApplicationApi } from './application-api.js';
 import { GameRuntime } from './game-runtime.js';
 
@@ -31,13 +35,27 @@ describe('GameRuntime', () => {
     expect(turn.options).toHaveLength(4);
   });
 
-  it('save/load restores GameState', () => {
+  it('save/load restores GameState', async () => {
     const runtime = new GameRuntime();
     const started = runtime.startGame();
-    runtime.save('save_1');
+    await runtime.save('save_1');
     const saved = runtime.getState();
-    runtime.load('save_1');
+    await runtime.load('save_1');
     expect(runtime.getState()).toEqual(saved);
     expect(runtime.getState().run.runId).toBe(started.run.runId);
+  });
+
+  it('can persist to a JSON directory repository', async () => {
+    const dir = await mkdtemp(join(tmpdir(), 'tavern-runtime-saves-'));
+    const repo = new JsonDirectorySaveRepository({ baseDir: dir });
+    const runtime = new GameRuntime({ persistence: repo });
+    runtime.startGame();
+    await runtime.save('run_017');
+    expect(await repo.list()).toEqual(['run_017']);
+
+    const restored = new GameRuntime({ persistence: repo });
+    await restored.load('run_017');
+    expect(restored.getState().run.runId).toBe('run_001');
+    await rm(dir, { recursive: true, force: true });
   });
 });

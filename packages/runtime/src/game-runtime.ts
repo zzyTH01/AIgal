@@ -6,14 +6,14 @@ import {
   type Option,
   type TurnResult,
 } from '@ag/schemas';
+import { createGameState, defaultRelationship, startTurn, type RNG } from '@ag/core';
+import { EventPool, XorShift128Rng, commitTriggeredEvent } from '@ag/world';
 import {
-  ALWAYS_SUCCESS_RNG,
-  createGameState,
-  defaultRelationship,
-  startTurn,
-  type RNG,
-} from '@ag/core';
-import { EventPool, commitTriggeredEvent } from '@ag/world';
+  MemorySaveRepository,
+  JsonDirectorySaveRepository,
+  type SaveRepository,
+} from '@ag/persistence';
+import { definitionToGameCharacter } from '@ag/st-adapter';
 import { buildContext } from '@ag/context';
 import { formMemory, consolidateMemories } from '@ag/memory';
 import {
@@ -37,6 +37,10 @@ export interface RuntimeConfig {
   providerConfig?: Omit<LLMProviderConfig, 'kind'> & { kind: LLMProviderConfig['kind'] };
   env?: Record<string, string | undefined>;
   combinedOptions?: CombinedGeneratorOptions;
+  rng?: RNG;
+  persistence?: SaveRepository;
+  /** 若提供，使用 JSON Directory 落盘（Node 环境）。 */
+  savesDir?: string;
 }
 
 export interface StartTurnView {
@@ -107,15 +111,16 @@ export class GameRuntime {
   readonly gateway: LLMGateway;
   readonly character: CharacterDefinition;
   readonly eventDefinitions: EventDefinition[];
-  readonly rng: RNG;
+  readonly persistence: SaveRepository;
 
+  private rng: RNG;
+  private readonly configuredRng?: RNG;
   private state?: GameState;
   private context?: ModelContext;
   private currentOptions: Option[] = [];
   private currentScenario?: StartTurnView['scenario'];
   private lastTurn?: TurnResult;
   private readonly eventPool: EventPool;
-  private readonly saves = new Map<string, GameState>();
 
   constructor(config: RuntimeConfig = {}) {
     this.character = config.character ?? demoCharacter;
@@ -127,7 +132,13 @@ export class GameRuntime {
         : config.env
           ? createGateway(loadProviderConfigFromEnv(config.env))
           : DEMO_LLM);
-    this.rng = ALWAYS_SUCCESS_RNG;
+    this.persistence =
+      config.persistence ??
+      (config.savesDir
+        ? new JsonDirectorySaveRepository({ baseDir: config.savesDir })
+        : new MemorySaveRepository());
+    this.configuredRng = config.rng;
+    this.rng = config.rng ?? new XorShift128Rng(20260816);
     this.eventPool = new EventPool(this.eventDefinitions);
   }
 
@@ -141,8 +152,12 @@ export class GameRuntime {
   }
 
   startGame(seed = 20260816): GameState {
+    this.rng = this.configuredRng ?? new XorShift128Rng(seed);
     const definition = this.character;
     let state = createGameState({ runId: 'run_001', seed, day: 1, time: '09:00' });
+    if (this.rng instanceof XorShift128Rng) {
+      state.rng = this.rng.save();
+    }
     state.characters[definition.characterId] = definitionToGameCharacter(definition);
     state.relationships[`rel_player_${definition.characterId}`] = defaultRelationship(
       'player',
@@ -258,14 +273,13 @@ export class GameRuntime {
     };
   }
 
-  save(saveId: string): GameState {
-    this.saves.set(saveId, this.getState());
+  async save(saveId: string): Promise<GameState> {
+    await this.persistence.save(saveId, this.getState());
     return this.getState();
   }
 
-  load(saveId: string): GameState {
-    const saved = this.saves.get(saveId);
-    if (!saved) throw new Error(`Unknown saveId: ${saveId}`);
+  async load(saveId: string): Promise<GameState> {
+    const saved = await this.persistence.load<GameState>(saveId);
     this.state = structuredClone(saved);
     this.currentOptions = [];
     this.context = undefined;
@@ -276,25 +290,4 @@ export class GameRuntime {
   export(): string {
     return JSON.stringify({ gameState: this.getState(), lastTurn: this.lastTurn }, null, 2);
   }
-}
-
-function definitionToGameCharacter(
-  definition: CharacterDefinition,
-): NonNullable<GameState['characters'][string]> {
-  return {
-    characterId: definition.characterId,
-    identity: definition.identity,
-    personality: definition.personality,
-    psychology: definition.psychologyDefaults,
-    emotion: { primary: 'neutral', intensity: 30, valence: 0, energy: 50 },
-    cognition: definition.cognition,
-    physical: { energy: 70, fatigue: 20, health: 90, hunger: 20, sleepiness: 10 },
-    activity: {
-      locationId: 'loc_start',
-      activity: 'idle',
-      availability: 100,
-      currentGoal: definition.goals[0]?.description,
-    },
-    status: 'active',
-  };
 }
