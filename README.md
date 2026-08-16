@@ -39,7 +39,8 @@ pnpm lint
 - ✅ Phase 8 — SillyTavern Adapter：Character Card V2 / World Book / Context Bridge / Extension / Character Compiler
 - ✅ Phase 9 — Minimal Play UI：`@ag/runtime` 编排 + Application API + React Player（无输入框）
 - ✅ Phase 10 — Designer Mode：Character Creator、Project JSON 导入/导出、Design→Play 模拟
-- ⏭️ 下一步 — Phase 11：Simulation / Debug（批量模拟、Turn Debugger、Golden Test）
+- ✅ Phase 11 — Simulation / Debug：批量模拟统计、Turn Debugger、Inspectors、Replay/Golden、Memory 修剪
+- ⏭️ 下一步 — Phase 12：Presentation Layer（立绘 / 对话框 / CG / 音频）
 
 ## 仓库结构
 

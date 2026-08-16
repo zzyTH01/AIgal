@@ -1,2 +1,4 @@
-// 占位实现 —— @ag/devtools 的正式逻辑在后续 Phase 实现。
-export const PACKAGE_NAME = '@ag/devtools';
+// @ag/devtools —— Simulation / Debug（Phase 11）。
+export * from './simulation-engine.js';
+export * from './inspectors.js';
+export * from './turn-debugger.js';

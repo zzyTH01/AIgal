@@ -5,3 +5,4 @@ export * from './decay.js';
 export * from './retrieval.js';
 export * from './reinforcement.js';
 export * from './consolidation.js';
+export * from './prune.js';

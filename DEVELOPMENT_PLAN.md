@@ -1,7 +1,7 @@
 # AI GALGAME Framework
-## 开发计划 Development Plan v2.8
+## 开发计划 Development Plan v2.9
 
-> 版本：v2.8 ｜ 依据：`AI_GALGAME_Master_Design_v1.0.md`（唯一权威设计基线，当前文档版本 v1.2）
+> 版本：v2.9 ｜ 依据：`AI_GALGAME_Master_Design_v1.0.md`（唯一权威设计基线，当前文档版本 v1.2）
 >
 > 本计划是**可执行的分阶段开发安排**。Claude Code（或任何开发执行者）应按阶段顺序推进：每阶段有明确目标、验收标准、任务清单、测试要求与验证命令，**验收通过后才进入下一阶段**。
 
@@ -522,6 +522,8 @@ pnpm --filter @ag/designer build && pnpm test
 
 # 14. Phase 11 — Simulation / Debug
 
+- **状态**：✅ 已完成（2026-08-16）。`simulate --runs 100`、Turn Debugger、Inspectors、Golden/Replay 与 Context Explosion 测试通过。
+
 ## 14.1 目标
 让项目真正"可设计可调试"（Master Design §1.3 Debug 模式、§7）。
 
@@ -531,15 +533,15 @@ pnpm --filter @ag/designer build && pnpm test
 - Golden Test：固定 RNG Seed + GameState + LLM Fixture 输出可复现。
 
 ## 14.3 任务清单
-- [ ] `apps/devtools` CLI：`simulate --runs 100`、`debug-turn <turnId>`、`inspect <state>`、`replay --seed`。
-- [ ] Simulation Engine（复用 Phase 2 模拟器 + 事件 + 选项生成 + 记忆）。
-- [ ] 统计收集器与报告输出（含 LLM 成本估算）。
-- [ ] Turn Debugger（基于 turn history + RNG state 回放）。
-- [ ] Memory / Context / State Inspector。
-- [ ] Golden Test 框架与首批 fixture。
-- [ ] Context Explosion 测试（长 Run 下 Context 是否稳定）。
-- [ ] **Memory 容量/修剪策略（Phase 6 review）**：校准 `records + forgottenIds` 只增不减问题，设置容量上限或修剪策略。
-- [ ] **Memory 参数校准（Phase 6 review）**：用 100 Runs 仿真校准 formation threshold / 初始 strength / 重复反馈转负轮次。
+- [x] `apps/devtools` CLI：`simulate --runs 100`、`debug-turn <turnId>`、`inspect <state>`、`replay --seed`。
+- [x] Simulation Engine（复用 Phase 2 模拟器 + 事件 + 选项生成 + 记忆）。
+- [x] 统计收集器与报告输出（含 LLM 成本估算）。
+- [x] Turn Debugger（基于 turn history + RNG state 回放）。
+- [x] Memory / Context / State Inspector。
+- [x] Golden Test 框架与首批 fixture。
+- [x] Context Explosion 测试（长 Run 下 Context 是否稳定）。
+- [x] **Memory 容量/修剪策略（Phase 6 review）**：校准 `records + forgottenIds` 只增不减问题，设置容量上限或修剪策略。
+- [x] **Memory 参数校准（Phase 6 review）**：用 100 Runs 仿真校准 formation threshold / 初始 strength / 重复反馈转负轮次。
 
 ## 14.4 测试要求
 - Simulation 断言（统计落在合理区间、Ending 分布稳定）。

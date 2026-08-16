@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **AI GALGAME Framework**（tavern-gal）：一个以 SillyTavern 为可选 AI Runtime、以 GALGAME 选择式交互为表现形式、以 Game State 为核心、由 AI 动态叙事 + Roguelike 机制驱动的 AI 叙事游戏框架。
 
-当前仓库处于**Phase 10 已完成（Designer Mode）**阶段：权威架构由两份设计文档定义（见下），工程为 pnpm + TypeScript monorepo；Play UI 与 Designer 均已具备最小可运行形态。任何实现工作开始前，必须先读权威设计文档与开发计划，不要凭推测自行发明架构。
+当前仓库处于**Phase 11 已完成（Simulation / Debug）**阶段：权威架构由两份设计文档定义（见下），工程为 pnpm + TypeScript monorepo；批量模拟、Turn 回放与状态检查工具已就绪。任何实现工作开始前，必须先读权威设计文档与开发计划，不要凭推测自行发明架构。
 
 ### 权威文档（唯一事实来源）
 
@@ -134,7 +134,8 @@ Option 是 Behavior Object：`presentation`（玩家看到的语言）+ `behavio
 - **Phase 7 已完成（LLM Gateway 落地）**：真实 Provider 适配器、重试/成本与 Scenario+Options 合并调用。
 - **Phase 8 已完成（SillyTavern Adapter）**：Card/WorldBook/Context Bridge/Extension/Compiler。
 - **Phase 9 已完成（Minimal Play UI）**：Runtime 编排 + Application API + React Player。
-- **Phase 10 已完成（Designer Mode）**：`apps/designer` 提供项目表单、Character Creator、Card/WorldBook 编译预览、Project JSON 导入/导出与 Design→Play 一回合模拟；`projectToRuntimeConfig` 打通 Designer → Runtime。
-- **下一阶段**：Phase 11 Simulation / Debug（见 `DEVELOPMENT_PLAN.md` §14）——批量模拟 100/1000 Runs、统计报告、Turn Debugger、Memory/Context Inspector 与 Golden Test。
+- **Phase 10 已完成（Designer Mode）**：最小设计器 + Project round-trip + Design→Play。
+- **Phase 11 已完成（Simulation / Debug）**：`apps/devtools` CLI（simulate/replay/inspect/debug-turn）、Simulation Engine 统计报告、Turn Debugger、State/Memory/Context Inspector、确定性 fingerprint 与 Memory 修剪策略。
+- **下一阶段**：Phase 12 Presentation Layer（见 `DEVELOPMENT_PLAN.md` §15）——立绘/背景、对话框打字机、CG 收集、TTS/BGM（可选）。
 
 验收基线（Phase 2 原则）：**核心玩法的纯文本闭环能连续跑几十个 Turn 而不破坏 GameState，且不接任何 LLM，才算 Game Core 成立。**
