@@ -10,10 +10,12 @@ const DEFAULT_SEED_STATE = 0x9e3779b9;
  * 供 Debug/Replay/Golden Test 使用。
  */
 export class XorShift128Rng implements RNG {
+  private readonly originalSeed: number;
   private s: [number, number, number, number];
 
   constructor(seed: number) {
     const normalized = Math.trunc(seed) >>> 0;
+    this.originalSeed = normalized;
     const a = normalized === 0 ? DEFAULT_SEED_STATE : normalized;
     const b = (a ^ 0x6d2b79f5) >>> 0;
     const c = (a ^ 0xa5a5a5a5) >>> 0;
@@ -47,7 +49,7 @@ export class XorShift128Rng implements RNG {
 
   save(): RNGState {
     return rngStateSchema.parse({
-      seed: this.s[0],
+      seed: this.originalSeed,
       state: [...this.s],
       algorithm: 'xorshift128',
     });

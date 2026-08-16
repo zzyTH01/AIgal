@@ -1,7 +1,7 @@
 # AI GALGAME Framework
-## 开发计划 Development Plan v1.6
+## 开发计划 Development Plan v1.7
 
-> 版本：v1.6 ｜ 依据：`AI_GALGAME_Master_Design_v1.0.md`（唯一权威设计基线，当前文档版本 v1.2）
+> 版本：v1.7 ｜ 依据：`AI_GALGAME_Master_Design_v1.0.md`（唯一权威设计基线，当前文档版本 v1.2）
 >
 > 本计划是**可执行的分阶段开发安排**。Claude Code（或任何开发执行者）应按阶段顺序推进：每阶段有明确目标、验收标准、任务清单、测试要求与验证命令，**验收通过后才进入下一阶段**。
 
@@ -331,6 +331,7 @@ LLM 生成场景与选项，但 **StateResolver 仍掌握最终状态权**（Mas
 - [ ] ReactionGenerator：玩家选择后生成 NPC 反应（双通道）。
 - [ ] 结构化输出解析与校验：Schema → 非法 Retry → Fallback 模板。
 - [ ] 与 Turn 生命周期接线：05/06/07/10 阶段调用对应生成器。
+- [ ] **事件触发接线（Phase 4 review 必做项）**：事件选择成功后，Turn 编排必须把 EventInstance 写入 `world.activeEvents`（设置 `lastTriggeredDay = 当前 day`）并调用 `EventPool.recordTriggered`；补端到端天数/回合冷却测试。
 
 ## 8.5 测试要求
 - Integration：用 TestProvider 覆盖完整 Turn 的 Scenario→Option→Choice→Reaction 链路。
@@ -457,6 +458,7 @@ pnpm --filter @ag/st-adapter test
 - [ ] UI 组件：叙事面板、选项按钮、状态栏（Day/Time/Progress）、关系显示、存档面板。
 - [ ] 接入真实 LLM（默认 OpenAI-compatible 配置）跑通一轮 Run。
 - [ ] 基础错误处理（LLM 失败回退、存档失败提示）。
+- [ ] **事件触发接线复核（Phase 4 review）**：UI/编排层验证事件触发后 `world.activeEvents` 与天数冷却在真实 Run 中生效。
 
 ## 12.4 测试要求
 - 组件测试（选项渲染、状态更新）。

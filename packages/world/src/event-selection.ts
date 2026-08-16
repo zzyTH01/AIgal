@@ -157,13 +157,17 @@ export function rankEvents(
   rng: RNG,
   options: EventSelectionOptions = {},
 ): EventCandidateWithMultipliers[] {
-  return definitions
-    .filter((definition) => isEventEligible(state, definition, options))
-    .map((definition) => {
-      const randomFactor = 0.5 + rng.next() * 0.5;
-      return scoreEvent(state, definition, randomFactor);
-    })
-    .sort((a, b) => b.score - a.score);
+  return (
+    definitions
+      .filter((definition) => isEventEligible(state, definition, options))
+      .map((definition) => {
+        // Phase 11 仿真校准可放宽随机扰动区间（如 [0.2, 1.2]）。
+        const randomFactor = 0.5 + rng.next() * 0.5;
+        return scoreEvent(state, definition, randomFactor);
+      })
+      // sort 仅为调试/检查排序；pickWeighted 按累积分数选择，顺序不影响分布。
+      .sort((a, b) => b.score - a.score)
+  );
 }
 
 /** 按候选 score 加权随机选择并实例化；无候选时抛错。 */

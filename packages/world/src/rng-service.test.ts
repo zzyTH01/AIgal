@@ -27,6 +27,7 @@ describe('XorShift128Rng', () => {
     Array.from({ length: 20 }, () => rng.next());
     const saved = rng.save();
     expect(rngStateSchema.safeParse(saved).success).toBe(true);
+    expect(saved.seed).toBe(99);
 
     const restored = XorShift128Rng.fromState(saved);
     expect(Array.from({ length: 50 }, () => rng.next())).toEqual(
