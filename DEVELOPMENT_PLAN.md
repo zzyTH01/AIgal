@@ -1,7 +1,7 @@
 # AI GALGAME Framework
-## 开发计划 Development Plan v1.0
+## 开发计划 Development Plan v1.1
 
-> 版本：v1.0 ｜ 依据：`AI_GALGAME_Master_Design_v1.0.md`（唯一权威设计基线）
+> 版本：v1.1 ｜ 依据：`AI_GALGAME_Master_Design_v1.0.md`（唯一权威设计基线，当前文档版本 v1.1）
 >
 > 本计划是**可执行的分阶段开发安排**。Claude Code（或任何开发执行者）应按阶段顺序推进：每阶段有明确目标、验收标准、任务清单、测试要求与验证命令，**验收通过后才进入下一阶段**。
 
@@ -139,6 +139,8 @@ pnpm dev                              # 启动 apps（player/designer）
 
 # 3. Phase 0.5 — 工程初始化（TS Monorepo）
 
+- **状态**：✅ 已完成。
+
 ## 3.1 目标
 搭建可构建、可测试、可扩展的 TypeScript monorepo 骨架，取代当前 Python 占位脚手架。
 
@@ -147,13 +149,13 @@ pnpm dev                              # 启动 apps（player/designer）
 - 目录结构与 §1.2 一致；`packages/schemas` 可独立构建。
 
 ## 3.3 任务清单
-- [ ] **清理 Python 脚手架**：移除 `pyproject.toml`、`uv.lock`、`.python-version`、`.uv-cache/`、`.venv/`、`src/`。*（删除前需与用户确认）*
-- [ ] 根 `package.json`（workspace 聚合脚本）、`pnpm-workspace.yaml`、`tsconfig.base.json`（strict）。
-- [ ] `vitest.workspace.ts`、ESLint + Prettier 配置。
-- [ ] 建立全部 `packages/*` 与 `apps/*` 占位包（最小 package.json + `index.ts`）。
-- [ ] `packages/schemas` 立起骨架：导出 `schemas/` 目录与共享类型占位。
-- [ ] `.gitignore`（node_modules、dist、saves、.claude 等）。
-- [ ] README 更新为项目说明（含构建/测试命令）。
+- [x] **清理 Python 脚手架**：移除 `pyproject.toml`、`uv.lock`、`.python-version`、`.uv-cache/`、`.venv/`、`src/`。*（删除前需与用户确认）*
+- [x] 根 `package.json`（workspace 聚合脚本）、`pnpm-workspace.yaml`、`tsconfig.base.json`（strict）。
+- [x] `vitest.workspace.ts`、ESLint + Prettier 配置。
+- [x] 建立全部 `packages/*` 与 `apps/*` 占位包（最小 package.json + `index.ts`）。
+- [x] `packages/schemas` 立起骨架：导出 `schemas/` 目录与共享类型占位。
+- [x] `.gitignore`（node_modules、dist、saves、.claude 等）。
+- [x] README 更新为项目说明（含构建/测试命令）。
 
 ## 3.4 验证命令
 ```bash
@@ -167,6 +169,8 @@ pnpm install && pnpm build && pnpm test && pnpm typecheck && pnpm lint
 
 # 4. Phase 1 — 数据契约冻结
 
+- **状态**：✅ 已完成（2026-08-16）。验收命令 `pnpm --filter @ag/schemas test && pnpm --filter @ag/schemas build` 全部通过。
+
 ## 4.1 目标
 冻结全部跨模块数据契约：**TS 类型 + Zod 运行时校验 + JSON Schema**。这是整个项目的数据地基（Master Design §4）。
 
@@ -176,17 +180,17 @@ pnpm install && pnpm build && pnpm test && pnpm typecheck && pnpm lint
 - §4.11 待冻结清单全部转正；Master Design 更新为"已冻结"。
 
 ## 4.3 任务清单（按依赖优先级顺序实现）
-- [ ] **共享基元**：`ID/RunId/TurnId/...`、`GameTimestamp`、`Percent(0~100)`、`NumericRange`。
-- [ ] **迁移已冻结 State**：GameState、RunState、CharacterState（identity/personality/psychology/emotion/cognition/physical/activity）、RelationshipState、WorldState、PlayerModel、MemoryState、MemoryRecord、MetaState、RNGState。
-- [ ] **① Option**（Master Design §4.10）：presentation / behavior / gameplay / effects / conditions / generation。
-- [ ] **② StateDelta**：run / character / relationship / world / flags / memoryCandidates / meta；区分 `BaseDelta / Modifier / FinalDelta`。
-- [ ] **③ Event**：EventDefinition / EventCandidate / EventInstance / EventResult + weight/rarity/condition/cooldown。
-- [ ] **④ TurnResult**：State Before / Choice / Direct Delta / Reaction / Secondary Delta / New Memories / Player Model / World Update / Final State。
-- [ ] **⑤ Context（ModelContext）**：System Rules / Current State / Recent Events / Retrieved Memories / Internal State / Generation Task + budget。
-- [ ] **⑥ SaveSnapshot**：SaveMetadata + 完整快照结构。
-- [ ] **⑦ Project**：project.json + characters/world/parameters/options/events/endings/prompts 的包结构。
-- [ ] **⑧ CharacterDefinition**：identity/personality/preferences/speech/psychology defaults/cognition/relationship defaults/secrets/goals/boundaries/game parameters。
-- [ ] JSON Schema 文件（可经脚本从 Zod 生成或手工维护，但**必须与类型同源**）。
+- [x] **共享基元**：`ID/RunId/TurnId/...`、`GameTimestamp`、`Percent(0~100)`、`NumericRange`。
+- [x] **迁移已冻结 State**：GameState、RunState、CharacterState（identity/personality/psychology/emotion/cognition/physical/activity）、RelationshipState、WorldState、PlayerModel、MemoryState、MemoryRecord、MetaState、RNGState。
+- [x] **① Option**（Master Design §4.10）：presentation / behavior / gameplay / effects / conditions / generation。
+- [x] **② StateDelta**：run / character / relationship / world / flags / memoryCandidates / meta；区分 `BaseDelta / Modifier / FinalDelta`。
+- [x] **③ Event**：EventDefinition / EventCandidate / EventInstance / EventResult + weight/rarity/condition/cooldown。
+- [x] **④ TurnResult**：State Before / Choice / Direct Delta / Reaction / Secondary Delta / New Memories / Player Model / World Update / Final State。
+- [x] **⑤ Context（ModelContext）**：System Rules / Current State / Recent Events / Retrieved Memories / Internal State / Generation Task + budget。
+- [x] **⑥ SaveSnapshot**：SaveMetadata + 完整快照结构。
+- [x] **⑦ Project**：project.json + characters/world/parameters/options/events/endings/prompts 的包结构。
+- [x] **⑧ CharacterDefinition**：identity/personality/preferences/speech/psychology defaults/cognition/relationship defaults/secrets/goals/boundaries/game parameters。
+- [x] JSON Schema 文件（由 `scripts/generate-json-schema.mjs` 从 Zod 同源生成，Draft 2020-12）。
 
 ## 4.4 测试要求
 - Unit：每个 schema 的 valid / invalid 样本表驱动测试。

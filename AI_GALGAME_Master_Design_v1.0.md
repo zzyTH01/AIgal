@@ -1,7 +1,7 @@
 # AI GALGAME Framework
-## 总设计文档 Master Design v1.0（唯一权威基线）
+## 总设计文档 Master Design v1.1（唯一权威基线）
 
-> 版本：v1.0 ｜ 状态：设计基线（可据此进入开发） ｜ 语言：中文
+> 版本：v1.1 ｜ 状态：Phase 1 数据契约已冻结（可据此进入 Phase 2） ｜ 语言：中文
 >
 > 本文档是对此前六份 v0.1 设计文档的分析、综合与定案，是项目**唯一的权威设计基线**。
 > 旧文档已归档至 `docs/design-history/`，仅供追溯设计过程，不再作为实现依据。
@@ -486,20 +486,20 @@ interface RNGState { seed: number; state: number[]; algorithm: string; }  // 如
 - **重复反馈**：`recentBehaviorPattern` 使重复行为收益递减甚至转负。
 - **同行为不同结果**：`ΔS = f(B, P, C, R, W)` —— 行为 + 角色人格 + 角色状态 + 关系 + 世界共同决定结果（独立型角色 vs 依赖型角色对"我来帮你吧"反应相反）。
 
-## 4.11 待冻结的数据契约
+## 4.11 已冻结的数据契约（Phase 1 定案）
 
-以下契约**尚未冻结**，是开发计划 Phase 1 的产物（按优先级排序）：
+以下契约已在 **Phase 1 冻结**，由 `packages/schemas` 以 TypeScript 类型 + Zod 运行时校验 + JSON Schema 同源实现：
 
 ```text
 Option → StateDelta → Event → TurnResult → Context → SaveSnapshot → Project → CharacterDefinition
 ```
 
-其中 **StateDelta** 是连接 `Option → StateResolver → GameState` 的关键结构，需区分 `BaseDelta / Modifier / FinalDelta`，能表达 run / character / relationship / world / flags / memoryCandidates / meta 的变化。
+其中 **StateDelta** 是连接 `Option → StateResolver → GameState` 的关键结构，已区分为 `base / modifier / final` 三个 phase（`BaseStateDelta / ModifierStateDelta / FinalStateDelta`），能表达 run / character / relationship / world / flags / memoryCandidates / meta 的变化。
 
 ## 4.12 Schema 作为单一事实来源
 
 - 采用 **JSON Schema Draft 2020-12** + TypeScript 接口 + **Zod** 运行时验证。
-- Schema 目录：`schemas/game-state|character|relationship|option|event|state-delta|turn-result|context|memory|save|project.schema.json`。
+- Schema 目录：`packages/schemas/schemas/`（含 game-state / character / relationship / option / event / state-delta / turn-result / context / memory / save / project / character-definition 等 `.schema.json`）。
 - **同一份 Schema 服务所有消费方**：Character Creator、Validation、Save、Import/Export、Character Card 生成、Prompt 生成、API、测试。严禁"前端一套字段、AI 一套字段、Save 一套字段"。
 - **成年角色边界**：`CharacterIdentity.age >= 18`，第一版 Runtime 角色数据层只允许成年角色进入关系系统——这是为后续成熟向内容提供的**清晰数据层边界**。
 
@@ -687,7 +687,7 @@ GameProject: project.json / characters/ / world/ / parameters/ / options/
 
 **已冻结（v1.0 基线）**：项目定位、核心玩法、反馈闭环、四级时间结构、Turn 生命周期、职责边界、系统架构、数据所有权、GameState / CharacterState / RelationshipState / WorldState / PlayerModel / MemoryState / MetaState / RNGState、技术栈定案、验收标准。
 
-**待冻结（开发计划 Phase 1 产物）**：Option / Event / StateDelta / TurnResult / Context / SaveSnapshot / Project / CharacterDefinition 的正式 Schema。
+**已冻结（Phase 1 完成）**：Option / Event / StateDelta / TurnResult / Context / SaveSnapshot / Project / CharacterDefinition 的正式 Schema，已由 `packages/schemas` 同源落地为 TS 类型 + Zod + JSON Schema（Draft 2020-12）。
 
 ## 10.2 与旧文档的关系
 

@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **AI GALGAME Framework**（tavern-gal）：一个以 SillyTavern 为可选 AI Runtime、以 GALGAME 选择式交互为表现形式、以 Game State 为核心、由 AI 动态叙事 + Roguelike 机制驱动的 AI 叙事游戏框架。
 
-当前仓库处于**设计冻结 / Phase 0.5 已完成**阶段：权威架构由两份设计文档定义（见下），工程已切换为 pnpm + TypeScript monorepo 占位骨架，业务实现尚未开始。任何实现工作开始前，必须先读权威设计文档与开发计划，不要凭推测自行发明架构。
+当前仓库处于**设计冻结 / Phase 1 已完成（数据契约冻结）**阶段：权威架构由两份设计文档定义（见下），工程为 pnpm + TypeScript monorepo；`@ag/schemas` 已冻结全部跨模块数据契约，Game Core 业务实现尚未开始。任何实现工作开始前，必须先读权威设计文档与开发计划，不要凭推测自行发明架构。
 
 ### 权威文档（唯一事实来源）
 
@@ -20,7 +20,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 常用命令
 
-**技术栈已定案：TypeScript + React + Zod**（见 Master Design §8）。Phase 0.5 已完成，pnpm TS monorepo 已就绪：
+**技术栈已定案：TypeScript + React + Zod**（见 Master Design §8）。pnpm TS monorepo 已就绪，Phase 1 Schema 已冻结：
 
 ```bash
 pnpm install                    # 安装依赖
@@ -124,8 +124,8 @@ Option 是 Behavior Object：`presentation`（玩家看到的语言）+ `behavio
 
 ## 当前实现状态
 
-- **Phase 0.5 已完成**：pnpm TS monorepo 就绪，15 个包/应用占位骨架 + `packages/schemas` 共享类型占位与 `schemas/` JSON Schema 占位目录，`pnpm install/build/test/typecheck/lint` 全部通过（15 测试全绿）。
-- pnpm 11.22.0 已全局可用；Python 脚手架与旧 `.bootstrap/` / `.npm-cache/` 引导缓存均已移除。
-- **下一阶段**：Phase 1 数据契约冻结（见 `DEVELOPMENT_PLAN.md` §4）——在 `packages/schemas` 实现 Option/Event/StateDelta/TurnResult/Context/SaveSnapshot/Project/CharacterDefinition 的 TS 类型 + Zod 校验。
+- **Phase 0.5 已完成**：pnpm TS monorepo 就绪，15 个包/应用骨架 + `packages/schemas` 独立构建/测试/类型检查全部通过。
+- **Phase 1 已完成（数据契约冻结）**：`@ag/schemas` 已落地共享基元、全部 GameState 状态结构、Option / StateDelta / Event / TurnResult / Context / SaveSnapshot / Project / CharacterDefinition 的 TS 类型 + Zod 校验 + JSON Schema（Draft 2020-12，`pnpm --filter @ag/schemas build` 从 Zod 同源生成）。61 个测试通过。
+- **下一阶段**：Phase 2 Pure Game Core（见 `DEVELOPMENT_PLAN.md` §5）——`GameState` 工厂、ProgressEngine、Turn 事务外壳、RuleEngine、EndingEngine 与 50+ Turn 模拟器（无 LLM）。
 
 验收基线（Phase 2 原则）：**核心玩法的纯文本闭环能连续跑几十个 Turn 而不破坏 GameState，且不接任何 LLM，才算 Game Core 成立。**

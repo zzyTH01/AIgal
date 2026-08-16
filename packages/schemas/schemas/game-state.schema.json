@@ -1,0 +1,1245 @@
+{
+  "type": "object",
+  "properties": {
+    "schemaVersion": {
+      "type": "string",
+      "const": "0.1.0"
+    },
+    "run": {
+      "type": "object",
+      "properties": {
+        "runId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "startedAt": {
+          "type": "string"
+        },
+        "day": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "turn": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "time": {
+          "type": "string",
+          "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+        },
+        "dailyProgress": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "dailyProgressLimit": {
+          "type": "integer",
+          "exclusiveMinimum": 0
+        },
+        "currentEventId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "currentLocationId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "status": {
+          "type": "string",
+          "enum": [
+            "not_started",
+            "active",
+            "paused",
+            "ending",
+            "completed",
+            "bad_end"
+          ]
+        }
+      },
+      "required": [
+        "runId",
+        "startedAt",
+        "day",
+        "turn",
+        "time",
+        "dailyProgress",
+        "dailyProgressLimit",
+        "currentLocationId",
+        "status"
+      ],
+      "additionalProperties": false
+    },
+    "world": {
+      "type": "object",
+      "properties": {
+        "day": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "time": {
+          "type": "string",
+          "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+        },
+        "weekday": {
+          "type": "string",
+          "enum": [
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+            "sunday"
+          ]
+        },
+        "season": {
+          "type": "string",
+          "enum": [
+            "spring",
+            "summer",
+            "autumn",
+            "winter"
+          ]
+        },
+        "weather": {
+          "type": "object",
+          "properties": {
+            "type": {
+              "type": "string"
+            },
+            "intensity": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            },
+            "temperature": {
+              "type": "number"
+            },
+            "visibility": {
+              "type": "number",
+              "minimum": 0,
+              "maximum": 100
+            }
+          },
+          "required": [
+            "type",
+            "intensity",
+            "temperature",
+            "visibility"
+          ],
+          "additionalProperties": false
+        },
+        "currentLocationId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "locations": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "accessibility": {
+                "type": "string"
+              },
+              "active": {
+                "type": "boolean"
+              },
+              "currentCharacters": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              }
+            },
+            "required": [
+              "type",
+              "tags",
+              "accessibility",
+              "active",
+              "currentCharacters"
+            ],
+            "additionalProperties": false
+          },
+          "propertyNames": {
+            "minLength": 1
+          }
+        },
+        "publicEvents": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "eventId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "daily",
+                  "social",
+                  "exploration",
+                  "conflict",
+                  "romantic",
+                  "special",
+                  "world",
+                  "rare"
+                ]
+              },
+              "rarity": {
+                "type": "string",
+                "enum": [
+                  "common",
+                  "uncommon",
+                  "rare",
+                  "legendary"
+                ]
+              },
+              "title": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "weight": {
+                "type": "number",
+                "minimum": 0
+              },
+              "lastTriggeredDay": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "eventId",
+              "type",
+              "rarity",
+              "title",
+              "description",
+              "weight"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "activeEvents": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "eventId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "daily",
+                  "social",
+                  "exploration",
+                  "conflict",
+                  "romantic",
+                  "special",
+                  "world",
+                  "rare"
+                ]
+              },
+              "rarity": {
+                "type": "string",
+                "enum": [
+                  "common",
+                  "uncommon",
+                  "rare",
+                  "legendary"
+                ]
+              },
+              "title": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              },
+              "weight": {
+                "type": "number",
+                "minimum": 0
+              },
+              "lastTriggeredDay": {
+                "type": "integer",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "eventId",
+              "type",
+              "rarity",
+              "title",
+              "description",
+              "weight"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "worldFlags": {
+          "type": "object",
+          "additionalProperties": {
+            "type": [
+              "boolean",
+              "number",
+              "string"
+            ]
+          }
+        }
+      },
+      "required": [
+        "day",
+        "time",
+        "weekday",
+        "season",
+        "weather",
+        "currentLocationId",
+        "locations",
+        "publicEvents",
+        "activeEvents"
+      ],
+      "additionalProperties": false
+    },
+    "characters": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "characterId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "identity": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
+              "age": {
+                "type": "integer",
+                "minimum": 18
+              },
+              "gender": {
+                "type": "string"
+              },
+              "genderIdentity": {
+                "type": "string"
+              },
+              "sexualOrientation": {
+                "type": "string"
+              },
+              "role": {
+                "type": "string"
+              },
+              "description": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "age",
+              "gender",
+              "genderIdentity",
+              "sexualOrientation",
+              "role",
+              "description"
+            ],
+            "additionalProperties": false
+          },
+          "personality": {
+            "type": "object",
+            "properties": {
+              "traits": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100
+                }
+              },
+              "independence": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "confidence": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "sociability": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "sensitivity": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "assertiveness": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "empathy": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "openness": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              }
+            },
+            "required": [
+              "traits",
+              "independence",
+              "confidence",
+              "sociability",
+              "sensitivity",
+              "assertiveness",
+              "empathy",
+              "openness"
+            ],
+            "additionalProperties": false
+          },
+          "psychology": {
+            "type": "object",
+            "properties": {
+              "dependence": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "security": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "loneliness": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "stress": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "jealousy": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "selfWorth": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "emotionalStability": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "romanticTension": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              }
+            },
+            "required": [
+              "dependence",
+              "security",
+              "loneliness",
+              "stress",
+              "jealousy",
+              "selfWorth",
+              "emotionalStability",
+              "romanticTension"
+            ],
+            "additionalProperties": false
+          },
+          "emotion": {
+            "type": "object",
+            "properties": {
+              "primary": {
+                "type": "string",
+                "minLength": 1
+              },
+              "secondary": {
+                "type": "string"
+              },
+              "intensity": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "valence": {
+                "type": "number",
+                "minimum": -100,
+                "maximum": 100
+              },
+              "energy": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              }
+            },
+            "required": [
+              "primary",
+              "intensity",
+              "valence",
+              "energy"
+            ],
+            "additionalProperties": false
+          },
+          "cognition": {
+            "type": "object",
+            "properties": {
+              "memoryCapacity": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "encoding": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "retention": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "retrieval": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "forgetfulness": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "grudge": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "obsession": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "attention": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "emotionalSalience": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "cognitiveLoad": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              }
+            },
+            "required": [
+              "memoryCapacity",
+              "encoding",
+              "retention",
+              "retrieval",
+              "forgetfulness",
+              "grudge",
+              "obsession",
+              "attention",
+              "emotionalSalience",
+              "cognitiveLoad"
+            ],
+            "additionalProperties": false
+          },
+          "physical": {
+            "type": "object",
+            "properties": {
+              "energy": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "fatigue": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "health": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "hunger": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "sleepiness": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              }
+            },
+            "required": [
+              "energy",
+              "fatigue",
+              "health",
+              "hunger",
+              "sleepiness"
+            ],
+            "additionalProperties": false
+          },
+          "activity": {
+            "type": "object",
+            "properties": {
+              "locationId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "activity": {
+                "type": "string"
+              },
+              "availability": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "scheduleState": {
+                "type": "string"
+              },
+              "currentGoal": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "locationId",
+              "activity",
+              "availability"
+            ],
+            "additionalProperties": false
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "unavailable",
+              "absent",
+              "asleep",
+              "disabled"
+            ]
+          }
+        },
+        "required": [
+          "characterId",
+          "identity",
+          "personality",
+          "psychology",
+          "emotion",
+          "cognition",
+          "physical",
+          "activity",
+          "status"
+        ],
+        "additionalProperties": false
+      },
+      "propertyNames": {
+        "minLength": 1
+      }
+    },
+    "relationships": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "relationshipId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "sourceId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "targetId": {
+            "type": "string",
+            "minLength": 1
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "unknown",
+              "stranger",
+              "acquaintance",
+              "friend",
+              "close_friend",
+              "romantic_interest",
+              "partner",
+              "family",
+              "rival",
+              "enemy",
+              "estranged",
+              "custom"
+            ]
+          },
+          "affection": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "trust": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "intimacy": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "familiarity": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "attraction": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "conflict": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "respect": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "dependency": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          },
+          "currentLabel": {
+            "type": "string"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "active",
+              "strained",
+              "broken",
+              "ended"
+            ]
+          },
+          "customMetrics": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number"
+            }
+          }
+        },
+        "required": [
+          "relationshipId",
+          "sourceId",
+          "targetId",
+          "type",
+          "affection",
+          "trust",
+          "intimacy",
+          "familiarity",
+          "attraction",
+          "conflict",
+          "respect",
+          "dependency",
+          "tags",
+          "status",
+          "customMetrics"
+        ],
+        "additionalProperties": false
+      },
+      "propertyNames": {
+        "minLength": 1
+      }
+    },
+    "flags": {
+      "type": "object",
+      "additionalProperties": {
+        "type": [
+          "boolean",
+          "number",
+          "string"
+        ]
+      }
+    },
+    "playerModel": {
+      "type": "object",
+      "properties": {
+        "perceivedTraits": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          }
+        },
+        "perceivedIntentions": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 100
+          }
+        },
+        "behavioralPatterns": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number",
+            "minimum": 0
+          }
+        },
+        "recentBehaviorPattern": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "reliability": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "honesty": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "caring": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "romanticInterest": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "perceivedControl": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 100
+        }
+      },
+      "required": [
+        "perceivedTraits",
+        "perceivedIntentions",
+        "behavioralPatterns",
+        "recentBehaviorPattern",
+        "reliability",
+        "honesty",
+        "caring",
+        "confidence",
+        "romanticInterest",
+        "perceivedControl"
+      ],
+      "additionalProperties": false
+    },
+    "memories": {
+      "type": "object",
+      "properties": {
+        "records": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "type": {
+                "type": "string",
+                "enum": [
+                  "episodic",
+                  "semantic",
+                  "emotional",
+                  "social"
+                ]
+              },
+              "content": {
+                "type": "string"
+              },
+              "createdAt": {
+                "type": "object",
+                "properties": {
+                  "day": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "time": {
+                    "type": "string",
+                    "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+                  }
+                },
+                "required": [
+                  "day",
+                  "time"
+                ],
+                "additionalProperties": false
+              },
+              "importance": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "emotionalIntensity": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "valence": {
+                "type": "number",
+                "minimum": -100,
+                "maximum": 100
+              },
+              "strength": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "accuracy": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "relatedCharacters": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "sourceTurnId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "retrievalCount": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "lastRetrievedAt": {
+                "type": "object",
+                "properties": {
+                  "day": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "time": {
+                    "type": "string",
+                    "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+                  }
+                },
+                "required": [
+                  "day",
+                  "time"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "id",
+              "type",
+              "content",
+              "createdAt",
+              "importance",
+              "emotionalIntensity",
+              "valence",
+              "strength",
+              "accuracy",
+              "tags",
+              "relatedCharacters",
+              "sourceTurnId",
+              "retrievalCount"
+            ],
+            "additionalProperties": false
+          },
+          "propertyNames": {
+            "minLength": 1
+          }
+        },
+        "shortTermIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "longTermIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "forgottenIds": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "lastConsolidatedDay": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "records",
+        "shortTermIds",
+        "longTermIds",
+        "forgottenIds",
+        "lastConsolidatedDay"
+      ],
+      "additionalProperties": false
+    },
+    "meta": {
+      "type": "object",
+      "properties": {
+        "runCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "completedRuns": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "knowledge": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "title": {
+                "type": "string"
+              },
+              "content": {
+                "type": "string"
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "sourceRunId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "acquiredAt": {
+                "type": "object",
+                "properties": {
+                  "day": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "time": {
+                    "type": "string",
+                    "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+                  }
+                },
+                "required": [
+                  "day",
+                  "time"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "id",
+              "title",
+              "content",
+              "tags"
+            ],
+            "additionalProperties": false
+          },
+          "propertyNames": {
+            "minLength": 1
+          }
+        },
+        "memories": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "minLength": 1
+              },
+              "content": {
+                "type": "string"
+              },
+              "createdAt": {
+                "type": "object",
+                "properties": {
+                  "day": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "time": {
+                    "type": "string",
+                    "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+                  }
+                },
+                "required": [
+                  "day",
+                  "time"
+                ],
+                "additionalProperties": false
+              },
+              "importance": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "sourceRunId": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "id",
+              "content",
+              "createdAt",
+              "importance",
+              "tags"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "unlocks": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "achievements": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "endingsDiscovered": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "permanentModifiers": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number"
+          }
+        }
+      },
+      "required": [
+        "runCount",
+        "completedRuns",
+        "knowledge",
+        "memories",
+        "unlocks",
+        "achievements",
+        "endingsDiscovered",
+        "permanentModifiers"
+      ],
+      "additionalProperties": false
+    },
+    "rng": {
+      "type": "object",
+      "properties": {
+        "seed": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "state": {
+          "type": "array",
+          "items": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "algorithm": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "seed",
+        "state",
+        "algorithm"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "schemaVersion",
+    "run",
+    "world",
+    "characters",
+    "relationships",
+    "flags",
+    "playerModel",
+    "memories",
+    "meta",
+    "rng"
+  ],
+  "additionalProperties": false,
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

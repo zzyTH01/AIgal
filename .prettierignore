@@ -1,4 +1,5 @@
 # Generated / third-party
+packages/schemas/schemas/*.schema.json
 node_modules/
 dist/
 coverage/

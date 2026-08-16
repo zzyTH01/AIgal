@@ -1,0 +1,117 @@
+{
+  "type": "object",
+  "properties": {
+    "relationshipId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "sourceId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "targetId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "unknown",
+        "stranger",
+        "acquaintance",
+        "friend",
+        "close_friend",
+        "romantic_interest",
+        "partner",
+        "family",
+        "rival",
+        "enemy",
+        "estranged",
+        "custom"
+      ]
+    },
+    "affection": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "trust": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "intimacy": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "familiarity": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "attraction": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "conflict": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "respect": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "dependency": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "currentLabel": {
+      "type": "string"
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "active",
+        "strained",
+        "broken",
+        "ended"
+      ]
+    },
+    "customMetrics": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "number"
+      }
+    }
+  },
+  "required": [
+    "relationshipId",
+    "sourceId",
+    "targetId",
+    "type",
+    "affection",
+    "trust",
+    "intimacy",
+    "familiarity",
+    "attraction",
+    "conflict",
+    "respect",
+    "dependency",
+    "tags",
+    "status",
+    "customMetrics"
+  ],
+  "additionalProperties": false,
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

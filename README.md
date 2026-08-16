@@ -6,7 +6,7 @@
 
 ## 文档
 
-- **`AI_GALGAME_Master_Design_v1.0.md`** — 唯一权威设计基线（设计哲学、核心闭环、领域模型、分层架构、验收标准）
+- **`AI_GALGAME_Master_Design_v1.0.md`** — 唯一权威设计基线（当前文档版本 v1.1；设计哲学、核心闭环、领域模型、分层架构、验收标准）
 - **`DEVELOPMENT_PLAN.md`** — 可执行的分阶段开发计划（Phase 0.5–12）
 - `docs/design-history/` — 早期设计文档归档
 
@@ -24,6 +24,13 @@ pnpm test
 pnpm typecheck
 pnpm lint
 ```
+
+## 当前进度
+
+- ✅ Phase 0 — 设计冻结
+- ✅ Phase 0.5 — 工程初始化（pnpm + TypeScript monorepo）
+- ✅ Phase 1 — 数据契约冻结：`@ag/schemas` 已落地 TS 类型 + Zod 运行时校验 + JSON Schema（Draft 2020-12），全部 Schema 从 Zod 同源生成
+- ⏭️ 下一步 — Phase 2：Pure Game Core（无 LLM 纯规则闭环）
 
 ## 仓库结构
 

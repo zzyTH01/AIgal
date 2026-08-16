@@ -1,0 +1,879 @@
+{
+  "anyOf": [
+    {
+      "type": "object",
+      "properties": {
+        "phase": {
+          "type": "string",
+          "const": "base"
+        },
+        "run": {
+          "type": "object",
+          "properties": {
+            "dailyProgressDelta": {
+              "type": "integer"
+            },
+            "dayDelta": {
+              "type": "integer"
+            },
+            "turnDelta": {
+              "type": "integer"
+            },
+            "time": {
+              "type": "string",
+              "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+            },
+            "currentEventId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "currentLocationId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "not_started",
+                "active",
+                "paused",
+                "ending",
+                "completed",
+                "bad_end"
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        "characters": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "psychology": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "number"
+                }
+              },
+              "emotion": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "number"
+                }
+              },
+              "physical": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "number"
+                }
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "active",
+                  "unavailable",
+                  "absent",
+                  "asleep",
+                  "disabled"
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "propertyNames": {
+            "minLength": 1
+          }
+        },
+        "relationships": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "number"
+            }
+          },
+          "propertyNames": {
+            "minLength": 1
+          }
+        },
+        "world": {
+          "type": "object",
+          "properties": {
+            "weather": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string"
+                },
+                "intensity": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100
+                },
+                "temperature": {
+                  "type": "number"
+                },
+                "visibility": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100
+                }
+              },
+              "additionalProperties": false
+            },
+            "flagsPatch": {
+              "type": "object",
+              "properties": {
+                "set": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": [
+                      "boolean",
+                      "number",
+                      "string"
+                    ]
+                  }
+                },
+                "unset": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "additionalProperties": false
+            },
+            "currentLocationId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "time": {
+              "type": "string",
+              "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+            }
+          },
+          "additionalProperties": false
+        },
+        "flags": {
+          "type": "object",
+          "properties": {
+            "set": {
+              "type": "object",
+              "additionalProperties": {
+                "type": [
+                  "boolean",
+                  "number",
+                  "string"
+                ]
+              }
+            },
+            "unset": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "memoryCandidates": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "episodic",
+                  "semantic",
+                  "emotional",
+                  "social"
+                ]
+              },
+              "content": {
+                "type": "string"
+              },
+              "importance": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "emotionalIntensity": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "valence": {
+                "type": "number",
+                "minimum": -100,
+                "maximum": 100
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "relatedCharacters": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "sourceTurnId": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "type",
+              "content",
+              "importance",
+              "emotionalIntensity",
+              "valence",
+              "tags",
+              "relatedCharacters",
+              "sourceTurnId"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "meta": {
+          "type": "object",
+          "properties": {
+            "knowledge": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "content": {
+                    "type": "string"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "sourceRunId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "acquiredAt": {
+                    "type": "object",
+                    "properties": {
+                      "day": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "time": {
+                        "type": "string",
+                        "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+                      }
+                    },
+                    "required": [
+                      "day",
+                      "time"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "id",
+                  "title",
+                  "content",
+                  "tags"
+                ],
+                "additionalProperties": false
+              },
+              "propertyNames": {
+                "minLength": 1
+              }
+            },
+            "memories": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "content": {
+                    "type": "string"
+                  },
+                  "createdAt": {
+                    "type": "object",
+                    "properties": {
+                      "day": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "time": {
+                        "type": "string",
+                        "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+                      }
+                    },
+                    "required": [
+                      "day",
+                      "time"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "importance": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "sourceRunId": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "id",
+                  "content",
+                  "createdAt",
+                  "importance",
+                  "tags"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "unlocks": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "achievements": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "endingsDiscovered": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "permanentModifiers": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "number"
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "phase"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "phase": {
+          "type": "string",
+          "const": "modifier"
+        },
+        "modifiers": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "number"
+          }
+        },
+        "riskOutcome": {
+          "type": "string",
+          "enum": [
+            "success",
+            "failure"
+          ]
+        }
+      },
+      "required": [
+        "phase",
+        "modifiers"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "phase": {
+          "type": "string",
+          "const": "final"
+        },
+        "run": {
+          "type": "object",
+          "properties": {
+            "day": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "turn": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "time": {
+              "type": "string",
+              "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+            },
+            "dailyProgress": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "currentEventId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "currentLocationId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "not_started",
+                "active",
+                "paused",
+                "ending",
+                "completed",
+                "bad_end"
+              ]
+            }
+          },
+          "additionalProperties": false
+        },
+        "characters": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "properties": {
+              "psychology": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object",
+                  "properties": {
+                    "before": {
+                      "type": "number"
+                    },
+                    "after": {
+                      "type": "number"
+                    },
+                    "delta": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "before",
+                    "after",
+                    "delta"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "emotion": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object",
+                  "properties": {
+                    "before": {
+                      "type": "number"
+                    },
+                    "after": {
+                      "type": "number"
+                    },
+                    "delta": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "before",
+                    "after",
+                    "delta"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "physical": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object",
+                  "properties": {
+                    "before": {
+                      "type": "number"
+                    },
+                    "after": {
+                      "type": "number"
+                    },
+                    "delta": {
+                      "type": "number"
+                    }
+                  },
+                  "required": [
+                    "before",
+                    "after",
+                    "delta"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "active",
+                  "unavailable",
+                  "absent",
+                  "asleep",
+                  "disabled"
+                ]
+              }
+            },
+            "additionalProperties": false
+          },
+          "propertyNames": {
+            "minLength": 1
+          }
+        },
+        "relationships": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "properties": {
+                "before": {
+                  "type": "number"
+                },
+                "after": {
+                  "type": "number"
+                },
+                "delta": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "before",
+                "after",
+                "delta"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "propertyNames": {
+            "minLength": 1
+          }
+        },
+        "world": {
+          "type": "object",
+          "properties": {
+            "weather": {
+              "type": "object",
+              "properties": {
+                "type": {
+                  "type": "string"
+                },
+                "intensity": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100
+                },
+                "temperature": {
+                  "type": "number"
+                },
+                "visibility": {
+                  "type": "number",
+                  "minimum": 0,
+                  "maximum": 100
+                }
+              },
+              "additionalProperties": false
+            },
+            "flagsPatch": {
+              "type": "object",
+              "properties": {
+                "set": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "type": [
+                      "boolean",
+                      "number",
+                      "string"
+                    ]
+                  }
+                },
+                "unset": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              },
+              "additionalProperties": false
+            },
+            "currentLocationId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "time": {
+              "type": "string",
+              "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+            }
+          },
+          "additionalProperties": false
+        },
+        "flags": {
+          "type": "object",
+          "properties": {
+            "set": {
+              "type": "object",
+              "additionalProperties": {
+                "type": [
+                  "boolean",
+                  "number",
+                  "string"
+                ]
+              }
+            },
+            "unset": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          "additionalProperties": false
+        },
+        "memoryCandidates": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "enum": [
+                  "episodic",
+                  "semantic",
+                  "emotional",
+                  "social"
+                ]
+              },
+              "content": {
+                "type": "string"
+              },
+              "importance": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "emotionalIntensity": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "valence": {
+                "type": "number",
+                "minimum": -100,
+                "maximum": 100
+              },
+              "tags": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "relatedCharacters": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "sourceTurnId": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "type",
+              "content",
+              "importance",
+              "emotionalIntensity",
+              "valence",
+              "tags",
+              "relatedCharacters",
+              "sourceTurnId"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "meta": {
+          "type": "object",
+          "properties": {
+            "knowledge": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "content": {
+                    "type": "string"
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "sourceRunId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "acquiredAt": {
+                    "type": "object",
+                    "properties": {
+                      "day": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "time": {
+                        "type": "string",
+                        "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+                      }
+                    },
+                    "required": [
+                      "day",
+                      "time"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "id",
+                  "title",
+                  "content",
+                  "tags"
+                ],
+                "additionalProperties": false
+              },
+              "propertyNames": {
+                "minLength": 1
+              }
+            },
+            "memories": {
+              "type": "array",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "content": {
+                    "type": "string"
+                  },
+                  "createdAt": {
+                    "type": "object",
+                    "properties": {
+                      "day": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "time": {
+                        "type": "string",
+                        "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+                      }
+                    },
+                    "required": [
+                      "day",
+                      "time"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "importance": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "tags": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    }
+                  },
+                  "sourceRunId": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "id",
+                  "content",
+                  "createdAt",
+                  "importance",
+                  "tags"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "unlocks": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "achievements": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "endingsDiscovered": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "permanentModifiers": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "number"
+              }
+            }
+          },
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "phase"
+      ],
+      "additionalProperties": false
+    }
+  ],
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

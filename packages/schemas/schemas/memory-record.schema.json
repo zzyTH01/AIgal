@@ -1,0 +1,120 @@
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "episodic",
+        "semantic",
+        "emotional",
+        "social"
+      ]
+    },
+    "content": {
+      "type": "string"
+    },
+    "createdAt": {
+      "type": "object",
+      "properties": {
+        "day": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "time": {
+          "type": "string",
+          "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+        }
+      },
+      "required": [
+        "day",
+        "time"
+      ],
+      "additionalProperties": false
+    },
+    "importance": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "emotionalIntensity": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "valence": {
+      "type": "number",
+      "minimum": -100,
+      "maximum": 100
+    },
+    "strength": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "accuracy": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 100
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "relatedCharacters": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "sourceTurnId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "retrievalCount": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "lastRetrievedAt": {
+      "type": "object",
+      "properties": {
+        "day": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "time": {
+          "type": "string",
+          "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+        }
+      },
+      "required": [
+        "day",
+        "time"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "id",
+    "type",
+    "content",
+    "createdAt",
+    "importance",
+    "emotionalIntensity",
+    "valence",
+    "strength",
+    "accuracy",
+    "tags",
+    "relatedCharacters",
+    "sourceTurnId",
+    "retrievalCount"
+  ],
+  "additionalProperties": false,
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

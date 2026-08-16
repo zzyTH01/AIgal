@@ -1,0 +1,149 @@
+{
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1
+    },
+    "presentation": {
+      "type": "object",
+      "properties": {
+        "text": {
+          "type": "string",
+          "minLength": 1
+        },
+        "tone": {
+          "type": "string",
+          "minLength": 1
+        }
+      },
+      "required": [
+        "text",
+        "tone"
+      ],
+      "additionalProperties": false
+    },
+    "behavior": {
+      "type": "object",
+      "properties": {
+        "actions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        },
+        "intent": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1
+        },
+        "risk": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        }
+      },
+      "required": [
+        "actions",
+        "intent",
+        "risk"
+      ],
+      "additionalProperties": false
+    },
+    "gameplay": {
+      "type": "object",
+      "properties": {
+        "progress": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "progress"
+      ],
+      "additionalProperties": false
+    },
+    "effects": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "properties": {
+          "base": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "base"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "conditions": {
+      "type": "object",
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "string"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "min": {
+                "type": "number"
+              },
+              "max": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
+    "generation": {
+      "type": "object",
+      "properties": {
+        "must_fit_character": {
+          "type": "boolean"
+        },
+        "must_fit_context": {
+          "type": "boolean"
+        },
+        "variation": {
+          "type": "string",
+          "enum": [
+            "low",
+            "medium",
+            "high"
+          ]
+        }
+      },
+      "required": [
+        "must_fit_character",
+        "must_fit_context",
+        "variation"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "required": [
+    "id",
+    "presentation",
+    "behavior",
+    "gameplay",
+    "effects",
+    "conditions",
+    "generation"
+  ],
+  "additionalProperties": false,
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

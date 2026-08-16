@@ -1,0 +1,142 @@
+{
+  "type": "object",
+  "properties": {
+    "eventId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "type": {
+      "type": "string",
+      "enum": [
+        "daily",
+        "social",
+        "exploration",
+        "conflict",
+        "romantic",
+        "special",
+        "world",
+        "rare"
+      ]
+    },
+    "rarity": {
+      "type": "string",
+      "enum": [
+        "common",
+        "uncommon",
+        "rare",
+        "legendary"
+      ]
+    },
+    "title": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "baseWeight": {
+      "type": "number",
+      "minimum": 0
+    },
+    "conditions": {
+      "type": "object",
+      "additionalProperties": {
+        "anyOf": [
+          {
+            "type": "boolean"
+          },
+          {
+            "type": "number"
+          },
+          {
+            "type": "string"
+          },
+          {
+            "type": "object",
+            "properties": {
+              "min": {
+                "type": "number"
+              },
+              "max": {
+                "type": "number"
+              }
+            },
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
+    "cooldown": {
+      "type": "object",
+      "properties": {
+        "days": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "turns": {
+          "type": "integer",
+          "minimum": 0
+        }
+      },
+      "required": [
+        "days",
+        "turns"
+      ],
+      "additionalProperties": false
+    },
+    "allowedLocationIds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "tags": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "requiresCharacterIds": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "requiresRelationshipType": {
+      "type": "string",
+      "enum": [
+        "unknown",
+        "stranger",
+        "acquaintance",
+        "friend",
+        "close_friend",
+        "romantic_interest",
+        "partner",
+        "family",
+        "rival",
+        "enemy",
+        "estranged",
+        "custom"
+      ]
+    },
+    "behaviorConstraints": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  },
+  "required": [
+    "eventId",
+    "type",
+    "rarity",
+    "title",
+    "description",
+    "baseWeight",
+    "conditions",
+    "cooldown"
+  ],
+  "additionalProperties": false,
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}
