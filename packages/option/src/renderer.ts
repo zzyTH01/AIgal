@@ -1,4 +1,4 @@
-import { optionSchema, type Option } from '@ag/schemas';
+import { optionSchema, type Option, type OptionConditions } from '@ag/schemas';
 import type { PlannedOption } from './planner.js';
 
 export interface RenderOptionOptions {
@@ -20,9 +20,32 @@ export function renderOption(plan: PlannedOption, options: RenderOptionOptions =
     behavior: plan.behavior,
     gameplay: plan.gameplay,
     effects: plan.effects,
-    conditions: plan.conditions,
+    conditions: sanitizeOptionConditions(plan.conditions),
     generation: plan.generation,
   });
+}
+
+/** 宽松 LLM conditions → 严格 OptionConditions；无法映射的值直接丢弃。 */
+export function sanitizeOptionConditions(conditions: Record<string, unknown>): OptionConditions {
+  const sanitized: OptionConditions = {};
+  for (const [key, value] of Object.entries(conditions)) {
+    if (typeof value === 'boolean' || typeof value === 'number' || typeof value === 'string') {
+      sanitized[key] = value;
+      continue;
+    }
+    if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+      const record = value as Record<string, unknown>;
+      const min = typeof record.min === 'number' ? record.min : undefined;
+      const max = typeof record.max === 'number' ? record.max : undefined;
+      if (min !== undefined || max !== undefined) {
+        sanitized[key] = {
+          ...(min !== undefined ? { min } : {}),
+          ...(max !== undefined ? { max } : {}),
+        };
+      }
+    }
+  }
+  return sanitized;
 }
 
 export function renderOptions(

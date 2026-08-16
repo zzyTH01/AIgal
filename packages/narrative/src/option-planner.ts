@@ -2,7 +2,7 @@ import { z } from 'zod';
 import {
   idSchema,
   optionBehaviorSchema,
-  optionConditionsSchema,
+  llmOptionConditionsSchema,
   optionEffectsSchema,
   optionGameplaySchema,
   optionGenerationSchema,
@@ -21,7 +21,7 @@ export const plannedOptionSchema = z
     behavior: optionBehaviorSchema,
     gameplay: optionGameplaySchema,
     effects: optionEffectsSchema,
-    conditions: optionConditionsSchema,
+    conditions: llmOptionConditionsSchema,
     generation: optionGenerationSchema,
   })
   .strict();
@@ -85,6 +85,7 @@ function buildOptionRequest(context: ModelContext, options: LLMOptionPlannerOpti
           `为 Day ${context.day} ${context.time} 的场景生成至少 4 个行为选项。`,
           '必须覆盖：主动行为 / 保守行为 / 社交关系行为 / 风险行为。',
           '输出 JSON 数组，元素结构（presentation 必须是玩家可读的自然语言）：',
+          'conditions 只允许输出 {}，或 {"<flag>": boolean|number|"字符串"}；不要输出数组、null 或嵌套对象。',
           '{"id":"option_001","presentation":{"text":"需要我帮忙吗？","tone":"supportive"},"behavior":{"actions":["support"],"intent":["care"],"risk":0.15},"gameplay":{"progress":2},"effects":{"affection":{"base":2}},"conditions":{},"generation":{"must_fit_character":true,"must_fit_context":true,"variation":"high"}}',
         ].join('\n'),
       },

@@ -78,6 +78,7 @@ function buildCombinedRequest(
         content: [
           `Day ${context.day} ${context.time}，生成当前场景和 4 个行为选项。`,
           '必须覆盖：主动 / 保守 / 社交关系 / 风险。',
+          'conditions 只允许 {} 或 {"<flag>": boolean|number|"字符串"}；不要输出数组/null/嵌套对象。',
           '严格输出 JSON：',
           '{"scenario":{"narrative":"场景文本","structured":{"emotion":{"type":"...","intensity":0},"intent":{"type":"...","intensity":0}}},"options":[{"id":"option_001","presentation":{"text":"自然语言选项","tone":"..."},"behavior":{"actions":["support"],"intent":["care"],"risk":0.15},"gameplay":{"progress":2},"effects":{"affection":{"base":2}},"conditions":{},"generation":{"must_fit_character":true,"must_fit_context":true,"variation":"high"}}]}',
         ].join('\n'),

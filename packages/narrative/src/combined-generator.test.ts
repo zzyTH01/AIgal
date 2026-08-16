@@ -13,6 +13,19 @@ describe('combined Scenario + Options generation', () => {
     expect(provider.calls).toHaveLength(1);
   });
 
+  it('sanitizes messy LLM conditions instead of falling back', async () => {
+    const parsed = JSON.parse(combinedJson);
+    parsed.options[0].conditions = { 'relationship.trust': { min: 20, extra: 'ignore' } };
+    parsed.options[1].conditions = { requires: ['friend'], mood: null };
+    parsed.options[2].conditions = { 'run.day': { min: 1, extra: true } };
+    const provider = TestProvider.fromText(JSON.stringify(parsed));
+    const result = await generateScenarioAndOptions(makeNarrativeContext(), provider);
+    expect(result.source).toBe('llm');
+    expect(result.options).toHaveLength(4);
+    expect(result.options[0]?.conditions).toEqual({ 'relationship.trust': { min: 20 } });
+    expect(result.options[1]?.conditions).toEqual({});
+  });
+
   it('falls back without calling LLM again after retries', async () => {
     const provider = TestProvider.fromText('not-json');
     const result = await generateScenarioAndOptions(makeNarrativeContext(), provider, {

@@ -8,6 +8,27 @@ const optionConditionValueSchema = z.union([
   numericConditionSchema,
 ]);
 
+/**
+ * LLM 侧宽松条件：真实模型常输出 array/null/带额外键的对象。
+ * plannedOptionSchema 使用本 schema；最终入库仍走严格 optionSchema。
+ */
+const llmNumericConditionSchema = z
+  .object({
+    min: z.number().optional(),
+    max: z.number().optional(),
+  })
+  .passthrough();
+
+export const llmOptionConditionValueSchema = z.union([
+  z.boolean(),
+  z.number(),
+  z.string(),
+  llmNumericConditionSchema,
+  z.array(z.string()),
+  z.null(),
+]);
+export const llmOptionConditionsSchema = z.record(z.string(), llmOptionConditionValueSchema);
+
 export const optionPresentationSchema = z
   .object({
     text: z.string().min(1),

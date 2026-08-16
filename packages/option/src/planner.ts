@@ -1,6 +1,5 @@
 import type {
   OptionBehavior,
-  OptionConditions,
   OptionEffects,
   OptionGameplay,
   OptionGeneration,
@@ -15,7 +14,8 @@ export interface PlannedOption {
   behavior: OptionBehavior;
   gameplay: OptionGameplay;
   effects: OptionEffects;
-  conditions: OptionConditions;
+  /** LLM 可输出宽松条件；renderOption 会 sanitize 为严格 OptionConditions。 */
+  conditions: Record<string, unknown>;
   generation: OptionGeneration;
 }
 

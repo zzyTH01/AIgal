@@ -13,6 +13,10 @@ export function App() {
     role: '图书管理员',
     description: '安静但观察力敏锐的图书管理员。',
     worldName: '图书馆',
+    locationName: '图书馆',
+    dayLength: 12,
+    eventTitle: '安静的图书馆',
+    endingTitle: '普通结局',
     prompt: '保持角色一致性；输出双通道结构。',
   });
   const [project, setProject] = useState<GameProject>(() => createBlankProject());
@@ -32,13 +36,58 @@ export function App() {
       role: form.role,
       description: form.description,
     };
+    const world = structuredClone(blank.world);
+    world.name = form.worldName;
+    world.dailyProgressLimit = form.dayLength;
+    world.locations = [
+      {
+        locationId: 'loc_start',
+        name: form.locationName || '起点',
+        type: 'hub',
+        tags: [],
+        accessibility: 100,
+        description: form.locationName || '默认地点',
+      },
+    ];
+    const events =
+      form.eventTitle.trim().length > 0
+        ? [
+            {
+              eventId: 'event_designer',
+              type: 'daily' as const,
+              rarity: 'common' as const,
+              title: form.eventTitle,
+              description: form.eventTitle,
+              baseWeight: 10,
+              conditions: {},
+              cooldown: { days: 0, turns: 0 },
+              allowedLocationIds: ['loc_start'],
+            },
+          ]
+        : [];
+    const endings =
+      form.endingTitle.trim().length > 0
+        ? [
+            {
+              endingId: 'ending_designer_normal',
+              kind: 'normal' as const,
+              title: form.endingTitle,
+              description: form.endingTitle,
+              conditions: { 'run.day': { min: 3 } },
+              priority: 10,
+            },
+          ]
+        : [];
     return {
       ...blank,
       projectId: `project_${form.projectName}`,
       name: form.projectName,
-      world: { ...blank.world, name: form.worldName },
+      world,
+      parameters: { dayLength: form.dayLength },
       prompts: { system: form.prompt },
       characters: [character],
+      events,
+      endings,
     };
   }, [form]);
 

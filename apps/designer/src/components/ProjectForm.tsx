@@ -5,6 +5,10 @@ export interface ProjectFormData {
   role: string;
   description: string;
   worldName: string;
+  locationName: string;
+  dayLength: number;
+  eventTitle: string;
+  endingTitle: string;
   prompt: string;
 }
 
