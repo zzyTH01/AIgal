@@ -39,4 +39,14 @@ describe('Project schema', () => {
     project.world.dailyProgressLimit = 0;
     expect(gameProjectSchema.safeParse(project).success).toBe(false);
   });
+
+  it('rejects day 0 start and out-of-range location accessibility', () => {
+    const project = makeProject();
+    project.world.startDay = 0;
+    expect(gameProjectSchema.safeParse(project).success).toBe(false);
+
+    project.world.startDay = 1;
+    project.world.locations[0]!.accessibility = 120;
+    expect(gameProjectSchema.safeParse(project).success).toBe(false);
+  });
 });

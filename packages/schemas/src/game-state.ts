@@ -21,7 +21,7 @@ export const runStateSchema = z
   .object({
     runId: idSchema,
     startedAt: z.string(),
-    day: z.number().int().nonnegative(),
+    day: z.number().int().min(1),
     turn: z.number().int().nonnegative(),
     time: timeStringSchema,
     dailyProgress: z.number().int().nonnegative(),

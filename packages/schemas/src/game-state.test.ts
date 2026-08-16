@@ -13,8 +13,14 @@ describe('GameState schema', () => {
     expect(gameStateSchema.safeParse(state).success).toBe(false);
   });
 
-  it('rejects negative daily progress and invalid run status', () => {
+  it('rejects day 0, negative daily progress, and invalid run status', () => {
     const state = makeGameState();
+
+    state.run.day = 0;
+    expect(runStateSchema.safeParse(state.run).success).toBe(false);
+    expect(gameStateSchema.safeParse(state).success).toBe(false);
+
+    state.run.day = 1;
     state.run.dailyProgress = -1;
     expect(runStateSchema.safeParse(state.run).success).toBe(false);
     expect(gameStateSchema.safeParse(state).success).toBe(false);

@@ -6,6 +6,7 @@ import {
   flagsSchema,
   idSchema,
   numericConditionSchema,
+  percentSchema,
   schemaVersionSchema,
   seasonSchema,
   timeStringSchema,
@@ -27,9 +28,10 @@ export const projectPolicySchema = z
 export const projectLocationDefinitionSchema = z
   .object({
     locationId: idSchema,
+    name: z.string().min(1),
     type: z.string(),
     tags: z.array(z.string()),
-    accessibility: z.string(),
+    accessibility: percentSchema,
     description: z.string(),
   })
   .strict();
@@ -40,7 +42,7 @@ export const worldDefinitionSchema = z
     name: z.string(),
     description: z.string(),
     dailyProgressLimit: z.number().int().positive(),
-    startDay: z.number().int().nonnegative(),
+    startDay: z.number().int().min(1),
     startTime: timeStringSchema,
     startWeekday: weekdaySchema,
     startSeason: seasonSchema,

@@ -99,9 +99,11 @@ export function makeWorldState(): WorldState {
     currentLocationId: 'loc_library',
     locations: {
       loc_library: {
+        locationId: 'loc_library',
+        name: '图书馆',
         type: 'library',
         tags: ['quiet', 'study'],
-        accessibility: 'public',
+        accessibility: 100,
         active: true,
         currentCharacters: [characterId],
       },
@@ -470,9 +472,10 @@ export function makeProject(): GameProject {
       locations: [
         {
           locationId: 'loc_library',
+          name: '图书馆',
           type: 'library',
           tags: ['quiet'],
-          accessibility: 'public',
+          accessibility: 100,
           description: '安静的小图书馆。',
         },
       ],

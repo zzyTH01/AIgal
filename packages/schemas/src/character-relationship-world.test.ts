@@ -64,4 +64,18 @@ describe('WorldState schema', () => {
     data.weather.visibility = 120;
     expect(worldStateSchema.safeParse(data).success).toBe(false);
   });
+
+  it('rejects missing location name/id and out-of-range accessibility', () => {
+    const data = makeWorldState();
+    delete (data.locations.loc_library as { name?: unknown }).name;
+    expect(worldStateSchema.safeParse(data).success).toBe(false);
+
+    delete (data.locations.loc_library as { locationId?: unknown }).locationId;
+    expect(worldStateSchema.safeParse(data).success).toBe(false);
+
+    data.locations.loc_library!.locationId = 'loc_library';
+    data.locations.loc_library!.name = '图书馆';
+    data.locations.loc_library!.accessibility = 120;
+    expect(worldStateSchema.safeParse(data).success).toBe(false);
+  });
 });

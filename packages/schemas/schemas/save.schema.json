@@ -74,7 +74,7 @@
             },
             "day": {
               "type": "integer",
-              "minimum": 0
+              "minimum": 1
             },
             "turn": {
               "type": "integer",
@@ -130,7 +130,7 @@
           "properties": {
             "day": {
               "type": "integer",
-              "minimum": 0
+              "minimum": 1
             },
             "time": {
               "type": "string",
@@ -194,6 +194,14 @@
               "additionalProperties": {
                 "type": "object",
                 "properties": {
+                  "locationId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "name": {
+                    "type": "string",
+                    "minLength": 1
+                  },
                   "type": {
                     "type": "string"
                   },
@@ -204,7 +212,9 @@
                     }
                   },
                   "accessibility": {
-                    "type": "string"
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
                   },
                   "active": {
                     "type": "boolean"
@@ -218,6 +228,8 @@
                   }
                 },
                 "required": [
+                  "locationId",
+                  "name",
                   "type",
                   "tags",
                   "accessibility",
@@ -1335,7 +1347,7 @@
                   },
                   "day": {
                     "type": "integer",
-                    "minimum": 0
+                    "minimum": 1
                   },
                   "turn": {
                     "type": "integer",
@@ -1391,7 +1403,7 @@
                 "properties": {
                   "day": {
                     "type": "integer",
-                    "minimum": 0
+                    "minimum": 1
                   },
                   "time": {
                     "type": "string",
@@ -1455,6 +1467,14 @@
                     "additionalProperties": {
                       "type": "object",
                       "properties": {
+                        "locationId": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "name": {
+                          "type": "string",
+                          "minLength": 1
+                        },
                         "type": {
                           "type": "string"
                         },
@@ -1465,7 +1485,9 @@
                           }
                         },
                         "accessibility": {
-                          "type": "string"
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 100
                         },
                         "active": {
                           "type": "boolean"
@@ -1479,6 +1501,8 @@
                         }
                       },
                       "required": [
+                        "locationId",
+                        "name",
                         "type",
                         "tags",
                         "accessibility",
@@ -3818,7 +3842,7 @@
             "properties": {
               "day": {
                 "type": "integer",
-                "minimum": 0
+                "minimum": 1
               },
               "time": {
                 "type": "string",
@@ -3882,6 +3906,14 @@
                 "additionalProperties": {
                   "type": "object",
                   "properties": {
+                    "locationId": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "name": {
+                      "type": "string",
+                      "minLength": 1
+                    },
                     "type": {
                       "type": "string"
                     },
@@ -3892,7 +3924,9 @@
                       }
                     },
                     "accessibility": {
-                      "type": "string"
+                      "type": "number",
+                      "minimum": 0,
+                      "maximum": 100
                     },
                     "active": {
                       "type": "boolean"
@@ -3906,6 +3940,8 @@
                     }
                   },
                   "required": [
+                    "locationId",
+                    "name",
                     "type",
                     "tags",
                     "accessibility",
@@ -4075,7 +4111,7 @@
                   },
                   "day": {
                     "type": "integer",
-                    "minimum": 0
+                    "minimum": 1
                   },
                   "turn": {
                     "type": "integer",
@@ -4131,7 +4167,7 @@
                 "properties": {
                   "day": {
                     "type": "integer",
-                    "minimum": 0
+                    "minimum": 1
                   },
                   "time": {
                     "type": "string",
@@ -4195,6 +4231,14 @@
                     "additionalProperties": {
                       "type": "object",
                       "properties": {
+                        "locationId": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "name": {
+                          "type": "string",
+                          "minLength": 1
+                        },
                         "type": {
                           "type": "string"
                         },
@@ -4205,7 +4249,9 @@
                           }
                         },
                         "accessibility": {
-                          "type": "string"
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 100
                         },
                         "active": {
                           "type": "boolean"
@@ -4219,6 +4265,8 @@
                         }
                       },
                       "required": [
+                        "locationId",
+                        "name",
                         "type",
                         "tags",
                         "accessibility",

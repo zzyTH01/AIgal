@@ -1,7 +1,7 @@
 # AI GALGAME Framework
-## 开发计划 Development Plan v1.1
+## 开发计划 Development Plan v1.2
 
-> 版本：v1.1 ｜ 依据：`AI_GALGAME_Master_Design_v1.0.md`（唯一权威设计基线，当前文档版本 v1.1）
+> 版本：v1.2 ｜ 依据：`AI_GALGAME_Master_Design_v1.0.md`（唯一权威设计基线，当前文档版本 v1.2）
 >
 > 本计划是**可执行的分阶段开发安排**。Claude Code（或任何开发执行者）应按阶段顺序推进：每阶段有明确目标、验收标准、任务清单、测试要求与验证命令，**验收通过后才进入下一阶段**。
 
@@ -169,7 +169,7 @@ pnpm install && pnpm build && pnpm test && pnpm typecheck && pnpm lint
 
 # 4. Phase 1 — 数据契约冻结
 
-- **状态**：✅ 已完成（2026-08-16）。验收命令 `pnpm --filter @ag/schemas test && pnpm --filter @ag/schemas build` 全部通过。
+- **状态**：✅ 已完成（2026-08-16）；审查反馈（`docs/review/phase1-review.md`）已在 Phase 2 前修订并通过回归。
 
 ## 4.1 目标
 冻结全部跨模块数据契约：**TS 类型 + Zod 运行时校验 + JSON Schema**。这是整个项目的数据地基（Master Design §4）。

@@ -1,7 +1,7 @@
 # AI GALGAME Framework
-## 总设计文档 Master Design v1.1（唯一权威基线）
+## 总设计文档 Master Design v1.2（唯一权威基线）
 
-> 版本：v1.1 ｜ 状态：Phase 1 数据契约已冻结（可据此进入 Phase 2） ｜ 语言：中文
+> 版本：v1.2 ｜ 状态：Phase 1 数据契约已冻结并通过审查修订（可据此进入 Phase 2） ｜ 语言：中文
 >
 > 本文档是对此前六份 v0.1 设计文档的分析、综合与定案，是项目**唯一的权威设计基线**。
 > 旧文档已归档至 `docs/design-history/`，仅供追溯设计过程，不再作为实现依据。
@@ -372,14 +372,36 @@ interface WorldState {
   day: number; time: string; weekday: Weekday; season: Season;
   weather: WeatherState;            // type/intensity/temperature/visibility
   currentLocationId: string;
-  locations: Record<string, LocationState>;   // type/tags/accessibility/active/currentCharacters
+  locations: Record<string, LocationState>;
   publicEvents: WorldEventState[];
   activeEvents: WorldEventState[];
   worldFlags?: Record<string, boolean|number|string>;
 }
+
+interface LocationState {           // Phase 1 冻结（v1.2）
+  locationId: LocationId;
+  name: string;                     // 显示名（UI 必需）
+  type: string;                     // 如 library/rooftop；保持字符串以允许项目扩展
+  tags: string[];
+  accessibility: Percent;           // 0~100，可及性百分比
+  active: boolean;
+  currentCharacters: CharacterId[];
+}
+
+interface WorldEventState {         // Phase 1 冻结（v1.2）
+  eventId: EventId;
+  type: EventType;                  // daily/social/exploration/conflict/romantic/special/world/rare
+  rarity: EventRarity;              // common/uncommon/rare/legendary
+  title: string;
+  description: string;
+  weight: number;                   // 用于 Phase 4 EventScore
+  lastTriggeredDay?: number;        // 冷却追踪
+}
 ```
 
 世界是有规则的随机世界：**在固定世界规则与可用空间内随机采样事件**（图书馆偏向阅读/学习/安静聊天/偶遇；天台偏向独处/深谈/关系事件/冲突）。
+
+**WorldEventState 字段裁定（相对 v0.1 契约）**：v0.1 中的 `startDay/endDay/locationIds/characterIds` 归入 `EventInstance`/`EventDefinition` 承载；`importance` 由 `weight + rarity` 表达；`active` 由事件位于 `publicEvents` 或 `activeEvents` 列表表达；`tags` 由 `EventDefinition.tags` 承载。`weather.type` 允许值约定为 `clear/cloudy/rain/storm/snow/fog/wind/other`（World Engine 校验）。
 
 ## 4.7 PlayerModel —— 角色对玩家的主观认知
 

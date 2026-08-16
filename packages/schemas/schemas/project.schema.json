@@ -516,7 +516,7 @@
         },
         "startDay": {
           "type": "integer",
-          "minimum": 0
+          "minimum": 1
         },
         "startTime": {
           "type": "string",
@@ -552,6 +552,10 @@
                 "type": "string",
                 "minLength": 1
               },
+              "name": {
+                "type": "string",
+                "minLength": 1
+              },
               "type": {
                 "type": "string"
               },
@@ -562,7 +566,9 @@
                 }
               },
               "accessibility": {
-                "type": "string"
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
               },
               "description": {
                 "type": "string"
@@ -570,6 +576,7 @@
             },
             "required": [
               "locationId",
+              "name",
               "type",
               "tags",
               "accessibility",
