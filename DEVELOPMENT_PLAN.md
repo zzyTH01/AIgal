@@ -1,7 +1,7 @@
 # AI GALGAME Framework
-## 开发计划 Development Plan v1.9
+## 开发计划 Development Plan v2.0
 
-> 版本：v1.9 ｜ 依据：`AI_GALGAME_Master_Design_v1.0.md`（唯一权威设计基线，当前文档版本 v1.2）
+> 版本：v2.0 ｜ 依据：`AI_GALGAME_Master_Design_v1.0.md`（唯一权威设计基线，当前文档版本 v1.2）
 >
 > 本计划是**可执行的分阶段开发安排**。Claude Code（或任何开发执行者）应按阶段顺序推进：每阶段有明确目标、验收标准、任务清单、测试要求与验证命令，**验收通过后才进入下一阶段**。
 
@@ -351,6 +351,8 @@ pnpm --filter @ag/narrative test && pnpm --filter @ag/llm test
 
 # 9. Phase 6 — Memory / Context
 
+- **状态**：✅ 已完成（2026-08-16）。记忆生命周期、ContextBuilder/Budget 与 Memory→Context→LLM(fixture) 测试通过。
+
 ## 9.1 目标
 实现"角色真的记得你"（Master Design §4.8）。
 
@@ -359,16 +361,16 @@ pnpm --filter @ag/narrative test && pnpm --filter @ag/llm test
 - ContextBudget 永不超限；检索记忆进入本轮 Context。
 
 ## 9.3 任务清单
-- [ ] MemoryStore：records + short/long/forgotten 分层 + 索引。
-- [ ] MemoryFormation：候选评分与阈值（低分只留 Recent Events）。
-- [ ] MemoryDecay：`S(t)=S₀·e^(−λt)`，λ 受认知参数影响。
-- [ ] MemoryRetrieval：`Score = w_r·R + w_i·I + w_e·E + w_s·S + w_o·O`，Top-K。
-- [ ] MemoryReinforcement：检索后强度回升。
-- [ ] MemoryConsolidation：Day 结束短期→长期/丢弃。
-- [ ] ContextBuilder：`GameState + 检索记忆 + 当前事件 + 认知 → ModelContext`。
-- [ ] ContextBudget：按认知容量分配（System/Current/Recent/Memories/Internal）。
-- [ ] MemoryRanker / StateSummarizer / PromptComposer。
-- [ ] 与 Turn 生命周期接线：04/12/16 阶段。
+- [x] MemoryStore：records + short/long/forgotten 分层 + 索引。
+- [x] MemoryFormation：候选评分与阈值（低分只留 Recent Events）。
+- [x] MemoryDecay：`S(t)=S₀·e^(−λt)`，λ 受认知参数影响。
+- [x] MemoryRetrieval：`Score = w_r·R + w_i·I + w_e·E + w_s·S + w_o·O`，Top-K。
+- [x] MemoryReinforcement：检索后强度回升。
+- [x] MemoryConsolidation：Day 结束短期→长期/丢弃。
+- [x] ContextBuilder：`GameState + 检索记忆 + 当前事件 + 认知 → ModelContext`。
+- [x] ContextBudget：按认知容量分配（System/Current/Recent/Memories/Internal）。
+- [x] MemoryRanker / StateSummarizer / PromptComposer。
+- [x] 与 Turn 生命周期接线：04/12/16 阶段。
 
 ## 9.4 测试要求
 - Unit：decay 曲线、reinforce 回升、retrieval 排序、budget 不超限。

@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **AI GALGAME Framework**（tavern-gal）：一个以 SillyTavern 为可选 AI Runtime、以 GALGAME 选择式交互为表现形式、以 Game State 为核心、由 AI 动态叙事 + Roguelike 机制驱动的 AI 叙事游戏框架。
 
-当前仓库处于**Phase 5 已完成（Narrative / Option Engine）**阶段：权威架构由两份设计文档定义（见下），工程为 pnpm + TypeScript monorepo；`@ag/core/world` 纯规则闭环就绪，`@ag/llm + narrative + option` 已可用 TestProvider 跑通 Scenario→Options→Choice→Reaction。任何实现工作开始前，必须先读权威设计文档与开发计划，不要凭推测自行发明架构。
+当前仓库处于**Phase 6 已完成（Memory / Context）**阶段：权威架构由两份设计文档定义（见下），工程为 pnpm + TypeScript monorepo；纯规则闭环、LLM 生成链路、记忆生命周期与 Context 组装均已就绪。任何实现工作开始前，必须先读权威设计文档与开发计划，不要凭推测自行发明架构。
 
 ### 权威文档（唯一事实来源）
 
@@ -129,7 +129,8 @@ Option 是 Behavior Object：`presentation`（玩家看到的语言）+ `behavio
 - **Phase 2 已完成（Pure Game Core）**：`@ag/core` 已实现 GameState 工厂/applyDelta/diff、ProgressEngine、RuleEngine、EndingEngine、Turn 事务与 `simulateNTurns`。
 - **Phase 3 已完成（State Resolver）**：`resolveChoice(state, option, rng)` 实现 `BaseDelta → Modifier 链 → FinalDelta`。
 - **Phase 4 已完成（Event + RNG）**：`@ag/world` 已实现可复现 RNG、EventPool、事件选择与 WorldTick；事件触发接线已落地并测试。
-- **Phase 5 已完成（Narrative / Option Engine）**：`@ag/llm` 提供 `LLMGateway` Port 与 fixture TestProvider；`@ag/option` 提供四类 Option Planner/Validator/Renderer；`@ag/narrative` 实现 Scenario/Option/Reaction 生成、非法输出 Retry→Fallback 与 `runNarrativeTurn` 链路。
-- **下一阶段**：Phase 6 Memory / Context（见 `DEVELOPMENT_PLAN.md` §9）——MemoryStore、Formation/Decay/Retrieval/Reinforcement/Consolidation、ContextBuilder 与 ContextBudget。
+- **Phase 5 已完成（Narrative / Option Engine）**：LLM Port/TestProvider、Option Planner/Validator/Renderer、Scenario/Reaction 生成与 Retry→Fallback 链路。
+- **Phase 6 已完成（Memory / Context）**：`@ag/memory` 实现 Store/Formation/Decay/Retrieval/Reinforcement/Consolidation；`@ag/context` 实现 Budget、StateSummarizer、MemoryRanker、PromptComposer 与 ContextBuilder。不同认知 Profile 生成不同 Context。
+- **下一阶段**：Phase 7 LLM Gateway 落地（见 `DEVELOPMENT_PLAN.md` §10）——真实 Provider、重试/超时/Token 成本，以及 Scenario+Options 合并调用。
 
 验收基线（Phase 2 原则）：**核心玩法的纯文本闭环能连续跑几十个 Turn 而不破坏 GameState，且不接任何 LLM，才算 Game Core 成立。**

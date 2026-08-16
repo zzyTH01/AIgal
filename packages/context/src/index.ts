@@ -1,2 +1,6 @@
-// 占位实现 —— @ag/context 的正式逻辑在后续 Phase 实现。
-export const PACKAGE_NAME = '@ag/context';
+// @ag/context —— Context Engine（Phase 6）。
+export * from './budget.js';
+export * from './summarizer.js';
+export * from './ranker.js';
+export * from './composer.js';
+export * from './context-builder.js';

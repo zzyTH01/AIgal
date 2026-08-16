@@ -1,2 +1,7 @@
-// 占位实现 —— @ag/memory 的正式逻辑在后续 Phase 实现。
-export const PACKAGE_NAME = '@ag/memory';
+// @ag/memory —— Memory Engine（Phase 6）。
+export * from './memory-store.js';
+export * from './formation.js';
+export * from './decay.js';
+export * from './retrieval.js';
+export * from './reinforcement.js';
+export * from './consolidation.js';

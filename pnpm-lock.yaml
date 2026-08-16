@@ -140,6 +140,10 @@ importers:
       '@ag/schemas':
         specifier: workspace:*
         version: link:../schemas
+    devDependencies:
+      '@ag/llm':
+        specifier: workspace:*
+        version: link:../adapters/llm
 
   packages/core:
     dependencies:
