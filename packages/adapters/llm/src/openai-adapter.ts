@@ -29,12 +29,18 @@ export class OpenAIAdapter implements LLMGateway {
   private async generateOnce(request: LLMRequest): Promise<LLMResponse> {
     const baseUrl = (this.config.baseUrl ?? 'https://api.openai.com/v1').replace(/\/$/, '');
     const started = Date.now();
-    const body = {
+    const body: Record<string, unknown> = {
       model: request.model ?? this.config.model,
       messages: request.messages,
       temperature: request.temperature ?? this.config.temperature,
       max_tokens: request.maxTokens ?? this.config.maxTokens,
     };
+    if (request.responseSchema && typeof request.responseSchema === 'object') {
+      body.response_format = {
+        type: 'json_schema',
+        json_schema: { name: 'structured_response', strict: true, schema: request.responseSchema },
+      };
+    }
 
     const response = await postJson({
       url: `${baseUrl}/chat/completions`,

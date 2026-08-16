@@ -43,6 +43,25 @@ describe('OpenAIAdapter', () => {
     expect(fetchImpl).toHaveBeenCalledOnce();
   });
 
+  it('passes responseSchema as native OpenAI json_schema', async () => {
+    const fetchImpl = vi.fn(async (_input: string | URL | Request, init?: RequestInit) => {
+      const body = JSON.parse(String(init?.body));
+      expect(body.response_format).toMatchObject({ type: 'json_schema' });
+      return jsonResponse(200, {
+        choices: [{ message: { content: '{}' }, finish_reason: 'stop' }],
+        usage: { prompt_tokens: 0, completion_tokens: 0, total_tokens: 0 },
+      });
+    });
+    const adapter = new OpenAIAdapter(
+      { apiKey: 'k', model: 'm', baseUrl: 'https://mock.local/v1' },
+      { fetchImpl },
+    );
+    await adapter.generate({
+      messages: [],
+      responseSchema: { type: 'object', properties: {} },
+    });
+  });
+
   it('retries rate-limit then succeeds', async () => {
     let calls = 0;
     const fetchImpl = vi.fn(async () => {

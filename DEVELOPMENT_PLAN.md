@@ -1,7 +1,7 @@
 # AI GALGAME Framework
-## 开发计划 Development Plan v2.2
+## 开发计划 Development Plan v2.3
 
-> 版本：v2.2 ｜ 依据：`AI_GALGAME_Master_Design_v1.0.md`（唯一权威设计基线，当前文档版本 v1.2）
+> 版本：v2.3 ｜ 依据：`AI_GALGAME_Master_Design_v1.0.md`（唯一权威设计基线，当前文档版本 v1.2）
 >
 > 本计划是**可执行的分阶段开发安排**。Claude Code（或任何开发执行者）应按阶段顺序推进：每阶段有明确目标、验收标准、任务清单、测试要求与验证命令，**验收通过后才进入下一阶段**。
 
@@ -388,7 +388,7 @@ pnpm --filter @ag/memory test && pnpm --filter @ag/context test && pnpm --filter
 
 # 10. Phase 7 — LLM Gateway 落地
 
-- **状态**：✅ 已完成（2026-08-16）。OpenAI/Anthropic/OpenAI-Compatible 适配器、重试/超时/成本日志、Scenario+Options 合并调用与回归测试通过。
+- **状态**：✅ 已完成（2026-08-16）；审查反馈（`docs/review/phase7-review.md`）已修订：OpenAI-compatible 允许无 key、结构化解析收敛到 @ag/llm、responseSchema 接入 OpenAI json_schema、非 LLMError 不重试、支持 env 配置加载。
 
 ## 10.1 目标
 接入真实 LLM Provider，切换模型不改核心逻辑（Master Design §5.5）。

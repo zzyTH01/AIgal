@@ -4,7 +4,7 @@ export interface RetryPolicy {
   maxRetries: number;
   baseDelayMs?: number;
   maxDelayMs?: number;
-  /** 仅 retryable LLMError 或未知网络错误会重试。 */
+  /** 仅 retryable LLMError 会重试；非 LLMError（编程错误）不重试。 */
   retryable?: boolean;
 }
 
@@ -22,7 +22,7 @@ export async function executeWithRetry<T>(
       return await operation();
     } catch (error) {
       lastError = error;
-      const retryable = error instanceof LLMError ? error.retryable : true; // fetch/network errors are transient by default
+      const retryable = error instanceof LLMError ? error.retryable : false; // 非 LLMError 不重试。
       if (attempt >= maxRetries || !retryable) {
         throw error;
       }
