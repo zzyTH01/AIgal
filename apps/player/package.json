@@ -1,0 +1,29 @@
+{
+  "name": "@ag/player",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Play Mode 玩家 UI（React，Phase 9 实现）",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts --sourcemap --clean",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --max-warnings 0"
+  },
+  "dependencies": {
+    "@ag/schemas": "workspace:*",
+    "@ag/core": "workspace:*",
+    "@ag/runtime": "workspace:*"
+  }
+}

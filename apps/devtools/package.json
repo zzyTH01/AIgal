@@ -1,0 +1,38 @@
+{
+  "name": "@ag/devtools",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Simulation / Turn Debugger / Inspector / Golden Test CLI",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format esm --dts --sourcemap --clean",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --max-warnings 0"
+  },
+  "dependencies": {
+    "@ag/schemas": "workspace:*",
+    "@ag/core": "workspace:*",
+    "@ag/world": "workspace:*",
+    "@ag/character": "workspace:*",
+    "@ag/option": "workspace:*",
+    "@ag/memory": "workspace:*",
+    "@ag/context": "workspace:*",
+    "@ag/narrative": "workspace:*",
+    "@ag/runtime": "workspace:*",
+    "@ag/persistence": "workspace:*",
+    "@ag/llm": "workspace:*",
+    "@ag/st-adapter": "workspace:*"
+  }
+}

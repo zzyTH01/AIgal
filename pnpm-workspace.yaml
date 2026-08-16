@@ -1,0 +1,8 @@
+packages:
+  - 'packages/*'
+  - 'packages/adapters/*'
+  - 'apps/*'
+
+# 允许受信任构建脚本（esbuild 需要 postinstall 安装平台二进制）
+allowBuilds:
+  esbuild: true

@@ -1,0 +1,25 @@
+# 本机设置
+.claude/
+
+# 依赖
+node_modules/
+
+# 构建产物
+dist/
+
+# 工具缓存
+.bootstrap/
+.npm-cache/
+.uv-cache/
+.venv/
+
+# 运行时数据
+saves/
+
+# 日志与系统文件
+*.log
+.DS_Store
+
+# 环境变量
+.env
+.env.*
