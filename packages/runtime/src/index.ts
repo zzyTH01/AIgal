@@ -1,2 +1,4 @@
-// 占位实现 —— @ag/runtime 的正式逻辑在后续 Phase 实现。
-export const PACKAGE_NAME = '@ag/runtime';
+// @ag/runtime —— Application 层（Phase 9）。
+export * from './demo-project.js';
+export * from './game-runtime.js';
+export * from './application-api.js';

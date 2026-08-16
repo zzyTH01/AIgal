@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { PACKAGE_NAME } from './index.js';
+import { createPlayerApi } from './index.js';
 
-describe('@ag/player placeholder', () => {
-  it('声明包身份', () => {
-    expect(PACKAGE_NAME).toBe('@ag/player');
+describe('@ag/player package entry', () => {
+  it('exports a player API client', async () => {
+    const api = createPlayerApi();
+    const started = await api.start();
+    expect(started.ok).toBe(true);
   });
 });

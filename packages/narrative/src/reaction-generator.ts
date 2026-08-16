@@ -6,7 +6,7 @@ import {
   type Option,
 } from '@ag/schemas';
 import { LLMError, type LLMGateway, type LLMRequest } from '@ag/llm';
-import type { ResolveChoiceResult } from '@ag/core';
+import type { FinalStateDelta } from '@ag/schemas';
 import { parseStructuredResponse } from './structured-parser.js';
 
 export interface ReactionGeneratorOptions {
@@ -25,7 +25,7 @@ export async function generateReaction(
   selectedOption: Option,
   gateway: LLMGateway,
   options: ReactionGeneratorOptions = {},
-  resolution?: ResolveChoiceResult,
+  resolution?: { directDelta: FinalStateDelta },
 ): Promise<NPCReaction & { source: 'llm' | 'fallback' }> {
   const maxAttempts = options.maxAttempts ?? 1;
 
@@ -48,7 +48,7 @@ function buildReactionRequest(
   context: ModelContext,
   selectedOption: Option,
   options: ReactionGeneratorOptions,
-  resolution?: ResolveChoiceResult,
+  resolution?: { directDelta: FinalStateDelta },
 ): LLMRequest {
   const resolutionSummary = summarizeResolution(resolution);
   return {
@@ -70,7 +70,7 @@ function buildReactionRequest(
   };
 }
 
-function summarizeResolution(resolution?: ResolveChoiceResult): string | undefined {
+function summarizeResolution(resolution?: { directDelta: FinalStateDelta }): string | undefined {
   if (!resolution) return undefined;
   const entries = Object.entries(resolution.directDelta.relationships ?? {}).flatMap(
     ([relationshipId, metrics]) =>

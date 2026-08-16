@@ -37,7 +37,8 @@ pnpm lint
 - ✅ Phase 6 — Memory / Context：记忆全生命周期、ContextBuilder + ContextBudget、不同认知 Profile 不同 Context
 - ✅ Phase 7 — LLM Gateway：OpenAI / Anthropic / OpenAI-Compatible 适配器、重试/超时/成本日志、Scenario+Options 合并调用
 - ✅ Phase 8 — SillyTavern Adapter：Character Card V2 / World Book / Context Bridge / Extension / Character Compiler
-- ⏭️ 下一步 — Phase 9：Minimal Play UI（Runtime Orchestrator + Application API + React Player）
+- ✅ Phase 9 — Minimal Play UI：`@ag/runtime` 编排 + Application API + React Player（无输入框）
+- ⏭️ 下一步 — Phase 10：Designer Mode（角色/世界/规则设计器）
 
 ## 仓库结构
 

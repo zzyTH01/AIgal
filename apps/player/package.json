@@ -16,14 +16,27 @@
     "dist"
   ],
   "scripts": {
-    "build": "tsup src/index.ts --format esm --dts --sourcemap --clean",
+    "build": "vite build",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint src --max-warnings 0"
+    "lint": "eslint src --max-warnings 0",
+    "dev": "vite",
+    "pretest": "pnpm --filter @ag/runtime test && pnpm --filter @ag/runtime build"
   },
   "dependencies": {
-    "@ag/schemas": "workspace:*",
     "@ag/core": "workspace:*",
-    "@ag/runtime": "workspace:*"
+    "@ag/runtime": "workspace:*",
+    "@ag/schemas": "workspace:*",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@types/react": "^18.3.31",
+    "@types/react-dom": "^18.3.7",
+    "@vitejs/plugin-react": "^6.0.5",
+    "jsdom": "^26.1.0",
+    "vite": "^8.2.1"
   }
 }

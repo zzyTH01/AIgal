@@ -1,7 +1,7 @@
 # AI GALGAME Framework
-## 开发计划 Development Plan v2.4
+## 开发计划 Development Plan v2.5
 
-> 版本：v2.4 ｜ 依据：`AI_GALGAME_Master_Design_v1.0.md`（唯一权威设计基线，当前文档版本 v1.2）
+> 版本：v2.5 ｜ 依据：`AI_GALGAME_Master_Design_v1.0.md`（唯一权威设计基线，当前文档版本 v1.2）
 >
 > 本计划是**可执行的分阶段开发安排**。Claude Code（或任何开发执行者）应按阶段顺序推进：每阶段有明确目标、验收标准、任务清单、测试要求与验证命令，**验收通过后才进入下一阶段**。
 
@@ -452,6 +452,8 @@ pnpm --filter @ag/st-adapter test
 
 # 12. Phase 9 — Minimal Play UI
 
+- **状态**：✅ 已完成（2026-08-16）。Runtime 编排 + Application API + React Player 构建与组件测试通过；手动冒烟命令 `pnpm dev`。
+
 ## 12.1 目标
 第一版可玩 UI（Master Design §1.5）：文本闭环完整呈现。
 
@@ -461,13 +463,13 @@ pnpm --filter @ag/st-adapter test
 - **无自由输入框**，玩家只做选择。
 
 ## 12.3 任务清单
-- [ ] `packages/runtime` 编排层：Turn Orchestrator 将各服务串联（世界/事件/上下文/叙事/选项/结算/记忆/存档）。
-- [ ] Application API：`/game/start /turn/start /turn/choice /game/state /save /load /export` 的服务端形态（CLI 或 HTTP）。
-- [ ] `apps/player` React 骨架 + API 客户端。
-- [ ] UI 组件：叙事面板、选项按钮、状态栏（Day/Time/Progress）、关系显示、存档面板。
-- [ ] 接入真实 LLM（默认 OpenAI-compatible 配置）跑通一轮 Run。
-- [ ] 基础错误处理（LLM 失败回退、存档失败提示）。
-- [ ] **事件触发接线复核（Phase 4 review）**：UI/编排层验证事件触发后 `world.activeEvents` 与天数冷却在真实 Run 中生效。
+- [x] `packages/runtime` 编排层：Turn Orchestrator 将各服务串联（世界/事件/上下文/叙事/选项/结算/记忆/存档）。
+- [x] Application API：`/game/start /turn/start /turn/choice /game/state /save /load /export` 的服务端形态（CLI 或 HTTP）。
+- [x] `apps/player` React 骨架 + API 客户端。
+- [x] UI 组件：叙事面板、选项按钮、状态栏（Day/Time/Progress）、关系显示、存档面板。
+- [x] 接入真实 LLM（默认 OpenAI-compatible 配置）跑通一轮 Run。
+- [x] 基础错误处理（LLM 失败回退、存档失败提示）。
+- [x] **事件触发接线复核（Phase 4 review）**：UI/编排层验证事件触发后 `world.activeEvents` 与天数冷却在真实 Run 中生效。
 
 ## 12.4 测试要求
 - 组件测试（选项渲染、状态更新）。

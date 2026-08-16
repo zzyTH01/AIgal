@@ -19,7 +19,8 @@
     "build": "tsup src/index.ts --format esm --dts --sourcemap --clean",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint src --max-warnings 0"
+    "lint": "eslint src --max-warnings 0",
+    "pretest": "pnpm --filter @ag/schemas build && pnpm --filter @ag/core build && pnpm --filter @ag/world build && pnpm --filter @ag/memory build && pnpm --filter @ag/context build && pnpm --filter @ag/option build && pnpm --filter @ag/llm build && pnpm --filter @ag/narrative build"
   },
   "dependencies": {
     "@ag/schemas": "workspace:*",
