@@ -70,6 +70,7 @@ export const scenarioJson = JSON.stringify({
 export const optionPlansJson = JSON.stringify([
   {
     id: 'option_active_1',
+    presentation: { text: '需要我帮忙吗？', tone: 'supportive' },
     behavior: { actions: ['approach', 'support'], intent: ['care'], risk: 0.15 },
     gameplay: { progress: 2 },
     effects: { affection: { base: 2 }, trust: { base: 1 } },
@@ -78,6 +79,7 @@ export const optionPlansJson = JSON.stringify([
   },
   {
     id: 'option_conservative_1',
+    presentation: { text: '我先在旁边等一会儿。', tone: 'calm' },
     behavior: { actions: ['observe', 'wait'], intent: ['respect'], risk: 0.05 },
     gameplay: { progress: 0 },
     effects: { trust: { base: 1 } },
@@ -86,6 +88,7 @@ export const optionPlansJson = JSON.stringify([
   },
   {
     id: 'option_social_1',
+    presentation: { text: '最近怎么样？', tone: 'friendly' },
     behavior: { actions: ['chat', 'ask'], intent: ['connect'], risk: 0.1 },
     gameplay: { progress: 1 },
     effects: { familiarity: { base: 2 } },
@@ -94,6 +97,7 @@ export const optionPlansJson = JSON.stringify([
   },
   {
     id: 'option_risk_1',
+    presentation: { text: '其实我一直想约你出去。', tone: 'bold' },
     behavior: { actions: ['challenge', 'confess'], intent: ['romance'], risk: 0.45 },
     gameplay: { progress: 2 },
     effects: { affection: { base: 3 }, conflict: { base: 1 } },

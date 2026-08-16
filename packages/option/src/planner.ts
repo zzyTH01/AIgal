@@ -4,11 +4,14 @@ import type {
   OptionEffects,
   OptionGameplay,
   OptionGeneration,
+  OptionPresentation,
 } from '@ag/schemas';
 
 /** Option Planning 的中间产物：只有逻辑，没有 surface language。 */
 export interface PlannedOption {
   id: string;
+  /** LLM Realization 可选产物；缺省时 renderer 使用机械 fallback 文本。 */
+  presentation?: OptionPresentation;
   behavior: OptionBehavior;
   gameplay: OptionGameplay;
   effects: OptionEffects;

@@ -1,7 +1,7 @@
 # AI GALGAME Framework
-## 开发计划 Development Plan v1.8
+## 开发计划 Development Plan v1.9
 
-> 版本：v1.8 ｜ 依据：`AI_GALGAME_Master_Design_v1.0.md`（唯一权威设计基线，当前文档版本 v1.2）
+> 版本：v1.9 ｜ 依据：`AI_GALGAME_Master_Design_v1.0.md`（唯一权威设计基线，当前文档版本 v1.2）
 >
 > 本计划是**可执行的分阶段开发安排**。Claude Code（或任何开发执行者）应按阶段顺序推进：每阶段有明确目标、验收标准、任务清单、测试要求与验证命令，**验收通过后才进入下一阶段**。
 
@@ -312,7 +312,7 @@ pnpm --filter @ag/world test && pnpm --filter @ag/core test
 
 # 8. Phase 5 — Narrative / Option Engine（首次接入 LLM）
 
-- **状态**：✅ 已完成（2026-08-16）。LLM Port/TestProvider、Scenario、Option、Reaction 与完整链路测试通过。
+- **状态**：✅ 已完成（2026-08-16）；审查反馈（`docs/review/phase5-review.md`）已修订：Option Realization 改为 LLM 输出自然语言 presentation，NPC Reaction 注入结算结果。
 
 ## 8.1 目标
 LLM 生成场景与选项，但 **StateResolver 仍掌握最终状态权**（Master Design §3）。
@@ -398,6 +398,7 @@ pnpm --filter @ag/memory test && pnpm --filter @ag/context test && pnpm --filter
 - [ ] Provider 注册表与配置加载（API key / baseURL / model / 参数）。
 - [ ] 重试 / 超时 / 退避策略；错误分类（parse/rate-limit/timeout/refusal）。
 - [ ] Token 计数与成本日志（供 Phase 11 的成本分析）。
+- [ ] **LLM Call Minimization（Phase 5 review）**：将 Scenario + Options 合并为 1 次调用，使每个 Turn 从 3 次降为 2 次。
 - [ ] `ModelContext → Provider 请求` 转换；Provider 响应 → 结构化校验入口。
 
 ## 10.4 测试要求

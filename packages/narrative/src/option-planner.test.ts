@@ -9,6 +9,7 @@ describe('Narrative OptionPlanner', () => {
     const result = await planAndRenderOptions(makeNarrativeContext(), provider);
     expect(result.source).toBe('llm');
     expect(result.options).toHaveLength(4);
+    expect(result.options[0]?.presentation.text).toBe('需要我帮忙吗？');
   });
 
   it('falls back to diverse deterministic plans on invalid LLM output', async () => {

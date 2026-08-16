@@ -32,6 +32,7 @@ export async function runNarrativeTurn(
   gateway: LLMGateway,
   options: NarrativeTurnOptions = {},
 ): Promise<NarrativeTurnResult> {
+  // TODO(Phase 7 成本优化)：Scenario + Options 可合并为 1 次 LLM 调用，将 Turn 从 3 次降为 2 次。
   const [scenario, planning] = await Promise.all([
     generateScenario(context, gateway, options.scenario),
     planAndRenderOptions(context, gateway, options.options),
@@ -50,6 +51,7 @@ export async function runNarrativeTurn(
     selectedOption,
     gateway,
     options.reaction,
+    resolution,
   );
 
   return {

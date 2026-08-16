@@ -8,11 +8,15 @@ export interface RenderOptionOptions {
 
 /** 把 Planning 产物转成玩家可见的 Behavior Object。 */
 export function renderOption(plan: PlannedOption, options: RenderOptionOptions = {}): Option {
-  const tone = options.tone ?? plan.behavior.actions[0] ?? 'neutral';
-  const text = options.text ?? `${plan.behavior.actions.join(' / ')}（${tone}）`;
+  const presentation = plan.presentation ?? {
+    text:
+      options.text ??
+      `${plan.behavior.actions.join(' / ')}（${options.tone ?? plan.behavior.actions[0] ?? 'neutral'}）`,
+    tone: options.tone ?? plan.behavior.actions[0] ?? 'neutral',
+  };
   return optionSchema.parse({
     id: plan.id,
-    presentation: { text, tone },
+    presentation,
     behavior: plan.behavior,
     gameplay: plan.gameplay,
     effects: plan.effects,

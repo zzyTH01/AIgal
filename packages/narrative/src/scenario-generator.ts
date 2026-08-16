@@ -1,9 +1,10 @@
 import type { ModelContext } from '@ag/schemas';
-import type { LLMGateway, LLMRequest } from '@ag/llm';
+import { LLMError, type LLMGateway, type LLMRequest } from '@ag/llm';
 import { generatedScenarioSchema, type GeneratedScenario } from './scenario.js';
 import { parseStructuredResponse } from './structured-parser.js';
 
 export interface ScenarioGeneratorOptions {
+  /** 最多重试次数；实际总调用次数为 maxAttempts + 1。 */
   maxAttempts?: number;
   model?: string;
 }
@@ -20,7 +21,8 @@ export async function generateScenario(
     try {
       const response = await gateway.generate(buildScenarioRequest(context, options));
       return { ...parseStructuredResponse(response.text, generatedScenarioSchema), source: 'llm' };
-    } catch {
+    } catch (error) {
+      if (error instanceof LLMError && !error.retryable) break;
       // Retry; final fallback below.
     }
   }
