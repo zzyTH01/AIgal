@@ -1,7 +1,7 @@
 # AI GALGAME Framework
-## 开发计划 Development Plan v2.0
+## 开发计划 Development Plan v2.1
 
-> 版本：v2.0 ｜ 依据：`AI_GALGAME_Master_Design_v1.0.md`（唯一权威设计基线，当前文档版本 v1.2）
+> 版本：v2.1 ｜ 依据：`AI_GALGAME_Master_Design_v1.0.md`（唯一权威设计基线，当前文档版本 v1.2）
 >
 > 本计划是**可执行的分阶段开发安排**。Claude Code（或任何开发执行者）应按阶段顺序推进：每阶段有明确目标、验收标准、任务清单、测试要求与验证命令，**验收通过后才进入下一阶段**。
 
@@ -351,7 +351,7 @@ pnpm --filter @ag/narrative test && pnpm --filter @ag/llm test
 
 # 9. Phase 6 — Memory / Context
 
-- **状态**：✅ 已完成（2026-08-16）。记忆生命周期、ContextBuilder/Budget 与 Memory→Context→LLM(fixture) 测试通过。
+- **状态**：✅ 已完成（2026-08-16）；审查反馈（`docs/review/phase6-review.md`）已修订：中文检索采用标点分段 + 字符 bigram，衰减时钟从 lastRetrievedAt 起算。
 
 ## 9.1 目标
 实现"角色真的记得你"（Master Design §4.8）。
@@ -528,6 +528,8 @@ pnpm --filter @ag/designer build && pnpm test
 - [ ] Memory / Context / State Inspector。
 - [ ] Golden Test 框架与首批 fixture。
 - [ ] Context Explosion 测试（长 Run 下 Context 是否稳定）。
+- [ ] **Memory 容量/修剪策略（Phase 6 review）**：校准 `records + forgottenIds` 只增不减问题，设置容量上限或修剪策略。
+- [ ] **Memory 参数校准（Phase 6 review）**：用 100 Runs 仿真校准 formation threshold / 初始 strength / 重复反馈转负轮次。
 
 ## 14.4 测试要求
 - Simulation 断言（统计落在合理区间、Ending 分布稳定）。

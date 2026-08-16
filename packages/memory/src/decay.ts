@@ -13,7 +13,11 @@ export function decayedStrength(
   currentDay: number,
   cognition: CognitionState,
 ): number {
-  const elapsedDays = Math.max(0, currentDay - record.createdAt.day);
+  // 强化/回忆（lastRetrievedAt）会重置衰减时钟；否则从创建日开始。
+  const elapsedDays = Math.max(
+    0,
+    currentDay - (record.lastRetrievedAt?.day ?? record.createdAt.day),
+  );
   let lambda = decayLambda(cognition);
   // 负面事件：grudge 越高衰减越慢；obsession 对所有记忆都有保持作用。
   if (record.valence < 0) {
@@ -30,6 +34,8 @@ export function decayMemoryRecord(
 ): MemoryRecord {
   return { ...record, strength: decayedStrength(record, currentDay, cognition) };
 }
+
+// TODO(Phase 11)：records+forgottenIds 只增不减；长 Run 需容量上限/修剪策略与 Context Explosion 联合校准。
 
 /** 对 MemoryState 中全部未遗忘记忆应用衰减，返回新 GameState。 */
 export function decayAllMemories(

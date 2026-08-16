@@ -68,10 +68,28 @@ function calculateRelevance(record: MemoryRecord, query: RetrievalQuery): number
 }
 
 function tokenize(text: string): string[] {
-  return text
-    .toLowerCase()
-    .split(/[^a-z0-9\u4e00-\u9fff]+/i)
+  const normalized = text.toLowerCase();
+  const segments = normalized
+    .split(/[，。！？、；：\s,.!?;:]+/i)
+    .map((segment) => segment.trim())
     .filter(Boolean);
+
+  const tokens: string[] = [];
+  for (const segment of segments) {
+    if (/^[\u4e00-\u9fff]+$/.test(segment)) {
+      // 中文：整段拆成字符 bigram，避免“连续中文 = 单 token 二值匹配”。
+      if (segment.length <= 2) {
+        tokens.push(segment);
+      } else {
+        for (let index = 0; index < segment.length - 1; index += 1) {
+          tokens.push(segment.slice(index, index + 2));
+        }
+      }
+    } else {
+      tokens.push(segment);
+    }
+  }
+  return tokens;
 }
 
 export interface RetrievalOptions {

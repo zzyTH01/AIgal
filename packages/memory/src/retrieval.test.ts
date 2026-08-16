@@ -52,6 +52,43 @@ describe('MemoryRetrieval', () => {
     expect(retrieved[0]?.id).toBe('mem_relevant');
   });
 
+  it('uses Chinese bigram text relevance even without matching tags', () => {
+    const state = makeMemoryGameState();
+    addRecord(state, {
+      id: 'mem_chinese_off',
+      type: 'episodic',
+      content: '那天我们聊了很久。',
+      createdAt: { day: 1, time: '09:00' },
+      importance: 50,
+      emotionalIntensity: 50,
+      valence: 0,
+      strength: 50,
+      accuracy: 90,
+      tags: [],
+      relatedCharacters: [],
+      sourceTurnId: 'turn_off',
+      retrievalCount: 0,
+    });
+    addRecord(state, {
+      id: 'mem_chinese_on',
+      type: 'episodic',
+      content: '玩家陪我在图书馆待到很晚。',
+      createdAt: { day: 1, time: '09:00' },
+      importance: 50,
+      emotionalIntensity: 50,
+      valence: 0,
+      strength: 50,
+      accuracy: 90,
+      tags: [],
+      relatedCharacters: [],
+      sourceTurnId: 'turn_on',
+      retrievalCount: 0,
+    });
+
+    const retrieved = retrieveMemories(state, { text: '图书馆' }, cognition, { topK: 1 });
+    expect(retrieved[0]?.id).toBe('mem_chinese_on');
+  });
+
   it('retrieval reinforces retrieved memories', () => {
     const state = makeMemoryGameState();
     addRecord(state, {

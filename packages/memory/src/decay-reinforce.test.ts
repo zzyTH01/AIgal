@@ -38,6 +38,17 @@ describe('MemoryDecay and Reinforcement', () => {
     );
   });
 
+  it('uses lastRetrievedAt to reset the decay clock', () => {
+    const reinforced: MemoryRecord = {
+      ...makeRecord(80, 1),
+      lastRetrievedAt: { day: 8, time: '09:00' },
+    };
+    const notReinforced = makeRecord(80, 1);
+    expect(decayedStrength(reinforced, 10, cognition)).toBeGreaterThan(
+      decayedStrength(notReinforced, 10, cognition),
+    );
+  });
+
   it('reinforces memory strength and retrieval metadata', () => {
     const state = makeMemoryGameState();
     state.memories.records.mem_1 = makeRecord(42);

@@ -75,6 +75,7 @@ export function formMemory(
     importance: parsed.importance,
     emotionalIntensity: parsed.emotionalIntensity,
     valence: parsed.valence,
+    // TODO(Phase 11)：初始 strength 与 threshold=100 为经验值，留待 100 Runs 仿真校准。
     strength: Math.max(1, parsed.importance * 0.5 + parsed.emotionalIntensity * 0.3),
     accuracy: 90,
     tags: parsed.tags,

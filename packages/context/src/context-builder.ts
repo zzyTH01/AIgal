@@ -34,6 +34,7 @@ export function buildContext(state: GameState, options: ContextBuilderOptions = 
   const budget = allocateContextBudget(capacity);
   const topK = options.memoryTopK ?? Math.max(1, Math.round(budget.memories / 5));
 
+  // Phase 6 机械近似：Phase 9 由 Turn 编排传入基于当前事件的 query 后，文本相关性会更明显。
   const query: RetrievalQuery = options.query ?? {
     tags: state.world.activeEvents.map((event) => event.eventId),
     text: summarizeGameState(state),
