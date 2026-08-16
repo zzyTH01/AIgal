@@ -23,6 +23,21 @@ describe('Turn transaction shell', () => {
     expect(transaction.isCommitted).toBe(true);
   });
 
+  it('delegates day advancement so weekday stays in sync', () => {
+    const state = makeCoreGameState();
+    state.run.dailyProgress = 11;
+    const transaction = startTurn(state);
+    const resolution = transaction.resolveChoice(supportOption);
+
+    expect(resolution.crossedDayBoundary).toBe(true);
+    expect(resolution.state.run.day).toBe(2);
+    expect(resolution.state.run.dailyProgress).toBe(0);
+    expect(resolution.state.run.time).toBe('09:00');
+    expect(resolution.state.world.day).toBe(2);
+    expect(resolution.state.world.time).toBe('09:00');
+    expect(resolution.state.world.weekday).toBe('tuesday');
+  });
+
   it('rolls back to state before turn and allows re-resolution', () => {
     const state = makeCoreGameState();
     const transaction = startTurn(state);

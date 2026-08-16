@@ -9,6 +9,7 @@ import {
   type TurnResult,
 } from '@ag/schemas';
 import { applyDelta, clamp, cloneGameState, validateGameState } from './game-state.js';
+import { advanceDay, isDayComplete } from './progress-engine.js';
 
 export function formatTurnId(runId: string, day: number, turn: number): string {
   return `${runId}/day_${day.toString().padStart(3, '0')}/turn_${turn.toString().padStart(3, '0')}`;
@@ -51,19 +52,15 @@ export function resolveChoice(
   const targetRelationshipId = options.targetRelationshipId ?? findPrimaryRelationshipId(state);
 
   const nextTurn = before.run.turn + 1;
-  const rawProgress = before.run.dailyProgress + parsedOption.gameplay.progress;
-  const crossedDayBoundary = rawProgress >= before.run.dailyProgressLimit;
-  const nextDay = crossedDayBoundary ? before.run.day + 1 : before.run.day;
-  const nextProgress = crossedDayBoundary
-    ? 0
-    : clamp(rawProgress, 0, before.run.dailyProgressLimit);
-  const nextTime = crossedDayBoundary ? (options.nextDayStartTime ?? '09:00') : before.run.time;
+  const nextProgress = clamp(
+    before.run.dailyProgress + parsedOption.gameplay.progress,
+    0,
+    before.run.dailyProgressLimit,
+  );
 
   const runDelta: FinalStateDelta['run'] = {
     turn: nextTurn,
-    day: nextDay,
     dailyProgress: nextProgress,
-    time: nextTime,
   };
 
   const relationships: FinalStateDelta['relationships'] = {};
@@ -94,7 +91,13 @@ export function resolveChoice(
     relationships,
   });
 
-  const nextState = applyDelta(before, directDelta);
+  let nextState = applyDelta(before, directDelta);
+  const crossedDayBoundary = isDayComplete(nextState);
+  if (crossedDayBoundary) {
+    // 天数推进只有 advanceDay 一条权威路径；weekday/time/progress 一并由它推进。
+    nextState = advanceDay(nextState, options.nextDayStartTime ?? '09:00');
+  }
+
   const turnId = formatTurnId(nextState.run.runId, before.run.day, nextTurn);
 
   return {

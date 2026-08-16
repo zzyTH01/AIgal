@@ -28,7 +28,6 @@ export function addDailyProgress(
   const crossed = before < limit && reached >= limit;
 
   next.run.dailyProgress = reached;
-  next.world.currentLocationId = next.run.currentLocationId;
 
   if (!crossed) {
     return { state: next, crossedDayBoundary: false, previousDay, nextDay: previousDay };

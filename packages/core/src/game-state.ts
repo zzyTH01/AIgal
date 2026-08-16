@@ -340,9 +340,12 @@ export function applyDelta(state: GameState, delta: FinalStateDelta): GameState 
       const character = next.characters[characterId];
       if (!character) continue;
       applyMetricChanges(character.psychology, characterDelta.psychology, 0, 100);
-      applyMetricChanges(character.emotion, characterDelta.emotion, 0, 100);
-      if (characterDelta.emotion?.valence) {
-        character.emotion.valence = clamp(characterDelta.emotion.valence.after, -100, 100);
+      const emotionChanges = { ...characterDelta.emotion };
+      const valenceChange = emotionChanges.valence;
+      delete emotionChanges.valence;
+      applyMetricChanges(character.emotion, emotionChanges, 0, 100);
+      if (valenceChange) {
+        character.emotion.valence = clamp(valenceChange.after, -100, 100);
       }
       applyMetricChanges(character.physical, characterDelta.physical, 0, 100);
       if (characterDelta.status !== undefined) character.status = characterDelta.status;

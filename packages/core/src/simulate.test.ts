@@ -11,6 +11,8 @@ describe('simulateNTurns', () => {
     expect(result.ended).toBe(false);
     expect(result.finalState.run.turn).toBe(50);
     expect(result.finalState.run.day).toBeGreaterThan(1);
+    expect(result.finalState.world.day).toBe(result.finalState.run.day);
+    expect(result.finalState.world.time).toBe(result.finalState.run.time);
     expect(validateGameState(result.finalState).success).toBe(true);
     expect(initial.run.turn).toBe(0);
   });
