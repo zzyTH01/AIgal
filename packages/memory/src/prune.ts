@@ -10,6 +10,7 @@ export interface PruneOptions {
 /**
  * Phase 11 容量控制：records/forgottenIds 只增不减问题的修剪策略。
  * 按 strength + importance 排序保留 Top-K；长期记忆获得权重保护。
+ * 注意：这是“硬删除修剪”，超容量记录不会进入 forgottenIds。
  */
 export function pruneMemories(state: GameState, options: PruneOptions = {}): GameState {
   const maxRecords = options.maxRecords ?? 100;

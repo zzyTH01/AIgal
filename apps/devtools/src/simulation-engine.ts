@@ -1,4 +1,11 @@
-import type { EndingDefinition, GameState, MemoryCandidate, Option, TurnResult } from '@ag/schemas';
+import type {
+  EndingDefinition,
+  EventDefinition,
+  GameState,
+  MemoryCandidate,
+  Option,
+  TurnResult,
+} from '@ag/schemas';
 import {
   createGameState,
   defaultRelationship,
@@ -21,6 +28,8 @@ export interface SimulationOptions {
   endings?: EndingDefinition[];
   costPerInputToken?: number;
   costPerOutputToken?: number;
+  /** 模拟世界使用的事件定义；缺省 demoEvents。 */
+  eventDefinitions?: readonly EventDefinition[];
 }
 
 export interface RunSimulationResult {
@@ -108,7 +117,8 @@ export function simulateRun(
 ): RunSimulationResult {
   const rng = new XorShift128Rng(seed);
   const optionsList: Option[] = renderOptions(planDiverseOptions(4));
-  const pool = new EventPool(demoEvents);
+  const eventDefinitions = options.eventDefinitions ?? demoEvents;
+  const pool = new EventPool(eventDefinitions);
   const selectedEventIds: string[] = [];
   const selectedOptionIds: string[] = [];
   const turnResults: TurnResult[] = [];
@@ -132,7 +142,7 @@ export function simulateRun(
       selectedEventIds.push(selectedEvent.eventId);
       state = commitTriggeredEvent(
         state,
-        demoEvents.find((event) => event.eventId === selectedEvent.eventId)!,
+        eventDefinitions.find((event) => event.eventId === selectedEvent.eventId)!,
         selectedEvent,
         pool,
       );
@@ -221,6 +231,7 @@ function aggregateReport(
   }
 
   const completedTurns = results.reduce((sum, result) => sum + result.turnResults.length, 0);
+  // TODO(真实 LLM)：当前为启发式成本估算；接入 usageListener 后替换为真实 token 用量。
   const estimatedCalls = completedTurns * 2;
   const estimatedInputTokens = completedTurns * 1200;
   const estimatedOutputTokens = completedTurns * 400;
