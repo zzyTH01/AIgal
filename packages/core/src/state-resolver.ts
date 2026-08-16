@@ -85,13 +85,20 @@ export function resolveChoice(
   const modifiers: Record<string, number> = {};
 
   if (relationship && targetRelationshipId) {
-    for (const [metric, effect] of Object.entries(option.effects)) {
+    // 行为语义 → 基础 effects 兜底：LLM 未提供/提供不足时，关系数值也能随行为真实变化。
+    const effectiveEffects = { ...deriveBaseEffects(option), ...option.effects };
+    for (const [metric, effect] of Object.entries(effectiveEffects)) {
       if (!isRelationshipNumericMetric(metric)) continue;
       const before = relationship[metric];
 
       // AI 可靠性层：非法/越界 base 被忽略，改用行为规则 fallback。
       const base = sanitizeEffectBase(effect.base, option);
-      const personalityModifier = calculatePersonalityModifier(character, option, metric);
+      const personalityModifier = calculatePersonalityModifier(
+        character,
+        option,
+        metric,
+        relationship,
+      );
       const relationshipModifier = calculateRelationshipModifier(relationship, metric);
       const contextModifier = calculateContextModifier(state, character);
       const emotionModifier = calculateEmotionModifier(character);
@@ -224,10 +231,53 @@ function sanitizeEffectBase(rawBase: number, option: Option): number {
   return 0;
 }
 
+/**
+ * 行为语义 → 基础 effects 的确定性兜底。
+ * LLM 选项未提供/提供不足 effects 时，关系数值仍随行为真实变化。
+ * 仅填充缺失指标；LLM 显式提供的 effects 优先级更高（在 resolveChoice 中覆盖）。
+ */
+export function deriveBaseEffects(option: Option): Record<string, { base: number }> {
+  const words = new Set([...option.behavior.actions, ...option.behavior.intent]);
+  const is = (...candidates: string[]): boolean =>
+    candidates.some((candidate) => words.has(candidate));
+  const bump = (metric: string, delta: number): void => {
+    const current = effectBases[metric];
+    effectBases[metric] = { base: (current?.base ?? 0) + delta };
+  };
+  const effectBases: Record<string, { base: number }> = {};
+
+  if (is('support', 'help', 'protect', 'comfort', 'care', 'encouragement', 'encourage')) {
+    bump('affection', 2);
+    bump('trust', 2);
+  }
+  if (is('chat', 'ask', 'compliment', 'share', 'connect', 'socialize')) {
+    bump('familiarity', 2);
+    bump('trust', 1);
+  }
+  if (is('flirt', 'confess', 'romance')) {
+    bump('attraction', 2);
+    bump('affection', 1);
+  }
+  if (is('challenge', 'tease')) {
+    bump('affection', 1);
+    bump('trust', 1);
+  }
+  if (is('observe', 'wait', 'respect', 'withdraw')) {
+    bump('trust', 1);
+    bump('respect', 1);
+  }
+  if (is('conflict', 'aggressive', 'provoke', 'harm')) {
+    bump('conflict', 2);
+    bump('trust', -2);
+  }
+  return effectBases;
+}
+
 function calculatePersonalityModifier(
   character: ReturnType<typeof findTargetCharacter>,
   option: Option,
   metric: string,
+  relationship?: RelationshipState,
 ): number {
   const personality = character?.personality;
   if (!personality) return 1;
@@ -250,7 +300,12 @@ function calculatePersonalityModifier(
   if (metric === 'affection' || metric === 'attraction') {
     if (isSupport) {
       // TODO(Phase 10/11)：当前映射为硬编码，后续应由 CharacterDefinition/Project 参数数据驱动。
-      if (personality.independence >= 75) return -0.5;
+      if (personality.independence >= 85) {
+        // 高独立角色对关怀起初排斥；随信任上升逐渐软化（傲娇升温曲线），不再永久转负。
+        const trust = relationship?.trust ?? 0;
+        const rejection = ((personality.independence - 85) / 15) * (1 - trust / 100);
+        return clamp(1 - rejection, 0.4, 1.2);
+      }
       return clamp(
         1 + (personality.empathy - 50) / 200 + (personality.sensitivity - 50) / 200,
         0.5,

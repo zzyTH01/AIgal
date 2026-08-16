@@ -40,6 +40,7 @@ function makeDependentState() {
 describe('StateResolver modifier engine', () => {
   it('produces different deltas for the same Option with different Characters', () => {
     const independent = makeCoreGameState();
+    independent.characters.char_mio!.personality.independence = 90;
     const dependent = makeDependentState();
     const rng = ALWAYS_SUCCESS_RNG;
 
@@ -48,9 +49,44 @@ describe('StateResolver modifier engine', () => {
 
     const independentAffection = independentResult.trace.find((t) => t.metric === 'affection')!;
     const dependentAffection = dependentResult.trace.find((t) => t.metric === 'affection')!;
-    expect(independentAffection.delta).toBeLessThan(0);
-    expect(dependentAffection.delta).toBeGreaterThan(0);
-    expect(independentAffection.delta).toBeLessThan(dependentAffection.delta);
+    // 高独立角色对关怀的增益被抑制（软化后仍为正，不再永久转负）；依赖角色增益更高。
+    expect(independentAffection.delta).toBeGreaterThan(0);
+    expect(dependentAffection.delta).toBeGreaterThan(independentAffection.delta);
+  });
+
+  it('derives base effects from behavior when the option carries none', () => {
+    const state = makeDependentState();
+    const noEffectsOption: Option = {
+      ...supportOption,
+      effects: {},
+    };
+    const result = resolveChoice(state, noEffectsOption, ALWAYS_SUCCESS_RNG);
+    const affection = result.trace.find((entry) => entry.metric === 'affection');
+    const trust = result.trace.find((entry) => entry.metric === 'trust');
+    expect(affection).toBeDefined();
+    expect(trust).toBeDefined();
+    expect(affection!.delta).toBeGreaterThan(0);
+    expect(trust!.delta).toBeGreaterThan(0);
+  });
+
+  it('softens care rejection for independent characters as trust grows', () => {
+    const lowTrust = makeCoreGameState();
+    lowTrust.characters.char_mio!.personality.independence = 90;
+    lowTrust.relationships.rel_player_mio!.trust = 0;
+
+    const highTrust = makeCoreGameState();
+    highTrust.characters.char_mio!.personality.independence = 90;
+    highTrust.relationships.rel_player_mio!.trust = 80;
+
+    const lowResult = resolveChoice(lowTrust, supportOption, ALWAYS_SUCCESS_RNG);
+    const highResult = resolveChoice(highTrust, supportOption, ALWAYS_SUCCESS_RNG);
+    const lowMod = lowResult.trace.find(
+      (entry) => entry.metric === 'affection',
+    )!.personalityModifier;
+    const highMod = highResult.trace.find(
+      (entry) => entry.metric === 'affection',
+    )!.personalityModifier;
+    expect(highMod).toBeGreaterThan(lowMod);
   });
 
   it('ignores illegal AI base values and recomputes from behavior rules', () => {
