@@ -10,7 +10,7 @@ describe('Inspectors', () => {
 
     const stateView = inspectState(state);
     expect(stateView.day).toBeGreaterThanOrEqual(1);
-    expect(stateView.characters).toContain('惣流・明日香・兰格雷');
+    expect(stateView.characters).toContain('阿尔托莉雅・潘德拉贡');
     expect(stateView.memoryRecords).toBeLessThanOrEqual(100);
 
     const memoryView = inspectMemory(state);

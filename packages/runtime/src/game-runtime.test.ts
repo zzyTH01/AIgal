@@ -14,7 +14,7 @@ describe('GameRuntime', () => {
     const started = await api.gameStart();
     expect(started.ok).toBe(true);
     expect(validateGameState(started.data!).success).toBe(true);
-    expect(started.data!.world.activeEvents[0]?.eventId).toBe('event_after_battle');
+    expect(started.data!.world.activeEvents[0]?.eventId).toBe('event_classroom_after_school');
 
     const turn = await api.turnStart();
     expect(turn.ok).toBe(true);

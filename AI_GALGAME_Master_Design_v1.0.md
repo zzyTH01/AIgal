@@ -1,7 +1,7 @@
 # AI GALGAME Framework
-## 总设计文档 Master Design v1.2（唯一权威基线）
+## 总设计文档 Master Design v1.3（唯一权威基线）
 
-> 版本：v1.2 ｜ 状态：Phase 1 数据契约已冻结并通过审查修订（可据此进入 Phase 2） ｜ 语言：中文
+> 版本：v1.3 ｜ 状态：Phase 0.5–12 与 Completion Plan A–H 已完成；§11 事件系统升级（Life Engine）为**已设计未实现**，规划见 `EVENT_LIFE_PLAN.md` ｜ 语言：中文
 >
 > 本文档是对此前六份 v0.1 设计文档的分析、综合与定案，是项目**唯一的权威设计基线**。
 > 旧文档已归档至 `docs/design-history/`，仅供追溯设计过程，不再作为实现依据。
@@ -716,3 +716,117 @@ GameProject: project.json / characters/ / world/ / parameters/ / options/
 - `docs/design-history/` 中的六份 v0.1 文档为设计过程存档。
 - 若旧文档与本文档冲突，**以本文档为准**。
 - 本文档 v1.0 之后的所有修订直接改本文件并递增版本号。
+
+---
+
+# 11. 补充设计：事件系统过渡与补充规划（Life Engine）—— ⚠️ 已设计，未实现
+
+> **状态：未完成。** 本节的六个子系统（§11.2–§11.7）为**已定案但尚未实现**的设计承诺。
+> 来源：`AIgal_事件系统过渡与补充规划.md`（作者补充的设计理念，v1.3 正式并入）。
+> 实现规划：`EVENT_LIFE_PLAN.md`（P0–P5 分阶段，对应本节的六个子系统）。
+
+## 11.1 总体目标：从 Event Engine 升级为 Life Engine
+
+当前核心闭环已经成立（场景 → 选项 → 行为 → AI 反应 → 关系/状态更新 → 记忆 → 后续引用 → Ending → 跨局）。但**事件之间缺乏中间层**：
+
+```text
+当前：Event A → Event B → Event C（事件硬切）
+目标：Life → Event → Consequence → Life → Autonomous Event → Memory → Event → ...
+```
+
+核心理念：
+
+> **事件不应该是孤立的剧情节点，而应该是角色生活中的高密度时刻。**
+> 即使玩家没有主动推动剧情，时间仍流逝、角色仍活动/思考/形成记忆/产生新意图、关系仍可能发生微小变化。
+
+## 11.2 Transition System（P0）—— ⚠️ 未实现
+
+事件结束后不直接进入下一个事件，而经过一个轻量 **Transition**：
+
+```text
+Event A → State Update → Transition { 时间 / 地点 / 环境 / 情绪余波 / Pending Intent / 事件调度 } → Event B
+```
+
+- **时间/地点/环境**：时间流逝（下午→傍晚→次日）、地点移动（图书馆→走廊→宿舍）、环境变化（天气/光线/人流/安静喧闹）——本身即自然的过渡，不改变核心剧情但增加世界连续性。
+- **情绪余波**：事件的后果在之后被"回味"（如"角色在晚上回想今天的谈话"），本身是一个过渡事件。
+- **目标：消除"事件硬切"。**
+
+## 11.3 Pending Intent（P1）—— ⚠️ 未实现
+
+**Intent ≠ Memory。** Memory 表达"过去发生过什么"；Intent 表达"角色现在还想做什么"。
+
+```text
+生命周期：产生 → 等待 → 择机触发 → 执行 → 完成 / 取消 / 转化
+```
+
+- 角色产生"未完成意图"（如"想继续向玩家讲述真实历史"），次日择机触发为新事件。
+- 不应每轮都执行，需具备：**优先级、触发条件、最晚触发时间、适合地点、适合时间段、与角色状态相关的权重**。
+- **目标：让昨天发生的事情能够影响明天。**
+
+## 11.4 Character Autonomous Event（P2）—— ⚠️ 未实现
+
+角色不只是"等待玩家输入的 NPC"，而是"拥有自己的行为倾向、需求、记忆和未完成目标的角色"：
+
+```text
+当前：玩家主动寻找 → 玩家选择 → 角色回应
+目标：角色产生意图 → 角色主动寻找玩家 → 触发事件
+```
+
+示例：玩家前一天陪角色讨论历史 → 产生 `pending_intent: 想继续历史讨论` → 次日角色**主动出现**："……等等。昨天你说的那些话，我后来想了很久。"
+**目标：让角色不再只是被动 NPC。**
+
+## 11.5 Micro Events / Life Events（P3）—— ⚠️ 未实现
+
+三层事件结构，填充大事件之间的"空气"：
+
+| 层级 | 职责 | 示例 |
+|---|---|---|
+| **Main Event** | 推动重要剧情 | 历史真相、关系确认、重大冲突、结局 |
+| **Side Event** | 推动关系与支线 | 训练、学习、聊天、共同活动 |
+| **Micro Event** | 维持生活感 | 偶遇、一句话、短暂互动、环境变化、角色独处 |
+
+Micro Event 不负责推动重大剧情，只负责"**让世界看起来正在运行**"（角色朝玩家点头、独处看书、递一杯茶、留下书签）。
+
+## 11.6 Relationship Narrative State（P4）—— ⚠️ 未实现
+
+数值负责"量化"，叙事层负责"角色关系的叙事解释"：
+
+- **relationship_phase**：陌生 → 认识 → 熟悉 → 信任 → 依赖 → 亲密 → 冲突 → 疏远 → 修复（不是简单阈值，而是叙事解释）。
+- **impression**：角色对玩家的动态印象（"愿意倾听"/"有些冒失"），随行为变化。
+- **current_desire**：角色当前想要什么（直接服务于 Autonomous Event）。
+- **unresolved**：角色未解决的问题（未来事件逐渐解决）。
+- **emotional_direction**：趋势而非快照（"角色正在变成什么样"，如"依赖增加"）。
+
+> **原则：数值 ≠ 人格。** `affection=40` 本身无叙事意义；重要的是"角色因为这些经历，开始越来越愿意向玩家倾诉"。
+
+## 11.7 Event Scheduling System（P5）—— ⚠️ 未实现
+
+统一调度器，管理 Main / Side / Micro / Autonomous / Transition 事件：
+
+```text
+World + Character + Relationship + Memory + Pending Intent → Event Pool → Eligibility Filter
+→ Weight Calculation（动态权重）→ Event Selection → Event Generation
+```
+
+权重受 trust / affection / conflict / stress / security / memory / relationship_phase / pending_intent / recent_events / time / location 共同影响。
+示例：trust 高 + 未完成倾诉意图 + 地点=图书馆 + 时间=傍晚 → **Autonomous History Event 权重显著提高**。
+
+## 11.8 与 BAD END 模板的关系
+
+BAD END 已形成完整因果链（挑衅 → conflict 上升 → BAD END → Ending Archive → Knowledge → PermanentModifier → 下一局继承），**不需要推翻**。把同样的"因果链"设计扩展到正常剧情：玩家行为 → State Change → Narrative Consequence → Memory → Pending Intent → Autonomous Event → Relationship Phase → 新的行为倾向。**让 BAD END 不再是唯一拥有因果链的系统。**
+
+## 11.9 核心设计原则（六条）
+
+1. **不要为了填充而填充**：过渡的意义是建立因果连续性，而非增加文本量。
+2. **Memory ≠ Intent**：两者必须分离（过去 vs 现在想做什么）。
+3. **数值 ≠ 人格**：数值变化应逐渐转化为人格和关系变化。
+4. **玩家不是唯一行动者**：角色必须拥有一定程度的自主行为。
+5. **不是所有事件都需要玩家选择**：生活包含主事件/小事件/自动事件/过渡/环境变化。
+6. **事件应该产生后果**：`Event → Memory → State → Intent → Future Behavior`。
+
+## 11.10 最终愿景
+
+> **Event System 是基础设施；Transition System 是连接；Memory 是过去；Intent 是未来；Character State 是现在。**
+> 最终构成：**一个能够在玩家参与下持续演化的 AI Character Life System。**
+
+实现优先级（详见 `EVENT_LIFE_PLAN.md`）：**P0 Transition → P1 Pending Intent → P2 Autonomous Event → P3 Micro Event → P4 Relationship Narrative State → P5 Event Scheduler**。

@@ -50,7 +50,7 @@ async function verifyMemoryInContext(): Promise<boolean> {
     state,
     {
       type: 'episodic',
-      content: '玩家曾在雨天陪明日香整理旧物。',
+      content: '玩家曾在雨天陪阿尔托莉雅整理旧物。',
       importance: 70,
       emotionalIntensity: 60,
       valence: 25,
