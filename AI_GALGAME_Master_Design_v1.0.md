@@ -1,7 +1,8 @@
 # AI GALGAME Framework
-## 总设计文档 Master Design v1.3（唯一权威基线）
+## 总设计文档 Master Design v1.4（唯一权威基线）
 
-> 版本：v1.3 ｜ 状态：Phase 0.5–12 与 Completion Plan A–H 已完成；§11 事件系统升级（Life Engine）为**已设计未实现**，规划见 `EVENT_LIFE_PLAN.md` ｜ 语言：中文
+> 版本：v1.4 ｜ 状态：Phase 0.5–12 与 Completion Plan A–H 已完成；§11 事件系统升级（Life Engine）为**已设计未实现**，规划见 `EVENT_LIFE_PLAN.md` ｜ 语言：中文
+> 变更记录：v1.4（2026-08-21）§11.2 Transition 补充**表现层设计**（旁白+对话文段生成、Memory 联动、合并调用、日内时间流动）；v1.3 并入事件系统补充规划。
 >
 > 本文档是对此前六份 v0.1 设计文档的分析、综合与定案，是项目**唯一的权威设计基线**。
 > 旧文档已归档至 `docs/design-history/`，仅供追溯设计过程，不再作为实现依据。
@@ -747,9 +748,22 @@ GameProject: project.json / characters/ / world/ / parameters/ / options/
 Event A → State Update → Transition { 时间 / 地点 / 环境 / 情绪余波 / Pending Intent / 事件调度 } → Event B
 ```
 
-- **时间/地点/环境**：时间流逝（下午→傍晚→次日）、地点移动（图书馆→走廊→宿舍）、环境变化（天气/光线/人流/安静喧闹）——本身即自然的过渡，不改变核心剧情但增加世界连续性。
+- **时间/地点/环境**：时间流逝（下午→傍晚→次日）、地点移动（图书馆→走廊→宿舍）、环境变化（天气/光线/人流/安静喧闹）——本身即自然的过渡，不改变核心剧情但增加世界连续性。**前提：日内时间必须随 Turn 流动**（当前实现 time 仅在跨天重置，需先冻结日内时段推进契约）。
 - **情绪余波**：事件的后果在之后被"回味"（如"角色在晚上回想今天的谈话"），本身是一个过渡事件。
 - **目标：消除"事件硬切"。**
+
+### 11.2.1 过渡的表现层：旁白与对话文段（v1.4 补充）
+
+Transition 不只是状态量，必须有**可读的过渡文段**，在相邻两个选项节点之间自动呈现：
+
+- **表现形式**：旁白（narration）+ 角色对话（dialogues[]），由 Narrative Engine 按 §3.2 双通道生成并经校验；无 LLM 时走确定性模板 fallback，守住 §9.1 纯文本闭环验收基线。
+- **内容承接（前后选项联动）**：文段必须可追溯——引用上一轮的选择结果（reaction / secondaryDelta）或铺垫下一场景；禁止无因果的空降过渡。
+- **Memory 联动三件套**（过渡是记忆系统的消费者兼生产者）：
+  1. **检索供素材**：生成前按当前情境检索 Top-K 相关记忆，作为"回味什么"的候选；
+  2. **引用即强化**：被文段实际引用的记忆触发 Reinforcement（复用 `reinforceMemoryRecord`）；
+  3. **回想产新忆**："回想"行为本身产出 `memoryCandidate` 经 Formation 入库——让昨天的事通过过渡持续影响今天。
+- **LLM Call Minimization 不破坏**：默认将过渡段**并入下一次 Scenario 调用**（prompt 要求先输出过场文段再输出场景），保持每 Turn 2 次调用；独立第 3 次调用仅作为可选配置。
+- **接入点**：`chooseOption` commit 之后、下一轮事件选择与场景生成之前；生成的文段随 `TransitionRecord.narrative` 持久化（回放 / Turn Debugger / UI 展示）。
 
 ## 11.3 Pending Intent（P1）—— ⚠️ 未实现
 

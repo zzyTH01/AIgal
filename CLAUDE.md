@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **AI GALGAME Framework**（tavern-gal）：一个以 SillyTavern 为可选 AI Runtime、以 GALGAME 选择式交互为表现形式、以 Game State 为核心、由 AI 动态叙事 + Roguelike 机制驱动的 AI 叙事游戏框架。
 
-当前仓库处于**Completion Plan v1.1 已执行 + 2026-08 审计修复**阶段：权威架构由 `AI_GALGAME_Master_Design_v1.0.md` 定义（**注意：文件名保留 v1.0，内容版本已是 v1.3**，其 §11"Life Engine"六个子系统为已定案但未实现的设计），`COMPLETION_PLAN.md` 记录 Phase A–H 补全结果。Phase 0.5–12 与补全计划已落地并通过自动化验收，但部分组件曾"实现未接线"，已于 2026-08-21 审计中接线（见 `docs/review/doc-vs-impl-audit-2026-08-21.md`）。任何实现工作开始前，必须先读权威设计文档与开发计划，不要凭推测自行发明架构。
+当前仓库处于**Completion Plan v1.1 已执行 + 2026-08 审计修复**阶段：权威架构由 `AI_GALGAME_Master_Design_v1.0.md` 定义（**注意：文件名保留 v1.0，内容版本已是 v1.4**，其 §11"Life Engine"六个子系统为已定案但未实现的设计，§11.2.1 定义了过渡文段的表现层与 Memory 联动），`COMPLETION_PLAN.md` 记录 Phase A–H 补全结果。Phase 0.5–12 与补全计划已落地并通过自动化验收，但部分组件曾"实现未接线"，已于 2026-08-21 审计中接线（见 `docs/review/doc-vs-impl-audit-2026-08-21.md`）。任何实现工作开始前，必须先读权威设计文档与开发计划，不要凭推测自行发明架构。
 
 ### 权威文档（唯一事实来源）
 
