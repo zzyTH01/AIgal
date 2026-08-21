@@ -113,6 +113,10 @@ pnpm --filter @ag/world test && pnpm --filter @ag/narrative test && pnpm --filte
 
 `@ag/schemas`（transition 契约 + narrative 字段 + 日内时间）、`@ag/world`（时间/地点/环境）、`@ag/narrative`（generateTransition 与合并 prompt）、`@ag/memory`（检索素材/强化/新候选）、`@ag/runtime`（Turn 编排接入 Transition）。
 
+## 2.6 技术设计
+
+接口、类与实现顺序详见文末 [§11 P0 技术设计](#11-p0-技术设计接口类与实现顺序)。
+
 ---
 
 # 3. Phase P1 — Pending Intent
@@ -318,3 +322,216 @@ P0 Transition → P1 Pending Intent → P2 Autonomous Event → P3 Micro Event �
 - **P4 与 P1/P2 互馈**：narrative state（desire/unresolved）驱动意图，意图反馈到叙事状态。
 - **P5 收口**：统一调度所有事件层级。
 - 每阶段验收通过才进入下一阶段；契约变更同步更新 Master Design §11 与 `docs/review/known-issues.md`。
+
+---
+
+# 11. P0 技术设计：接口、类与实现顺序
+
+> 本节是 P0 的可执行技术方案，签名与现有代码库约定对齐（Zod strict、`schemaVersion: '0.1.0'`、双通道 `source: 'llm' | 'fallback'`）。
+
+## 11.1 契约层（@ag/schemas，新文件 `src/transition.ts`）
+
+```typescript
+// 过渡对话行：narrator 表示旁白
+export const transitionDialogueSchema = z
+  .object({
+    speakerId: z.string(), // characterId 或 'narrator' / 'player'
+    text: z.string(),
+  })
+  .strict();
+
+// 过渡文段（表现层）
+export const transitionNarrativeSchema = z
+  .object({
+    narration: z.string().min(1),
+    dialogues: z.array(transitionDialogueSchema),
+    source: z.enum(['llm', 'fallback']),
+  })
+  .strict();
+
+// 过渡记录（状态层 + 表现层）
+export const transitionRecordSchema = z
+  .object({
+    schemaVersion: schemaVersionSchema,
+    turnId: idSchema, // 本过渡所属 Turn（即其开场过场）
+    time: z
+      .object({
+        previous: timeStringSchema,
+        current: timeStringSchema,
+        crossedDayBoundary: z.boolean(),
+      })
+      .strict(),
+    location: z
+      .object({
+        fromLocationId: idSchema.nullable(), // 首个 Turn 无前序地点时为 null
+        toLocationId: idSchema,
+      })
+      .strict(),
+    environment: z.record(z.string(), z.union([z.string(), z.number()])).optional(), // weather/light/crowd…
+    emotionalAftermath: z
+      .object({
+        referencedMemoryIds: z.array(idSchema), // 文段引用的记忆（Memory 联动②的依据）
+        summary: z.string(), // 回味摘要
+      })
+      .optional(),
+    pendingIntentIds: z.array(idSchema).default([]), // P1 预留，P0 恒为 []
+    narrative: transitionNarrativeSchema,
+  })
+  .strict();
+
+// LLM 结构化通道（合并调用内嵌于 combined 响应 / 独立调用响应）
+export const transitionLlmSchema = z
+  .object({
+    narration: z.string().min(1),
+    dialogues: z.array(transitionDialogueSchema),
+    referencedMemoryIds: z.array(z.string()).default([]),
+    memoryCandidate: memoryCandidateSchema.optional(), // Memory 联动③："回想"产新忆
+  })
+  .strict();
+```
+
+**既有契约扩展**（均为 optional 字段，旧存档兼容）：
+
+```typescript
+// turn-result.ts
+turnResultSchema: { …, transition: transitionRecordSchema.optional() }
+
+// world.ts 不改 time 格式（保持 HH:mm 字符串），日内流动由推进规则产生
+```
+
+## 11.2 Core 层：日内时间推进（`packages/core/src/progress-engine.ts`）
+
+```typescript
+export const DEFAULT_TURN_TIME_STEP_MINUTES = 30;
+
+/** 日内时间推进的唯一权威路径；跨天仍由 advanceDay 重置为 nextDayStartTime。 */
+export function advanceIntradayTime(state: GameState, stepMinutes: number): GameState;
+// 同时写 run.time 与 world.time；到达 23:59 后封顶等待跨天（Day 结束仍由 DailyProgress 驱动）
+
+// turn.ts 扩展：
+export interface ResolveChoiceOptions {
+  …
+  /** 每 Turn 日内推进分钟数；0 关闭（兼容旧 golden）。缺省 DEFAULT_TURN_TIME_STEP_MINUTES。 */
+  turnTimeStepMinutes?: number;
+}
+// applyChoiceToState：crossedDayBoundary === false 时调用 advanceIntradayTime
+```
+
+## 11.3 Narrative 层：过渡文段生成（`packages/narrative/src/transition-generator.ts`）
+
+```typescript
+export interface TransitionContextInput {
+  npcName: string;
+  lastTurn?: {
+    // 来自 runtime.lastTurn（内容承接：引用上一选择的结果）
+    optionActions: string[];
+    reactionSummary: string; // reaction.narrative 截断 + secondaryDelta 摘要
+    newMemoryContents: string[];
+  };
+  retrievedMemories: MemoryRecord[]; // Memory 联动①：buildContext 的检索结果
+  timeChange: TransitionRecord['time'];
+  locationChange: TransitionRecord['location'];
+  environmentChanges?: Record<string, string | number>;
+}
+
+export interface TransitionGeneratorOptions extends ReactionGeneratorOptions {}
+
+export interface TransitionNarrativeResult {
+  narration: string;
+  dialogues: TransitionDialogue[];
+  referencedMemoryIds: string[]; // 仅允许 ⊆ input.retrievedMemories 的 id（引擎校验过滤）
+  memoryCandidate?: MemoryCandidate;
+  source: 'llm' | 'fallback';
+}
+
+/** 独立生成路径（可选第 3 次调用）；默认走 §11.4 合并路径。 */
+export async function generateTransition(
+  input: TransitionContextInput,
+  gateway: LLMGateway,
+  options: TransitionGeneratorOptions = {},
+): Promise<TransitionNarrativeResult>;
+
+export function fallbackTransition(input: TransitionContextInput): TransitionNarrativeResult;
+// 模板示例：「（{time.current}，{location}）{environment 一句}……{角色}似乎还在想着刚才的事。」
+```
+
+**Prompt 要点**：systemRules 复用 `context.systemRules`；user 消息包含 `[上一轮]`（optionActions/reactionSummary）、`[检索记忆N]`（id+content）、`[时间/地点/环境变化]`；要求输出严格 JSON（transitionLlmSchema），并声明"旁白描写环境与时间流逝，对话表现角色的余波情绪；若检索记忆与本过渡相关，用 referencedMemoryIds 标注并在文段中自然呼应"。
+
+## 11.4 合并调用（`packages/narrative/src/combined-generator.ts`，默认路径）
+
+```typescript
+combinedGenerationSchema = z.object({
+  transition: transitionLlmSchema.optional(),   // LLM 缺失时回退 fallbackTransition
+  scenario: generatedScenarioSchema,
+  options: z.array(plannedOptionSchema).min(1),
+}).strict();
+
+CombinedGeneratorOptions {
+  …
+  transition?: TransitionContextInput;           // 提供则 prompt 追加过场要求
+}
+ScenarioOptionsResult {
+  …
+  transition?: TransitionNarrativeResult;        // 与 scenario 同 source
+}
+// buildCombinedRequest 在消息首部追加：
+// 「在场景之前先输出 transition 段：旁白+对话的过场文段，衔接上一轮结果与本场景。」
+```
+
+**调用次数不变：每 Turn 仍为 2 次（combined + reaction）。**
+
+## 11.5 Runtime 管线（`packages/runtime/src/game-runtime.ts`）
+
+```typescript
+GameRuntime 新增私有成员：
+  private pendingTransition?: TransitionRecord;
+
+startTurn() 管线（事件选择之后）：
+  ① buildContext(...)                                  // 检索素材（recency 已激活）
+  ② generateScenarioAndOptions(..., { transition: toTransitionInput(lastTurn, context, changes) })
+  ③ 组装 TransitionRecord：状态字段（time/location/environment）由 runtime 记账，
+     narrative 用 combined 结果（或 fallbackTransition）
+  ④ Memory 联动②：referencedMemoryIds 过滤（⊆ 检索集）后逐条 reinforceMemoryRecord(next, id, day)
+     —— 注意与 #14 冷却协同：同日重复引用不重复强化
+  ⑤ Memory 联动③：transition.memoryCandidate → formMemory(next, candidate, cognition)
+  ⑥ this.pendingTransition = record；this.state = next
+
+chooseOption()：
+  transaction.setTransition(this.pendingTransition)    // 新 setter，镜像 setReaction
+  commitTurn() 后 this.pendingTransition = undefined
+
+视图扩展：
+  StartTurnView { …, transition?: TransitionRecord }   // UI 在选项列表前渲染过场
+  ChooseTurnView { …, }                                // 不变（transition 已入 TurnResult）
+```
+
+`TurnTransaction` 扩展：`setTransition(record: TransitionRecord): void`（镜像 `setReaction`，commitTurn 时写入 `TurnResult.transition`）。
+
+## 11.6 UI（apps/player，最小改动）
+
+- `components/TransitionPanel.tsx`：渲染 `narration`（斜体/居中样式）与 `dialogues`（说话人名 + 台词）；props `{ transition }`。
+- `App.tsx`：`startTurn` 返回的 `transition` 存入 state，置于 NarrativePanel 之上；打字机复用 Typewriter。
+
+## 11.7 devtools（验证工具）
+
+- `live-verify.ts`：perTurn 增加 `transitionSource`、`transitionReferencedMemories` 两列；summary 增加 transitionLlmRatio。
+- P0 完成后重跑真实 LLM 30 Turn，对照 §2.3 验收标准出报告。
+
+## 11.8 实现顺序（7 步，每步含测试）
+
+| 步骤 | 内容                                                                    | 测试                                                                                                            | 依赖  |
+| ---- | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- | ----- |
+| S1   | schemas：`transition.ts` 三契约 + TurnResult.optional 扩展              | schema parse/round-trip                                                                                         | —     |
+| S2   | core：advanceIntradayTime + resolveChoice 接线（`turnTimeStepMinutes`） | core 单测：日内推进/封顶/跨天重置/step=0 关闭                                                                   | S1    |
+| S3   | narrative：generateTransition + fallbackTransition（独立路径）          | fixture LLM 解析、非法 JSON→retry→fallback、referencedMemoryIds 白名单过滤                                      | S1    |
+| S4   | combined 合并路径：schema/prompt/result 扩展                            | prompt 含过场要求；LLM 缺 transition 时降级不失败                                                               | S3    |
+| S5   | runtime 管线：pendingTransition/setTransition/Memory 三件套/视图扩展    | 全链路单测：transition 入 TurnResult、被引用记忆被强化（受冷却约束）、memoryCandidate 入库、调用次数仍为 2/Turn | S2+S4 |
+| S6   | player：TransitionPanel + App 接线                                      | 渲染测试（jsdom）                                                                                               | S5    |
+| S7   | devtools：live-verify 增强 + 真实 LLM 30 Turn 复验报告                  | 对照 §2.3 七条验收标准逐项打勾                                                                                  | S5    |
+
+## 11.9 兼容性影响与风险
+
+- **Golden/simulate 指纹变化**：S2 时间流动改变确定性仿真轨迹——golden 测试为同 seed 自比较，不受影响；simulate 统计基线需在 P0 验收时重新采集一次。
+- **旧存档兼容**：transition 为 optional；旧档 load 后首个 startTurn 无 lastTurn/pendingTransition，走 null 分支（fromLocationId=null、无余波）。
+- **冷却协同**：过渡强化与 #14 冷却共用 `reinforceMemoryRecord`，同日多次引用天然去重。
+- **prompt 长度**：combined 消息增加过渡要求与记忆行，maxTokens 维持 1536 观察截断率；必要时升到 1792。
