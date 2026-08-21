@@ -184,8 +184,8 @@ Event B
 
 ```yaml
 time:
-  previous: "afternoon"
-  current: "evening"
+  previous: 'afternoon'
+  current: 'evening'
 ```
 
 或者：
@@ -416,8 +416,8 @@ intent:
   priority: 0.7
 
   conditions:
-    trust: ">= 10"
-    previous_event: "history_discussion"
+    trust: '>= 10'
+    previous_event: 'history_discussion'
 
   preferred_locations:
     - library
@@ -538,7 +538,7 @@ security
 
 ```yaml
 relationship_phase:
-  current: "熟悉"
+  current: '熟悉'
 ```
 
 可以逐渐发展：
@@ -573,9 +573,9 @@ relationship_phase:
 
 ```yaml
 impression:
-  - "愿意倾听"
-  - "有些冒失"
-  - "似乎真的理解我"
+  - '愿意倾听'
+  - '有些冒失'
+  - '似乎真的理解我'
 ```
 
 这些印象可以随着玩家行为变化。
@@ -600,8 +600,8 @@ impression:
 
 ```yaml
 current_desire:
-  - "想继续讨论历史"
-  - "想了解玩家的过去"
+  - '想继续讨论历史'
+  - '想了解玩家的过去'
 ```
 
 这直接服务于 Autonomous Event。
@@ -614,8 +614,8 @@ current_desire:
 
 ```yaml
 unresolved:
-  - "为什么玩家一直关注自己"
-  - "玩家究竟怎么看待自己的过去"
+  - '为什么玩家一直关注自己'
+  - '玩家究竟怎么看待自己的过去'
 ```
 
 这些问题可以在未来事件中逐渐解决。
@@ -628,8 +628,8 @@ unresolved:
 
 ```yaml
 emotional_direction:
-  previous: "谨慎"
-  current: "依赖增加"
+  previous: '谨慎'
+  current: '依赖增加'
 ```
 
 重点不是保存“角色现在是多少”，而是保存：

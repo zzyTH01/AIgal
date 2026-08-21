@@ -60,6 +60,7 @@
 
 ### 13. `pruneMemories` 为硬删除修剪
 - 超容量记忆直接删除，不进 `forgottenIds`（语义"修剪"≠"遗忘"）。
+- **2026-08-21 更新**：修剪本身仍为硬删除语义，但已从"仅 devtools"接入 `GameRuntime.chooseOption` 主路径（`memoryPruneLimit` 可配，默认 100），主游玩路径记忆无限增长风险消除。
 
 ---
 
@@ -85,4 +86,14 @@
 - **#4 POV/角色定位**：`combined-generator` prompt 新增【角色定位】段——“你是玩家，正在与「NPC」互动；场景用第二人称描写玩家眼前所见；选项是玩家对 NPC 的行动”；`reaction-generator` 新增“你现在扮演「NPC」，回应玩家；不要替玩家说话”。
 - **#5 检索记忆注入**：combined / reaction prompt 均注入 `[检索记忆N]`、`[当前事件]`、`[近期事件]`，并要求相关时自然呼应。
 - 新增测试：断言 prompt 包含玩家 POV、NPC 名、检索记忆内容。
+
+## ✅ 修订记录（2026-08-21 审计接线修复）
+
+> 详见 `doc-vs-impl-audit-2026-08-21.md`。此前"实现未接线"的组件已接入生产路径：
+
+- `ContextCache` 接入 `GameRuntime.startTurn`（stable summary 进 system prompt，hit/miss 经 `getContextCacheStats()` 可观测）。
+- 检索强化 `reinforceMemoryRecord` 接入 startTurn（Retrieval→Reinforcement 设计语义落地）。
+- `pruneMemories` 接入 chooseOption 主路径（#13 风险消除）。
+- 一致性规则 `RuntimeConfig.consistency` 注入 Scenario+Reaction（含此前完全绕过校验的合并生成器路径）。
+- `llmMaxAttempts` 可配置（原写死 1）。
 - 回归：`pnpm --filter @ag/narrative test` 20/20 通过。

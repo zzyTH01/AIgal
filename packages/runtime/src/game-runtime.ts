@@ -22,8 +22,8 @@ import {
 } from '@ag/core';
 import { EventPool, XorShift128Rng, commitTriggeredEvent } from '@ag/world';
 import { MemorySaveRepository, type SaveRepository } from '@ag/persistence';
-import { buildContext } from '@ag/context';
-import { formMemory, consolidateMemories } from '@ag/memory';
+import { buildContext, ContextCache, type ContextCacheStats } from '@ag/context';
+import { formMemory, consolidateMemories, reinforceMemoryRecord, pruneMemories } from '@ag/memory';
 import {
   generateScenarioAndOptions,
   generateReaction,
@@ -50,6 +50,15 @@ export interface RuntimeConfig {
   persistence?: SaveRepository;
   /** Project Policy：进入 system prompt 与生成约束。 */
   policy?: ProjectPolicy;
+  /** LLM 生成失败重试次数（总调用 = maxAttempts + 1）；缺省 1。 */
+  llmMaxAttempts?: number;
+  /** 记忆容量上限，超过后按 strength+importance 修剪；缺省 100。 */
+  memoryPruneLimit?: number;
+  /** 叙事一致性规则：作用于 Scenario 与 Reaction 校验（U-4）。 */
+  consistency?: {
+    forbiddenTopics?: string[];
+    allowedCharacters?: string[];
+  };
 }
 
 export interface StartTurnView {
@@ -151,6 +160,10 @@ export class GameRuntime {
   private currentScenario?: StartTurnView['scenario'];
   private lastTurn?: TurnResult;
   private readonly eventPool: EventPool;
+  private readonly contextCache = new ContextCache();
+  private readonly llmMaxAttempts: number;
+  private readonly memoryPruneLimit: number;
+  private readonly consistency?: { forbiddenTopics?: string[]; allowedCharacters?: string[] };
 
   constructor(config: RuntimeConfig = {}) {
     this.character = config.character ?? demoCharacter;
@@ -164,6 +177,9 @@ export class GameRuntime {
           : DEMO_LLM);
     this.persistence = config.persistence ?? new MemorySaveRepository();
     this.policy = config.policy;
+    this.llmMaxAttempts = config.llmMaxAttempts ?? 1;
+    this.memoryPruneLimit = config.memoryPruneLimit ?? 100;
+    this.consistency = config.consistency;
     this.configuredRng = config.rng;
     this.rng = config.rng ?? new XorShift128Rng(20260816);
     this.eventPool = new EventPool(this.eventDefinitions);
@@ -176,6 +192,10 @@ export class GameRuntime {
 
   getCurrentOptions(): Option[] {
     return structuredClone(this.currentOptions);
+  }
+
+  getContextCacheStats(): ContextCacheStats {
+    return this.contextCache.getStats();
   }
 
   startGame(seed = 20260816): GameState {
@@ -236,11 +256,23 @@ export class GameRuntime {
     const context = buildContext(next, {
       characterId: this.character.characterId,
       systemRules: buildSystemRules(this.character.identity.name, this.policy),
+      cache: this.contextCache,
       currentEvent: selectedEvent,
       query: { tags: selectedEvent ? [selectedEvent.eventId] : ['library'] },
     });
+
+    // Retrieval → Reinforcement：本轮被召回的记忆按设计语义获得强化。
+    const retrievalCognition = next.characters[this.character.characterId]?.cognition;
+    if (retrievalCognition && context.retrievedMemories.length > 0) {
+      for (const record of context.retrievedMemories) {
+        next = reinforceMemoryRecord(next, record.id, next.run.day);
+      }
+      this.state = next;
+    }
+
     const generated = await generateScenarioAndOptions(context, this.gateway, {
-      maxAttempts: 1,
+      maxAttempts: this.llmMaxAttempts,
+      consistency: this.consistency,
     });
     this.context = context;
     this.currentOptions = generated.options;
@@ -270,7 +302,7 @@ export class GameRuntime {
       state,
       option,
       this.gateway,
-      { maxAttempts: 1 },
+      { maxAttempts: this.llmMaxAttempts, consistency: this.consistency },
       resolution,
     );
 
@@ -288,6 +320,7 @@ export class GameRuntime {
         next = consolidateMemories(next, state.run.day, cognition);
       }
     }
+    next = pruneMemories(next, { maxRecords: this.memoryPruneLimit });
     transaction.settle(() => next);
     transaction.setSecondaryDelta(secondaryDelta);
 

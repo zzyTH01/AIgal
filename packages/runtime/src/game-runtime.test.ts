@@ -166,4 +166,177 @@ describe('GameRuntime', () => {
     expect(restored.getState().run.runId).toBe('run_001');
     await rm(dir, { recursive: true, force: true });
   });
+
+  it('reinforces retrieved memories on context assembly', async () => {
+    const runtime = new GameRuntime();
+    runtime.startGame();
+    const turn = await runtime.startTurn();
+    await runtime.chooseOption(turn.options[0]!.id);
+    const before = Object.values(runtime.getState().memories.records);
+    expect(before.length).toBeGreaterThan(0);
+
+    await runtime.startTurn();
+    const after = runtime.getState().memories.records;
+    for (const record of before) {
+      const updated = after[record.id];
+      expect(updated).toBeDefined();
+      expect(updated!.retrievalCount).toBe(record.retrievalCount + 1);
+      expect(updated!.strength).toBeGreaterThanOrEqual(record.strength);
+      expect(updated!.lastRetrievedAt?.day).toBe(runtime.getState().run.day);
+    }
+  });
+
+  it('exposes context cache stats that improve across turns', async () => {
+    const runtime = new GameRuntime();
+    runtime.startGame();
+    await runtime.startTurn();
+    const first = runtime.getContextCacheStats();
+    expect(first.misses).toBeGreaterThan(0);
+
+    await runtime.chooseOption((await runtime.getCurrentOptions())[0]?.id ?? '');
+    await runtime.startTurn();
+    const second = runtime.getContextCacheStats();
+    expect(second.hits).toBeGreaterThan(first.hits);
+  });
+
+  it('prunes memories beyond the configured limit', async () => {
+    const runtime = new GameRuntime({ memoryPruneLimit: 2 });
+    runtime.startGame();
+    for (let i = 0; i < 3; i += 1) {
+      const turn = await runtime.startTurn();
+      await runtime.chooseOption(turn.options[0]!.id);
+    }
+    expect(Object.keys(runtime.getState().memories.records).length).toBeLessThanOrEqual(2);
+  });
+
+  it('applies consistency rules to scenario and reaction generation', async () => {
+    const provider = new TestProvider((request) =>
+      request.messages.some((message) => message.content.includes('行为选项'))
+        ? {
+            text: JSON.stringify({
+              scenario: { narrative: '场景中出现禁忌词', structured: {} },
+              options: [
+                {
+                  id: 'o1',
+                  presentation: { text: '选项一', tone: 'neutral' },
+                  behavior: { actions: ['chat', 'ask'], intent: ['connect'], risk: 0.1 },
+                  gameplay: { progress: 1 },
+                  effects: {},
+                  conditions: {},
+                  generation: {
+                    must_fit_character: true,
+                    must_fit_context: true,
+                    variation: 'medium',
+                  },
+                },
+                {
+                  id: 'o2',
+                  presentation: { text: '选项二', tone: 'neutral' },
+                  behavior: { actions: ['observe', 'wait'], intent: ['respect'], risk: 0.1 },
+                  gameplay: { progress: 0 },
+                  effects: {},
+                  conditions: {},
+                  generation: {
+                    must_fit_character: true,
+                    must_fit_context: true,
+                    variation: 'medium',
+                  },
+                },
+                {
+                  id: 'o3',
+                  presentation: { text: '选项三', tone: 'neutral' },
+                  behavior: { actions: ['approach', 'support'], intent: ['care'], risk: 0.1 },
+                  gameplay: { progress: 2 },
+                  effects: {},
+                  conditions: {},
+                  generation: {
+                    must_fit_character: true,
+                    must_fit_context: true,
+                    variation: 'medium',
+                  },
+                },
+                {
+                  id: 'o4',
+                  presentation: { text: '选项四', tone: 'neutral' },
+                  behavior: { actions: ['challenge', 'confess'], intent: ['romance'], risk: 0.1 },
+                  gameplay: { progress: 2 },
+                  effects: {},
+                  conditions: {},
+                  generation: {
+                    must_fit_character: true,
+                    must_fit_context: true,
+                    variation: 'medium',
+                  },
+                },
+              ],
+            }),
+          }
+        : { text: JSON.stringify({ narrative: '回应包含禁忌词', structured: {} }) },
+    );
+    const runtime = new GameRuntime({
+      gateway: provider,
+      consistency: { forbiddenTopics: ['禁忌词'] },
+    });
+    runtime.startGame();
+    const turn = await runtime.startTurn();
+    expect(turn.scenario.source).toBe('fallback');
+
+    const choice = await runtime.chooseOption(turn.options[0]!.id);
+    expect(choice.reactionText).toBe('……（NPC 没有回应。）');
+  });
+
+  it('retries flaky LLM calls according to llmMaxAttempts', async () => {
+    let calls = 0;
+    const combinedPayload = JSON.stringify({
+      scenario: { narrative: '重试后的场景', structured: {} },
+      options: [
+        {
+          id: 'o1',
+          presentation: { text: '选项一', tone: 'neutral' },
+          behavior: { actions: ['chat', 'ask'], intent: ['connect'], risk: 0.1 },
+          gameplay: { progress: 1 },
+          effects: {},
+          conditions: {},
+          generation: { must_fit_character: true, must_fit_context: true, variation: 'medium' },
+        },
+        {
+          id: 'o2',
+          presentation: { text: '选项二', tone: 'neutral' },
+          behavior: { actions: ['observe', 'wait'], intent: ['respect'], risk: 0.1 },
+          gameplay: { progress: 0 },
+          effects: {},
+          conditions: {},
+          generation: { must_fit_character: true, must_fit_context: true, variation: 'medium' },
+        },
+        {
+          id: 'o3',
+          presentation: { text: '选项三', tone: 'neutral' },
+          behavior: { actions: ['approach', 'support'], intent: ['care'], risk: 0.1 },
+          gameplay: { progress: 2 },
+          effects: {},
+          conditions: {},
+          generation: { must_fit_character: true, must_fit_context: true, variation: 'medium' },
+        },
+        {
+          id: 'o4',
+          presentation: { text: '选项四', tone: 'neutral' },
+          behavior: { actions: ['challenge', 'confess'], intent: ['romance'], risk: 0.1 },
+          gameplay: { progress: 2 },
+          effects: {},
+          conditions: {},
+          generation: { must_fit_character: true, must_fit_context: true, variation: 'medium' },
+        },
+      ],
+    });
+    const provider = new TestProvider(() => {
+      calls += 1;
+      if (calls === 1) throw new Error('flaky');
+      return { text: combinedPayload };
+    });
+    const runtime = new GameRuntime({ gateway: provider, llmMaxAttempts: 2 });
+    runtime.startGame();
+    const turn = await runtime.startTurn();
+    expect(turn.scenario.narrative).toBe('重试后的场景');
+    expect(calls).toBe(2);
+  });
 });

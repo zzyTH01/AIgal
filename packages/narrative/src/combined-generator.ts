@@ -5,6 +5,7 @@ import { planDiverseOptions, renderOptions, validateOptions, type PlannedOption 
 import { generatedScenarioSchema, type GeneratedScenario } from './scenario.js';
 import { plannedOptionSchema } from './option-planner.js';
 import { parseStructuredResponse } from './structured-parser.js';
+import { checkNarrativeConsistency } from './consistency-check.js';
 import { fallbackScenario } from './scenario-generator.js';
 
 export const combinedGenerationSchema = z
@@ -19,6 +20,10 @@ export interface CombinedGeneratorOptions {
   maxAttempts?: number;
   model?: string;
   minOptions?: number;
+  consistency?: {
+    forbiddenTopics?: string[];
+    allowedCharacters?: string[];
+  };
 }
 
 export interface ScenarioOptionsResult {
@@ -43,6 +48,11 @@ export async function generateScenarioAndOptions(
     try {
       const response = await gateway.generate(buildCombinedRequest(context, options));
       const parsed = parseStructuredResponse(response.text, combinedGenerationSchema);
+      const issues = checkNarrativeConsistency(parsed.scenario.narrative, {
+        forbiddenTopics: options.consistency?.forbiddenTopics,
+        allowedCharacters: options.consistency?.allowedCharacters,
+      });
+      if (issues.length > 0) throw new Error(`scenario consistency: ${issues.join('; ')}`);
       const rendered = renderOptions(parsed.options);
       if (
         rendered.length >= minOptions &&

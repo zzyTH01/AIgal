@@ -49,14 +49,16 @@ export function buildContext(state: GameState, options: ContextBuilderOptions = 
       })
     : [];
 
-  const systemRules = options.systemRules
-    ? (options.cache?.getSystemRules(characterId ?? 'default', () => options.systemRules!) ??
-      options.systemRules)
-    : (options.cache?.getSystemRules(
-        characterId ?? 'default',
-        () => '你是当前世界中的角色。保持角色一致性；输出双通道结构。',
-      ) ?? '你是当前世界中的角色。保持角色一致性；输出双通道结构。');
-  options.cache?.getStableSummary(state, characterId ?? 'default');
+  const defaultRules = '你是当前世界中的角色。保持角色一致性；输出双通道结构。';
+  const baseRules =
+    options.cache?.getSystemRules(
+      characterId ?? 'default',
+      () => options.systemRules ?? defaultRules,
+    ) ??
+    options.systemRules ??
+    defaultRules;
+  const stableSummary = options.cache?.getStableSummary(state, characterId ?? 'default') ?? '';
+  const systemRules = [stableSummary, baseRules].filter(Boolean).join('\n');
 
   const turnNumber = state.run.turn + 1;
   const turnId =
