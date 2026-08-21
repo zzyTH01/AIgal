@@ -1,0 +1,631 @@
+{
+  "providerConfigured": true,
+  "turnsRequested": 30,
+  "turnsCompleted": 30,
+  "daysElapsed": 5,
+  "scenarioLlmRatio": 1,
+  "reactionLlmRatio": 1,
+  "memoriesFormedTotal": 24,
+  "finalRecordCount": 24,
+  "forgottenCount": 16,
+  "finalAvgStrength": 46.9,
+  "finalMaxStrength": 100,
+  "saturatedRecords": 6,
+  "reinforcement": {
+    "retrievalCountSum": 106,
+    "saturationRatio": 0.25
+  },
+  "finalRelationship": {
+    "affection": 50,
+    "trust": 26,
+    "stress": 37
+  },
+  "perTurn": [
+    {
+      "turn": 1,
+      "day": 1,
+      "time": "09:00",
+      "scenarioSource": "llm",
+      "reactionSource": "llm",
+      "optionActions": [
+        "support"
+      ],
+      "newMemories": 1,
+      "recordCount": 1,
+      "avgStrength": 21,
+      "maxStrength": 21,
+      "saturatedRecords": 0,
+      "retrievalCountSum": 0,
+      "affection": 2,
+      "trust": 2,
+      "stress": 45,
+      "playerModelCaring": 52
+    },
+    {
+      "turn": 2,
+      "day": 1,
+      "time": "09:00",
+      "scenarioSource": "llm",
+      "reactionSource": "llm",
+      "optionActions": [
+        "observe"
+      ],
+      "newMemories": 0,
+      "recordCount": 1,
+      "avgStrength": 47,
+      "maxStrength": 47,
+      "saturatedRecords": 0,
+      "retrievalCountSum": 1,
+      "affection": 2,
+      "trust": 2,
+      "stress": 42,
+      "playerModelCaring": 53
+    },
+    {
+      "turn": 3,
+      "day": 1,
+      "time": "09:00",
+      "scenarioSource": "llm",
+      "reactionSource": "llm",
+      "optionActions": [
+        "assist"
+      ],
+      "newMemories": 1,
+      "recordCount": 2,
+      "avgStrength": 48.3,
+      "maxStrength": 73,
+      "saturatedRecords": 0,
+      "retrievalCountSum": 2,
+      "affection": 4,
+      "trust": 4,
+      "stress": 42,
+      "playerModelCaring": 53
+    },
+    {
+      "turn": 4,
+      "day": 1,
+      "time": "09:00",
+      "scenarioSource": "llm",
+      "reactionSource": "llm",
+      "optionActions": [
+        "approach"
+      ],
+      "newMemories": 1,
+      "recordCount": 3,
+      "avgStrength": 58.7,
+      "maxStrength": 99,
+      "saturatedRecords": 1,
+      "retrievalCountSum": 4,
+      "affection": 6,
+      "trust": 4,
+      "stress": 42,
+      "playerModelCaring": 53
+    },
+    {
+      "turn": 5,
+      "day": 1,
+      "time": "09:00",
+      "scenarioSource": "llm",
+      "reactionSource": "llm",
+      "optionActions": [
+        "support"
+      ],
+      "newMemories": 0,
+      "recordCount": 3,
+      "avgStrength": 76.3,
+      "maxStrength": 100,
+      "saturatedRecords": 1,
+      "retrievalCountSum": 7,
+      "affection": 8,
+      "trust": 6,
+      "stress": 42,
+      "playerModelCaring": 55
+    },
+    {
+      "turn": 6,
+      "day": 1,
+      "time": "09:00",
+      "scenarioSource": "llm",
+      "reactionSource": "llm",
+      "optionActions": [
+        "observe"
+      ],
+      "newMemories": 1,
+      "recordCount": 4,
+      "avgStrength": 77.8,
+      "maxStrength": 100,
+      "saturatedRecords": 2,
+      "retrievalCountSum": 10,
+      "affection": 9,
+      "trust": 7,
+      "stress": 42,
+      "playerModelCaring": 55
+    },
+    {
+      "turn": 7,
+      "day": 2,
+      "time": "09:00",
+      "scenarioSource": "llm",
+      "reactionSource": "llm",
+      "optionActions": [
+        "offer"
+      ],
+      "newMemories": 1,
+      "recordCount": 5,
+      "avgStrength": 77.8,
+      "maxStrength": 100,
+      "saturatedRecords": 3,
+      "retrievalCountSum": 14,
+      "affection": 14,
+      "trust": 9,
+      "stress": 42,
+      "playerModelCaring": 57
+    },
+    {
+      "turn": 8,
+      "day": 2,
+      "time": "09:00",
+      "scenarioSource": "llm",
+      "reactionSource": "llm",
+      "optionActions": [
+        "listen"
+      ],
+      "newMemories": 1,
+      "recordCount": 6,
+      "avgStrength": 74.7,
+      "maxStrength": 100,
+      "saturatedRecords": 3,
+      "retrievalCountSum": 18,
+      "affection": 16,
+      "trust": 9,
+      "stress": 42,
+      "playerModelCaring": 57
+    },
+    {
+      "turn": 9,
+      "day": 2,
+      "time": "09:00",
+      "scenarioSource": "llm",
+      "reactionSource": "llm",
+      "optionActions": [
+        "initiate_conversation",
+        "show_interest"
+      ],
+      "newMemories": 1,
+      "recordCount": 7,
+      "avgStrength": 70.6,
+      "maxStrength": 100,
+      "saturatedRecords": 4,
+      "retrievalCountSum": 22,
+      "affection": 20,
+      "trust": 11,
+      "stress": 42,
+      "playerModelCaring": 57
+    },
+    {
+      "turn": 10,
+      "day": 2,
+      "time": "09:00",
+      "scenarioSource": "llm",
+      "reactionSource": "llm",
+      "optionActions": [
+        "companion"
+      ],
+      "newMemories": 1,
+      "recordCount": 8,
+      "avgStrength": 64.8,
+      "maxStrength": 100,
+      "saturatedRecords": 4,
+      "retrievalCountSum": 26,
+      "affection": 21,
+      "trust": 12,
+      "stress": 40,
+      "playerModelCaring": 58
+    },
+    {
+      "turn": 11,
+      "day": 2,
+      "time": "09:00",
+      "scenarioSource": "llm",
+      "reactionSource": "llm",
+      "optionActions": [
+        "提问"
+      ],
+      "newMemories": 1,
+      "recordCount": 9,
+      "avgStrength": 66.4,
+      "maxStrength": 100,
+      "saturatedRecords": 4,
+      "retrievalCountSum": 30,
+      "affection": 20,
+      "trust": 12,
+      "stress": 40,
+      "playerModelCaring": 58
+    },
+    {
+      "turn": 12,
+      "day": 2,
+      "time": "09:00",
+      "scenarioSource": "llm",
+      "reactionSource": "llm",
+      "optionActions": [
+        "leave_note",
+        "propose"
+      ],
+      "newMemories": 1,
+      "recordCount": 10,
+      "avgStrength": 68.1,
+      "maxStrength": 100,
+      "saturatedRecords": 4,
+      "retrievalCountSum": 34,
+      "affection": 23,
+      "trust": 13,
+      "stress": 40,
+      "playerModelCaring": 58
+    },
+    {
+      "turn": 13,
+      "day": 3,
+      "time": "09:00",
+      "scenarioSource": "llm",
+      "reactionSource": "llm",
+      "optionActions": [
+        "support"
+      ],
+      "newMemories": 1,
+      "recordCount": 11,
+      "avgStrength": 67.8,
+      "maxStrength": 100,
+      "saturatedRecords": 6,
+      "retrievalCountSum": 38,
+      "affection": 26,
+      "trust": 15,
+      "stress": 40,
+      "playerModelCaring": 60
+    },
+    {
+      "turn": 14,
+      "day": 3,
+      "time": "09:00",
+      "scenarioSource": "llm",
+      "reactionSource": "llm",
+      "optionActions": [
+        "observe"
+      ],
+      "newMemories": 1,
+      "recordCount": 12,
+      "avgStrength": 64.8,
+      "maxStrength": 100,
+      "saturatedRecords": 6,
+      "retrievalCountSum": 42,
+      "affection": 28,
+      "trust": 18,
+      "stress": 40,
+      "playerModelCaring": 61
+    },
+    {
+      "turn": 15,
+      "day": 3,
+      "time": "09:00",
+      "scenarioSource": "llm",
+      "reactionSource": "llm",
+      "optionActions": [
+        "share"
+      ],
+      "newMemories": 1,
+      "recordCount": 13,
+      "avgStrength": 62.1,
+      "maxStrength": 100,
+      "saturatedRecords": 6,
+      "retrievalCountSum": 46,
+      "affection": 30,
+      "trust": 19,
+      "stress": 40,
+      "playerModelCaring": 61
+    },
+    {
+      "turn": 16,
+      "day": 3,
+      "time": "09:00",
+      "scenarioSource": "llm",
+      "reactionSource": "llm",
+      "optionActions": [
+        "confront"
+      ],
+      "newMemories": 1,
+      "recordCount": 14,
+      "avgStrength": 59.9,
+      "maxStrength": 100,
+      "saturatedRecords": 6,
+      "retrievalCountSum": 50,
+      "affection": 31,
+      "trust": 20,
+      "stress": 40,
+      "playerModelCaring": 61
+    },
+    {
+      "turn": 17,
+      "day": 3,
+      "time": "09:00",
+      "scenarioSource": "llm",
+      "reactionSource": "llm",
+      "optionActions": [
+        "support",
+        "approach"
+      ],
+      "newMemories": 1,
+      "recordCount": 15,
+      "avgStrength": 57.9,
+      "maxStrength": 100,
+      "saturatedRecords": 6,
+      "retrievalCountSum": 54,
+      "affection": 30,
+      "trust": 19,
+      "stress": 40,
+      "playerModelCaring": 63
+    },
+    {
+      "turn": 18,
+      "day": 3,
+      "time": "09:00",
+      "scenarioSource": "llm",
+      "reactionSource": "llm",
+      "optionActions": [
+        "observe"
+      ],
+      "newMemories": 1,
+      "recordCount": 16,
+      "avgStrength": 56.3,
+      "maxStrength": 100,
+      "saturatedRecords": 6,
+      "retrievalCountSum": 58,
+      "affection": 31,
+      "trust": 20,
+      "stress": 40,
+      "playerModelCaring": 63
+    },
+    {
+      "turn": 19,
+      "day": 3,
+      "time": "09:00",
+      "scenarioSource": "llm",
+      "reactionSource": "llm",
+      "optionActions": [
+        "engage"
+      ],
+      "newMemories": 0,
+      "recordCount": 16,
+      "avgStrength": 56.3,
+      "maxStrength": 100,
+      "saturatedRecords": 6,
+      "retrievalCountSum": 62,
+      "affection": 33,
+      "trust": 20,
+      "stress": 40,
+      "playerModelCaring": 63
+    },
+    {
+      "turn": 20,
+      "day": 3,
+      "time": "09:00",
+      "scenarioSource": "llm",
+      "reactionSource": "llm",
+      "optionActions": [
+        "withdraw"
+      ],
+      "newMemories": 1,
+      "recordCount": 17,
+      "avgStrength": 54.6,
+      "maxStrength": 100,
+      "saturatedRecords": 6,
+      "retrievalCountSum": 66,
+      "affection": 33,
+      "trust": 21,
+      "stress": 40,
+      "playerModelCaring": 63
+    },
+    {
+      "turn": 21,
+      "day": 4,
+      "time": "09:00",
+      "scenarioSource": "llm",
+      "reactionSource": "llm",
+      "optionActions": [
+        "approach",
+        "initiate_conversation"
+      ],
+      "newMemories": 0,
+      "recordCount": 17,
+      "avgStrength": 54.4,
+      "maxStrength": 100,
+      "saturatedRecords": 6,
+      "retrievalCountSum": 70,
+      "affection": 36,
+      "trust": 22,
+      "stress": 40,
+      "playerModelCaring": 63
+    },
+    {
+      "turn": 22,
+      "day": 4,
+      "time": "09:00",
+      "scenarioSource": "llm",
+      "reactionSource": "llm",
+      "optionActions": [
+        "approach",
+        "silent_company"
+      ],
+      "newMemories": 0,
+      "recordCount": 17,
+      "avgStrength": 54.4,
+      "maxStrength": 100,
+      "saturatedRecords": 6,
+      "retrievalCountSum": 74,
+      "affection": 38,
+      "trust": 24,
+      "stress": 37,
+      "playerModelCaring": 64
+    },
+    {
+      "turn": 23,
+      "day": 4,
+      "time": "09:00",
+      "scenarioSource": "llm",
+      "reactionSource": "llm",
+      "optionActions": [
+        "question"
+      ],
+      "newMemories": 1,
+      "recordCount": 18,
+      "avgStrength": 52.9,
+      "maxStrength": 100,
+      "saturatedRecords": 6,
+      "retrievalCountSum": 78,
+      "affection": 39,
+      "trust": 24,
+      "stress": 37,
+      "playerModelCaring": 64
+    },
+    {
+      "turn": 24,
+      "day": 4,
+      "time": "09:00",
+      "scenarioSource": "llm",
+      "reactionSource": "llm",
+      "optionActions": [
+        "tease"
+      ],
+      "newMemories": 0,
+      "recordCount": 18,
+      "avgStrength": 52.9,
+      "maxStrength": 100,
+      "saturatedRecords": 6,
+      "retrievalCountSum": 82,
+      "affection": 38,
+      "trust": 24,
+      "stress": 37,
+      "playerModelCaring": 64
+    },
+    {
+      "turn": 25,
+      "day": 4,
+      "time": "09:00",
+      "scenarioSource": "llm",
+      "reactionSource": "llm",
+      "optionActions": [
+        "greet"
+      ],
+      "newMemories": 1,
+      "recordCount": 19,
+      "avgStrength": 51.8,
+      "maxStrength": 100,
+      "saturatedRecords": 6,
+      "retrievalCountSum": 86,
+      "affection": 41,
+      "trust": 25,
+      "stress": 37,
+      "playerModelCaring": 64
+    },
+    {
+      "turn": 26,
+      "day": 4,
+      "time": "09:00",
+      "scenarioSource": "llm",
+      "reactionSource": "llm",
+      "optionActions": [
+        "observe"
+      ],
+      "newMemories": 1,
+      "recordCount": 20,
+      "avgStrength": 50.7,
+      "maxStrength": 100,
+      "saturatedRecords": 6,
+      "retrievalCountSum": 90,
+      "affection": 41,
+      "trust": 25,
+      "stress": 37,
+      "playerModelCaring": 64
+    },
+    {
+      "turn": 27,
+      "day": 4,
+      "time": "09:00",
+      "scenarioSource": "llm",
+      "reactionSource": "llm",
+      "optionActions": [
+        "invite"
+      ],
+      "newMemories": 1,
+      "recordCount": 21,
+      "avgStrength": 49.6,
+      "maxStrength": 100,
+      "saturatedRecords": 6,
+      "retrievalCountSum": 94,
+      "affection": 44,
+      "trust": 26,
+      "stress": 37,
+      "playerModelCaring": 64
+    },
+    {
+      "turn": 28,
+      "day": 5,
+      "time": "09:00",
+      "scenarioSource": "llm",
+      "reactionSource": "llm",
+      "optionActions": [
+        "challenge"
+      ],
+      "newMemories": 1,
+      "recordCount": 22,
+      "avgStrength": 48.4,
+      "maxStrength": 100,
+      "saturatedRecords": 6,
+      "retrievalCountSum": 98,
+      "affection": 44,
+      "trust": 25,
+      "stress": 37,
+      "playerModelCaring": 64
+    },
+    {
+      "turn": 29,
+      "day": 5,
+      "time": "09:00",
+      "scenarioSource": "llm",
+      "reactionSource": "llm",
+      "optionActions": [
+        "initiate_dialogue",
+        "share_knowledge"
+      ],
+      "newMemories": 1,
+      "recordCount": 23,
+      "avgStrength": 47.6,
+      "maxStrength": 100,
+      "saturatedRecords": 6,
+      "retrievalCountSum": 102,
+      "affection": 48,
+      "trust": 26,
+      "stress": 37,
+      "playerModelCaring": 64
+    },
+    {
+      "turn": 30,
+      "day": 5,
+      "time": "09:00",
+      "scenarioSource": "llm",
+      "reactionSource": "llm",
+      "optionActions": [
+        "offer"
+      ],
+      "newMemories": 1,
+      "recordCount": 24,
+      "avgStrength": 46.9,
+      "maxStrength": 100,
+      "saturatedRecords": 6,
+      "retrievalCountSum": 106,
+      "affection": 50,
+      "trust": 26,
+      "stress": 37,
+      "playerModelCaring": 64
+    }
+  ]
+}

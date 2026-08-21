@@ -34,13 +34,16 @@ export interface LiveVerifyReport {
   reactionLlmRatio: number;
   memoriesFormedTotal: number;
   finalRecordCount: number;
+  /** 活跃记忆 = records 中未被遗忘标记的记录（可被检索召回）。 */
+  activeRecordCount: number;
   forgottenCount: number;
   finalAvgStrength: number;
+  activeAvgStrength: number;
   finalMaxStrength: number;
   saturatedRecords: number;
   reinforcement: {
     retrievalCountSum: number;
-    /** 检索强化饱和观察：strength≥95 的记录占比。 */
+    /** 饱和观察：活跃记忆中 strength≥95 的占比。 */
     saturationRatio: number;
   };
   finalRelationship: { affection: number; trust: number; stress: number };
@@ -51,19 +54,29 @@ const FALLBACK_REACTION = '……（NPC 没有回应。）';
 
 function memoryStats(state: ReturnType<GameRuntime['getState']>): {
   recordCount: number;
+  activeRecordCount: number;
   avgStrength: number;
+  activeAvgStrength: number;
   maxStrength: number;
   saturatedRecords: number;
+  activeSaturatedRecords: number;
   retrievalCountSum: number;
 } {
+  const forgotten = new Set(state.memories.forgottenIds);
   const records = Object.values(state.memories.records);
+  const active = records.filter((record) => !forgotten.has(record.id));
   const strengths = records.map((record) => record.strength);
+  const activeStrengths = active.map((record) => record.strength);
   const sum = strengths.reduce((total, value) => total + value, 0);
+  const activeSum = activeStrengths.reduce((total, value) => total + value, 0);
   return {
     recordCount: records.length,
+    activeRecordCount: active.length,
     avgStrength: records.length > 0 ? Math.round((sum / records.length) * 10) / 10 : 0,
+    activeAvgStrength: active.length > 0 ? Math.round((activeSum / active.length) * 10) / 10 : 0,
     maxStrength: strengths.length > 0 ? Math.max(...strengths) : 0,
     saturatedRecords: strengths.filter((value) => value >= 95).length,
+    activeSaturatedRecords: activeStrengths.filter((value) => value >= 95).length,
     retrievalCountSum: records.reduce((total, record) => total + record.retrievalCount, 0),
   };
 }
@@ -150,14 +163,18 @@ export async function runLiveVerification(
     reactionLlmRatio: perTurn.length > 0 ? reactionLlm / perTurn.length : 0,
     memoriesFormedTotal: formedTotal,
     finalRecordCount: finalStats.recordCount,
+    activeRecordCount: finalStats.activeRecordCount,
     forgottenCount: finalState.memories.forgottenIds.length,
     finalAvgStrength: finalStats.avgStrength,
+    activeAvgStrength: finalStats.activeAvgStrength,
     finalMaxStrength: finalStats.maxStrength,
     saturatedRecords: finalStats.saturatedRecords,
     reinforcement: {
       retrievalCountSum: finalStats.retrievalCountSum,
       saturationRatio:
-        finalStats.recordCount > 0 ? finalStats.saturatedRecords / finalStats.recordCount : 0,
+        finalStats.activeRecordCount > 0
+          ? finalStats.activeSaturatedRecords / finalStats.activeRecordCount
+          : 0,
     },
     finalRelationship: {
       affection: finalSnapshot.affection,
