@@ -20,7 +20,9 @@ export function consolidateMemories(
   options: ConsolidationOptions = {},
 ): GameState {
   const next = decayAllMemories(state, currentDay, cognition);
-  const strengthThreshold = options.strengthThreshold ?? 50;
+  // live-verify #14 调参：强化改为 +12/日（带冷却）后，典型记忆单日强度约 23~47，
+  // 原阈值 50 会导致绝大多数记忆无法晋升长期而被遗忘（活跃池枯竭），故下调至 35。
+  const strengthThreshold = options.strengthThreshold ?? 35;
   const importanceThreshold = options.importanceThreshold ?? 60;
   const forgettingThreshold = options.forgettingThreshold ?? 10;
 

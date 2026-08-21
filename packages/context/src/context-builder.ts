@@ -46,6 +46,7 @@ export function buildContext(state: GameState, options: ContextBuilderOptions = 
     ? retrieveMemories(state, query, character.cognition, {
         topK,
         weights: options.retrievalWeights,
+        currentDay: state.run.day,
       })
     : [];
 

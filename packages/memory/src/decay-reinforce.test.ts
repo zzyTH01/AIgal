@@ -54,8 +54,30 @@ describe('MemoryDecay and Reinforcement', () => {
     state.memories.records.mem_1 = makeRecord(42);
     state.memories.shortTermIds.push('mem_1');
     const next = reinforceMemoryRecord(state, 'mem_1', 1);
-    expect(next.memories.records.mem_1?.strength).toBe(68);
+    expect(next.memories.records.mem_1?.strength).toBe(54);
     expect(next.memories.records.mem_1?.retrievalCount).toBe(1);
     expect(next.memories.records.mem_1?.lastRetrievedAt?.day).toBe(1);
+  });
+
+  it('skips reinforcement within the cooldown window', () => {
+    const state = makeMemoryGameState();
+    state.memories.records.mem_1 = makeRecord(42);
+    const first = reinforceMemoryRecord(state, 'mem_1', 1);
+    expect(first.memories.records.mem_1?.strength).toBe(54);
+
+    const sameDay = reinforceMemoryRecord(first, 'mem_1', 1);
+    expect(sameDay.memories.records.mem_1?.strength).toBe(54);
+    expect(sameDay.memories.records.mem_1?.retrievalCount).toBe(1);
+
+    const nextDay = reinforceMemoryRecord(first, 'mem_1', 2);
+    expect(nextDay.memories.records.mem_1?.strength).toBe(66);
+    expect(nextDay.memories.records.mem_1?.retrievalCount).toBe(2);
+  });
+
+  it('supports legacy numeric boost argument without cooldown override', () => {
+    const state = makeMemoryGameState();
+    state.memories.records.mem_1 = makeRecord(42);
+    const boosted = reinforceMemoryRecord(state, 'mem_1', 1, 26);
+    expect(boosted.memories.records.mem_1?.strength).toBe(68);
   });
 });

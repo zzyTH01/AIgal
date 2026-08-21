@@ -15,7 +15,9 @@ export interface LiveTurnMetric {
   optionActions: string[];
   newMemories: number;
   recordCount: number;
+  activeRecordCount: number;
   avgStrength: number;
+  activeAvgStrength: number;
   maxStrength: number;
   saturatedRecords: number;
   retrievalCountSum: number;
@@ -139,7 +141,9 @@ export async function runLiveVerification(
       optionActions: option.behavior.actions,
       newMemories: choice.turnResult.newMemories.length,
       recordCount: stats.recordCount,
+      activeRecordCount: stats.activeRecordCount,
       avgStrength: stats.avgStrength,
+      activeAvgStrength: stats.activeAvgStrength,
       maxStrength: stats.maxStrength,
       saturatedRecords: stats.saturatedRecords,
       retrievalCountSum: stats.retrievalCountSum,

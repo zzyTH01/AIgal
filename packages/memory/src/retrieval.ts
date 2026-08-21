@@ -9,39 +9,58 @@ export interface RetrievalQuery {
 
 export interface RetrievalWeights {
   relevance: number;
+  /** 时间新近度：越新越强（需 currentDay；缺省 0）。 */
+  recency: number;
   importance: number;
   emotion: number;
   strength: number;
   obsession: number;
 }
 
+/**
+ * live-verify #14 调参：原权重无 recency，查询与记忆普遍低相关时，
+ * 高强度/高重要性的饱和记忆垄断 Top-K（记忆回音室）。
+ * 现引入 recency 并下调静态属性权重。
+ */
 export const DEFAULT_RETRIEVAL_WEIGHTS: RetrievalWeights = {
-  relevance: 0.4,
-  importance: 0.2,
-  emotion: 0.2,
+  relevance: 0.35,
+  recency: 0.2,
+  importance: 0.15,
+  emotion: 0.15,
   strength: 0.1,
-  obsession: 0.1,
+  obsession: 0.05,
 };
 
-/** Score = w_r·R + w_i·I + w_e·E + w_s·S + w_o·O。 */
+const RECENCY_HORIZON_DAYS = 7;
+
+/** Score = w_r·R + w_n·N + w_i·I + w_e·E + w_s·S + w_o·O。 */
 export function retrievalScore(
   record: MemoryRecord,
   query: RetrievalQuery,
   cognition: CognitionState,
   weights: RetrievalWeights = DEFAULT_RETRIEVAL_WEIGHTS,
+  currentDay?: number,
 ): number {
   const relevance = calculateRelevance(record, query);
+  const recency = calculateRecency(record, currentDay);
   const importance = record.importance / 100;
   const emotion = record.emotionalIntensity / 100;
   const strength = record.strength / 100;
   const obsession = cognition.obsession / 100;
   return (
     weights.relevance * relevance +
+    weights.recency * recency +
     weights.importance * importance +
     weights.emotion * emotion +
     weights.strength * strength +
     weights.obsession * obsession
   );
+}
+
+function calculateRecency(record: MemoryRecord, currentDay?: number): number {
+  if (currentDay === undefined) return 0;
+  const elapsedDays = Math.max(0, currentDay - record.createdAt.day);
+  return Math.max(0, 1 - elapsedDays / RECENCY_HORIZON_DAYS);
 }
 
 function calculateRelevance(record: MemoryRecord, query: RetrievalQuery): number {
@@ -96,6 +115,8 @@ export interface RetrievalOptions {
   topK?: number;
   weights?: RetrievalWeights;
   excludeForgotten?: boolean;
+  /** 当前天数，用于 recency 因子；缺省不计 recency。 */
+  currentDay?: number;
 }
 
 export function retrieveMemories(
@@ -110,7 +131,10 @@ export function retrieveMemories(
 
   return Object.values(state.memories.records)
     .filter((record) => !excludeForgotten || !state.memories.forgottenIds.includes(record.id))
-    .map((record) => ({ record, score: retrievalScore(record, query, cognition, weights) }))
+    .map((record) => ({
+      record,
+      score: retrievalScore(record, query, cognition, weights, options.currentDay),
+    }))
     .sort((a, b) => b.score - a.score || b.record.strength - a.record.strength)
     .slice(0, Math.max(1, topK))
     .map((entry) => entry.record);

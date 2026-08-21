@@ -109,7 +109,50 @@ describe('MemoryRetrieval', () => {
 
     const result = retrieveAndReinforce(state, { tags: ['help'] }, cognition, { topK: 1 });
     expect(result.records).toHaveLength(1);
-    expect(result.state.memories.records.mem_1?.strength).toBe(68);
+    expect(result.state.memories.records.mem_1?.strength).toBe(54);
     expect(state.memories.records.mem_1?.strength).toBe(42);
+  });
+
+  it('recency boosts fresh memories when currentDay is provided', () => {
+    const state = makeMemoryGameState();
+    addRecord(state, {
+      id: 'mem_old',
+      type: 'episodic',
+      content: '很久之前聊过图书馆。',
+      createdAt: { day: 1, time: '09:00' },
+      importance: 50,
+      emotionalIntensity: 50,
+      valence: 0,
+      strength: 50,
+      accuracy: 90,
+      tags: ['library'],
+      relatedCharacters: [],
+      sourceTurnId: 'turn_old',
+      retrievalCount: 0,
+    });
+    addRecord(state, {
+      id: 'mem_fresh',
+      type: 'episodic',
+      content: '今天在图书馆发生了事。',
+      createdAt: { day: 8, time: '09:00' },
+      importance: 50,
+      emotionalIntensity: 50,
+      valence: 0,
+      strength: 50,
+      accuracy: 90,
+      tags: ['library'],
+      relatedCharacters: [],
+      sourceTurnId: 'turn_fresh',
+      retrievalCount: 0,
+    });
+
+    const withoutDay = retrieveMemories(state, { tags: ['library'] }, cognition, { topK: 2 });
+    expect(withoutDay[0]?.id).toBe('mem_old');
+
+    const withDay = retrieveMemories(state, { tags: ['library'] }, cognition, {
+      topK: 2,
+      currentDay: 8,
+    });
+    expect(withDay[0]?.id).toBe('mem_fresh');
   });
 });
