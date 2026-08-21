@@ -25,6 +25,38 @@ describe('Turn transaction shell', () => {
     expect(transaction.isCommitted).toBe(true);
   });
 
+  it('captures memories formed during settle and the NPC reaction into TurnResult', () => {
+    const state = makeCoreGameState();
+    const transaction = startTurn(state);
+    transaction.resolveChoice(supportOption);
+
+    transaction.settle((current) => {
+      const next = cloneGameState(current);
+      next.memories.records['mem_test_new'] = {
+        id: 'mem_test_new',
+        type: 'episodic',
+        content: '测试记忆',
+        createdAt: { day: 1, time: '09:00' },
+        importance: 40,
+        emotionalIntensity: 25,
+        valence: 10,
+        strength: 30,
+        accuracy: 90,
+        tags: ['test'],
+        relatedCharacters: ['char_mio'],
+        sourceTurnId: 'run_017/day_001/turn_001',
+        retrievalCount: 0,
+      };
+      next.memories.shortTermIds.push('mem_test_new');
+      return next;
+    });
+    transaction.setReaction({ narrative: '测试反应文本', structured: {} });
+
+    const result = transaction.commitTurn();
+    expect(result.newMemories.map((record) => record.id)).toEqual(['mem_test_new']);
+    expect(result.reaction.narrative).toBe('测试反应文本');
+  });
+
   it('delegates day advancement so weekday stays in sync', () => {
     const state = makeCoreGameState();
     state.run.dailyProgress = 11;

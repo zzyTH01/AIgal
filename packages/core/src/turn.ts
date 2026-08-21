@@ -1,11 +1,13 @@
 import {
   finalStateDeltaSchema,
+  npcReactionSchema,
   optionSchema,
   turnResultSchema,
   type BaseStateDelta,
   type FinalStateDelta,
   type GameState,
   type ModifierStateDelta,
+  type NPCReaction,
   type Option,
   type RelationshipState,
   type TurnResult,
@@ -107,6 +109,7 @@ export class TurnTransaction {
   private selectedOptionId?: string;
   private directDelta?: FinalStateDelta;
   private secondaryDelta?: FinalStateDelta;
+  private reaction?: NPCReaction;
   private committed = false;
 
   private constructor(state: GameState) {
@@ -150,10 +153,18 @@ export class TurnTransaction {
     this.secondaryDelta = finalStateDeltaSchema.parse(delta);
   }
 
+  setReaction(reaction: NPCReaction): void {
+    this.reaction = npcReactionSchema.parse(reaction);
+  }
+
   commitTurn(): TurnResult {
     if (!this.selectedOptionId || !this.directDelta) {
       throw new Error('Cannot commit a turn before resolveChoice');
     }
+    const beforeMemoryIds = new Set(Object.keys(this.stateBefore.memories.records));
+    const newMemories = Object.values(this.currentState.memories.records).filter(
+      (record) => !beforeMemoryIds.has(record.id),
+    );
     const result: TurnResult = {
       schemaVersion: '0.1.0',
       turnId: this.turnId,
@@ -161,9 +172,9 @@ export class TurnTransaction {
       stateBefore: cloneGameState(this.stateBefore),
       choice: { turnId: this.turnId, optionId: this.selectedOptionId },
       directDelta: cloneGameState(this.directDelta),
-      reaction: { narrative: '', structured: {} },
+      reaction: this.reaction ?? { narrative: '', structured: {} },
       secondaryDelta: cloneGameState(this.secondaryDelta ?? { phase: 'final' }),
-      newMemories: [],
+      newMemories,
       playerModel: cloneGameState(this.currentState.playerModel),
       worldUpdate: cloneGameState(this.currentState.world),
       finalState: cloneGameState(this.currentState),

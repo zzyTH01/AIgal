@@ -5,6 +5,7 @@ import { simulateRuns, fingerprint } from './simulation-engine.js';
 import { inspectMemory, inspectState } from './inspectors.js';
 import { TurnDebugger } from './turn-debugger.js';
 import { runV1Acceptance } from './acceptance.js';
+import { runLiveVerification } from './live-verify.js';
 
 async function main(): Promise<void> {
   const [command, ...args] = process.argv.slice(2);
@@ -37,6 +38,14 @@ async function main(): Promise<void> {
       console.log(JSON.stringify(await runV1Acceptance(), null, 2));
       return;
     }
+    case 'live-verify': {
+      const turns = readInt(args, '--turns', 30);
+      const seed = readInt(args, '--seed', 20260821);
+      const demo = args.includes('--demo');
+      const report = await runLiveVerification(demo ? { turns, seed, env: {} } : { turns, seed });
+      console.log(JSON.stringify(report, null, 2));
+      return;
+    }
     case 'debug-turn': {
       const [file, turnId] = args;
       if (!file || !turnId) throw new Error('usage: debug-turn <history.json> <turnId>');
@@ -48,7 +57,7 @@ async function main(): Promise<void> {
     }
     default:
       console.log(
-        'Usage:\n  ag-devtools simulate --runs 100 [--turns 50] [--seed 1000]\n  ag-devtools replay --seed 42\n  ag-devtools inspect <state.json>\n  ag-devtools debug-turn <history.json> <turnId>\n  ag-devtools acceptance',
+        'Usage:\n  ag-devtools simulate --runs 100 [--turns 50] [--seed 1000]\n  ag-devtools replay --seed 42\n  ag-devtools inspect <state.json>\n  ag-devtools debug-turn <history.json> <turnId>\n  ag-devtools acceptance\n  ag-devtools live-verify [--turns 30] [--seed 20260821]  # 真实 LLM 复验，经 LLM_* 环境变量配置 Provider',
       );
   }
 }

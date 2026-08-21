@@ -323,6 +323,7 @@ export class GameRuntime {
     next = pruneMemories(next, { maxRecords: this.memoryPruneLimit });
     transaction.settle(() => next);
     transaction.setSecondaryDelta(secondaryDelta);
+    transaction.setReaction({ narrative: reaction.narrative, structured: reaction.structured });
 
     const scenarioText = this.currentScenario?.narrative ?? '';
     const turnResult = transaction.commitTurn();
