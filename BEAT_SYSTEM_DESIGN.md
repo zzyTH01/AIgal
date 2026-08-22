@@ -176,7 +176,7 @@ eventDefinitionSchema: { …, importance: z.enum(['main','side','micro']).defaul
 export interface FlowBudget {
   minBeatsBetweenChoices: number; // 默认 2
   defaults: Record<'main' | 'side' | 'micro', { maxBeats: Range; maxChoices: Range }>;
-  similarityThreshold: number; // 默认 0.6
+  similarityThreshold: number; // 默认 0.45（v1.1 校准）
 }
 
 export class FlowController {
