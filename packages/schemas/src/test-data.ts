@@ -308,6 +308,7 @@ export function makeFinalDelta(): FinalStateDelta {
 export function makeEventDefinition(): EventDefinition {
   return {
     eventId: 'event_rainy_library',
+    importance: 'side',
     type: 'daily',
     rarity: 'common',
     title: '雨天的图书馆',

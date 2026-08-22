@@ -2,7 +2,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { dirname } from 'node:path';
 import type { LivePlayReport } from './live-play.js';
 
-/** LivePlayReport → 人工检查用 Markdown（对齐 long-run-artoria.md 的阅读习惯）。 */
+/** LivePlayReport → 人工检查用 Markdown（拍驱动：文段序列 + 选择点 + 影响）。 */
 export function renderPlaythroughMarkdown(report: LivePlayReport, title: string): string {
   const lines: string[] = [];
   const pct = (value: number) => `${Math.round(value * 100)}%`;
@@ -13,8 +13,12 @@ export function renderPlaythroughMarkdown(report: LivePlayReport, title: string)
       `轮数：${report.turnsCompleted}/${report.turnsRequested} ｜ 跨天数：${report.daysElapsed}`,
   );
   lines.push(
-    `> source 占比：情景 ${pct(report.ratio.scenario)} / 反应 ${pct(report.ratio.reaction)} / 过渡 ${pct(report.ratio.transition)}` +
-      `（过渡生成 ${report.transitionsGenerated} 段）`,
+    `> source 占比：文段拍 ${pct(report.ratio.narrativeBeatLlm)} / 选择拍 ${pct(
+      report.ratio.choiceBeatLlm,
+    )} / 反应 ${pct(report.ratio.reaction)}`,
+  );
+  lines.push(
+    `> 拍统计：文段拍 ${report.totalNarrativeBeats} 个 / 选择点 ${report.totalChoicePoints} 个`,
   );
   lines.push(
     `> 终局：affection ${report.finalRelationship.affection} ｜ trust ${report.finalRelationship.trust} ｜ stress ${report.finalRelationship.stress} ｜ 活跃记忆 ${report.activeMemoryCount} 条`,
@@ -24,31 +28,33 @@ export function renderPlaythroughMarkdown(report: LivePlayReport, title: string)
   );
 
   for (const turn of report.turns) {
-    lines.push(`## 第 ${turn.index} 轮（Day ${turn.day} · ${turn.time} · ${turn.locationId}）`, '');
+    lines.push(
+      `## 第 ${turn.index} 轮（Day ${turn.day} · ${turn.time} · ${turn.locationId} · 事件重要性 ${turn.eventImportance}）`,
+      '',
+    );
 
-    if (turn.transition) {
-      lines.push(
-        `### 过渡文段（${turn.transition.source}；${turn.transition.timeChange.previous} → ${turn.transition.timeChange.current}）`,
-        '',
-      );
-      lines.push(`> ${turn.transition.narration}`, '');
-      for (const dialogue of turn.transition.dialogues) {
-        lines.push(`> **${dialogue.speaker || '？'}**：${dialogue.text}`, '');
-      }
-      if (turn.transition.referencedMemoryContents.length > 0) {
+    for (const beat of turn.beats) {
+      if (beat.kind === 'narrative') {
         lines.push(
-          `*引用记忆：${turn.transition.referencedMemoryContents.map((content) => `「${content}」`).join('、')}*`,
+          `### 文段拍（${beat.source}${beat.branchPotential ? ` · 分支价值 ${beat.branchPotential}` : ''}）`,
           '',
         );
+        if (beat.narration) lines.push(`> ${beat.narration}`, '');
+        for (const dialogue of beat.dialogues ?? []) {
+          lines.push(`> **${dialogue.speaker || '？'}**：${dialogue.text}`, '');
+        }
+      } else {
+        lines.push(`### 选择点（${beat.source}）`, '');
+        if (beat.intro) lines.push(`*${beat.intro}*`, '');
       }
     }
-
-    lines.push(`### 情景（${turn.scenario.source}）`, '', turn.scenario.text, '');
 
     lines.push('### 选项', '');
     for (const option of turn.options) {
       lines.push(
-        `${option.label}. ${option.text} [${option.actions.join('/')}${option.intent.length ? ` · ${option.intent.join('/')}` : ''} · risk ${option.risk}]`,
+        `${option.label}. ${option.text} [${option.actions.join('/')}${
+          option.intent.length ? ` · ${option.intent.join('/')}` : ''
+        } · risk ${option.risk}]`,
       );
     }
     lines.push('');
@@ -69,12 +75,16 @@ export function renderPlaythroughMarkdown(report: LivePlayReport, title: string)
       lines.push('### 影响', '');
       for (const change of turn.relationshipImpact) {
         lines.push(
-          `- 关系 ${change.metric}：${change.before} → ${change.after}（${change.delta >= 0 ? '+' : ''}${change.delta}）`,
+          `- 关系 ${change.metric}：${change.before} → ${change.after}（${
+            change.delta >= 0 ? '+' : ''
+          }${change.delta}）`,
         );
       }
       for (const change of turn.psychologyImpact) {
         lines.push(
-          `- 二次结算 ${change.name}.${change.metric}：${change.before} → ${change.after}（${change.delta >= 0 ? '+' : ''}${change.delta}）`,
+          `- 二次结算 ${change.name}.${change.metric}：${change.before} → ${change.after}（${
+            change.delta >= 0 ? '+' : ''
+          }${change.delta}）`,
         );
       }
       for (const memory of turn.newMemories) {

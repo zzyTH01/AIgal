@@ -1,4 +1,5 @@
 import { GameRuntime } from '@ag/runtime';
+import type { Beat } from '@ag/schemas';
 
 export interface LiveVerifyOptions {
   turns?: number;
@@ -12,10 +13,10 @@ export interface LiveTurnMetric {
   time: string;
   scenarioSource: 'llm' | 'fallback';
   reactionSource: 'llm' | 'fallback' | 'inferred-fallback';
-  /** P0 过渡文段来源；'none' 表示本 Turn 无过渡记录。 */
-  transitionSource: 'llm' | 'fallback' | 'none';
-  /** 过渡文段引用的历史记忆数（Memory 联动②）。 */
-  transitionReferencedMemories: number;
+  /** P0.5：本 Turn 的文段拍数量（不含选择拍）。 */
+  narrativeBeats: number;
+  /** P0.5：文段拍 llm 来源数。 */
+  narrativeBeatLlm: number;
   optionActions: string[];
   newMemories: number;
   recordCount: number;
@@ -38,9 +39,9 @@ export interface LiveVerifyReport {
   daysElapsed: number;
   scenarioLlmRatio: number;
   reactionLlmRatio: number;
-  /** P0：过渡文段 llm 占比（分母为生成了过渡的 Turn 数）。 */
-  transitionLlmRatio: number;
-  transitionsGenerated: number;
+  /** P0.5：文段拍 llm 占比。 */
+  narrativeBeatLlmRatio: number;
+  totalNarrativeBeats: number;
   memoriesFormedTotal: number;
   finalRecordCount: number;
   /** 活跃记忆 = records 中未被遗忘标记的记录（可被检索召回）。 */
@@ -123,19 +124,36 @@ export async function runLiveVerification(
   const perTurn: LiveTurnMetric[] = [];
   let scenarioLlm = 0;
   let reactionLlm = 0;
-  let transitionsGenerated = 0;
-  let transitionLlmCount = 0;
+  let totalNarrativeBeats = 0;
+  let narrativeBeatLlm = 0;
   let formedTotal = 0;
 
   for (let index = 0; index < turnsRequested; index += 1) {
     const startView = await runtime.startTurn();
     if (startView.scenario.source === 'llm') scenarioLlm += 1;
-    if (startView.transition) {
-      transitionsGenerated += 1;
-      if (startView.transition.narrative.source === 'llm') transitionLlmCount += 1;
+
+    // P0.5：推进文段拍直到选择点，逐拍统计
+    const allBeats: Beat[] = startView.beat ? [startView.beat] : [];
+    let optionList = startView.options;
+    if (optionList.length === 0) {
+      let view = await runtime.advance();
+      allBeats.push(view.beat);
+      let guard = 0;
+      while (view.flowPhase !== 'awaiting-choice' && guard < 10) {
+        guard += 1;
+        view = await runtime.advance();
+        allBeats.push(view.beat);
+      }
+      optionList = view.options;
+    }
+    for (const beat of allBeats) {
+      if (beat.kind === 'narrative') {
+        totalNarrativeBeats += 1;
+        if (beat.source === 'llm') narrativeBeatLlm += 1;
+      }
     }
 
-    const option = startView.options[index % Math.max(1, startView.options.length)]!;
+    const option = optionList[index % Math.max(1, optionList.length)]!;
     const choice = await runtime.chooseOption(option.id);
     const reactionIsFallback =
       choice.turnResult.reaction.narrative === FALLBACK_REACTION ||
@@ -150,9 +168,10 @@ export async function runLiveVerification(
       day: choice.state.run.day,
       time: choice.state.run.time,
       scenarioSource: startView.scenario.source,
-      transitionSource: startView.transition?.narrative.source ?? 'none',
-      transitionReferencedMemories:
-        startView.transition?.emotionalAftermath?.referencedMemoryIds.length ?? 0,
+      narrativeBeats: allBeats.filter((beat) => beat.kind === 'narrative').length,
+      narrativeBeatLlm: allBeats.filter(
+        (beat) => beat.kind === 'narrative' && beat.source === 'llm',
+      ).length,
       reactionSource: reactionIsFallback ? 'inferred-fallback' : 'llm',
       optionActions: option.behavior.actions,
       newMemories: choice.turnResult.newMemories.length,
@@ -181,8 +200,8 @@ export async function runLiveVerification(
     daysElapsed: finalState.run.day,
     scenarioLlmRatio: perTurn.length > 0 ? scenarioLlm / perTurn.length : 0,
     reactionLlmRatio: perTurn.length > 0 ? reactionLlm / perTurn.length : 0,
-    transitionLlmRatio: transitionsGenerated > 0 ? transitionLlmCount / transitionsGenerated : 0,
-    transitionsGenerated,
+    narrativeBeatLlmRatio: totalNarrativeBeats > 0 ? narrativeBeatLlm / totalNarrativeBeats : 0,
+    totalNarrativeBeats,
     memoriesFormedTotal: formedTotal,
     finalRecordCount: finalStats.recordCount,
     activeRecordCount: finalStats.activeRecordCount,

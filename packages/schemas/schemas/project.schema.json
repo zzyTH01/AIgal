@@ -871,6 +871,15 @@
             "items": {
               "type": "string"
             }
+          },
+          "importance": {
+            "type": "string",
+            "enum": [
+              "main",
+              "side",
+              "micro"
+            ],
+            "default": "side"
           }
         },
         "required": [

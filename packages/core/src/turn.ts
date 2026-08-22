@@ -1,10 +1,12 @@
 import {
+  beatSchema,
   finalStateDeltaSchema,
   npcReactionSchema,
   optionSchema,
   transitionRecordSchema,
   turnResultSchema,
   type BaseStateDelta,
+  type Beat,
   type FinalStateDelta,
   type GameState,
   type ModifierStateDelta,
@@ -44,6 +46,8 @@ export interface ResolveChoiceOptions {
   rng?: RNG;
   /** P0 日内时间推进：每 Turn 推进分钟数；0 关闭（兼容旧 golden）。缺省 30。 */
   turnTimeStepMinutes?: number;
+  /** P0.5：事件重要性系数，StateResolver 出口乘算。缺省 1。 */
+  impactMultiplier?: number;
 }
 
 export interface ChoiceResolution {
@@ -78,7 +82,10 @@ export function applyChoiceToState(
     before.run.dailyProgressLimit,
   );
 
-  const resolved = resolveChoiceEffects(before, parsedOption, rng, { targetRelationshipId });
+  const resolved = resolveChoiceEffects(before, parsedOption, rng, {
+    targetRelationshipId,
+    impactMultiplier: options.impactMultiplier,
+  });
   const directDelta: FinalStateDelta = finalStateDeltaSchema.parse({
     phase: 'final',
     run: {
@@ -126,6 +133,7 @@ export class TurnTransaction {
   private secondaryDelta?: FinalStateDelta;
   private reaction?: NPCReaction;
   private transition?: TransitionRecord;
+  private beats?: Beat[];
   private committed = false;
 
   private constructor(state: GameState) {
@@ -178,6 +186,11 @@ export class TurnTransaction {
     this.transition = transitionRecordSchema.parse(record);
   }
 
+  /** P0.5：写入本次选择区间内产生的拍序列（原子提交）。 */
+  setBeats(beats: Beat[]): void {
+    this.beats = beats.map((beat) => beatSchema.parse(beat));
+  }
+
   commitTurn(): TurnResult {
     if (!this.selectedOptionId || !this.directDelta) {
       throw new Error('Cannot commit a turn before resolveChoice');
@@ -199,6 +212,7 @@ export class TurnTransaction {
       playerModel: cloneGameState(this.currentState.playerModel),
       worldUpdate: cloneGameState(this.currentState.world),
       transition: this.transition ? transitionRecordSchema.parse(this.transition) : undefined,
+      beats: this.beats,
       finalState: cloneGameState(this.currentState),
     };
     this.committed = true;

@@ -104,6 +104,7 @@ export const demoCharacter: CharacterDefinition = {
 export const demoEvents: EventDefinition[] = [
   {
     eventId: 'event_classroom_after_school',
+    importance: 'main',
     type: 'social',
     rarity: 'common',
     title: '放学后的教室',
@@ -117,6 +118,7 @@ export const demoEvents: EventDefinition[] = [
   },
   {
     eventId: 'event_cafeteria_lunch',
+    importance: 'side',
     type: 'daily',
     rarity: 'common',
     title: '食堂的午餐',
@@ -130,6 +132,7 @@ export const demoEvents: EventDefinition[] = [
   },
   {
     eventId: 'event_rooftop_dusk',
+    importance: 'side',
     type: 'special',
     rarity: 'uncommon',
     title: '天台的黄昏',
@@ -143,6 +146,7 @@ export const demoEvents: EventDefinition[] = [
   },
   {
     eventId: 'event_library_silent',
+    importance: 'side',
     type: 'daily',
     rarity: 'common',
     title: '安静的图书馆',

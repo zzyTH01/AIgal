@@ -7,30 +7,43 @@ import { App } from './App.js';
 afterEach(() => cleanup());
 
 describe('Player App', () => {
-  it('starts a game and completes one turn by selecting an option', async () => {
+  it('advances beats and stops at the choice point (manual mode)', async () => {
     render(<App />);
     expect(await screen.findByTestId('status-bar')).toHaveTextContent('Day 1');
-    expect(screen.getByTestId('narrative-panel')).toBeInTheDocument();
 
+    // 首个文段拍
     fireEvent.click(screen.getByRole('button', { name: '下一回合' }));
-    expect(await screen.findByTestId('option-list')).toBeInTheDocument();
-    const buttons = await screen.findAllByRole('button', { name: /帮忙|看书|推荐|了解/ });
-    expect(buttons.length).toBe(4);
+    const firstBeat = await screen.findAllByTestId('transition-line');
+    expect(firstBeat.length).toBeGreaterThanOrEqual(1);
+    expect(screen.getByTestId('flow-controls')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /帮忙|看书|推荐|了解/ })).toBeNull();
 
-    fireEvent.click(buttons[0]!);
-    await waitFor(() => {
-      expect(screen.getByTestId('status-bar')).toHaveTextContent('Turn 1');
-    });
+    // ▼ 继续推进，直到选择点（控件消失、选项出现）
+    let guard = 0;
+    while (guard < 8) {
+      guard += 1;
+      const controls = screen.queryByTestId('flow-controls');
+      if (!controls) break;
+      fireEvent.click(screen.getByRole('button', { name: '继续' }));
+      await waitFor(() => {
+        expect(screen.getByTestId('flow-controls') ?? screen.getByTestId('option-list'));
+      });
+      if (screen.queryByTestId('option-list')) break;
+    }
+    const optionList = await screen.findByTestId('option-list');
+    expect(optionList).toBeInTheDocument();
   });
 
-  it('renders transition lines before the scenario on the next turn', async () => {
+  it('auto-play stops at the choice point as well', async () => {
     render(<App />);
-    expect(await screen.findByTestId('status-bar')).toHaveTextContent('Day 1');
-
+    await screen.findByTestId('status-bar');
     fireEvent.click(screen.getByRole('button', { name: '下一回合' }));
-    const transitions = await screen.findAllByTestId('transition-line');
-    expect(transitions.length).toBeGreaterThanOrEqual(1);
-    // 首个 Turn 无前序轮次：DEMO LLM 未返回 transition 段 → 模板 fallback（时间/地点占位）
-    expect(transitions[0]).toHaveTextContent(/09:00，仍在/);
+    await screen.findAllByTestId('transition-line');
+
+    fireEvent.click(screen.getByTestId('auto-play'));
+    // 等待自动连播把流推进到选择点：选项出现且自动仍开启
+    const optionList = await screen.findByTestId('option-list', undefined, { timeout: 4000 });
+    expect(optionList).toBeInTheDocument();
+    expect(screen.getByTestId('auto-play')).toBeChecked();
   });
 });

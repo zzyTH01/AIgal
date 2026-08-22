@@ -26,6 +26,11 @@ export class ApplicationApi {
     return this.run(() => this.runtime.startTurn());
   }
 
+  /** P0.5 Beat System：推进下一文段拍。 */
+  async turnAdvance(): Promise<ApiResult<Awaited<ReturnType<GameRuntime['advance']>>>> {
+    return this.run(() => this.runtime.advance());
+  }
+
   async turnChoice(
     optionId: string,
   ): Promise<ApiResult<Awaited<ReturnType<GameRuntime['chooseOption']>>>> {

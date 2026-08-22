@@ -39,6 +39,7 @@ export function makeWorldGameState(): GameState {
 export function makeEventDefinition(overrides: Partial<EventDefinition> = {}): EventDefinition {
   return {
     eventId: 'event_default',
+    importance: 'side',
     type: 'daily',
     rarity: 'common',
     title: '默认事件',

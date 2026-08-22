@@ -12,3 +12,4 @@ export * from './simulate.js';
 export * from './secondary-resolution.js';
 export * from './player-model-update.js';
 export * from './meta-progression.js';
+export * from './flow-controller.js';

@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { beatSchema } from './beat.js';
 import { gameStateSchema } from './game-state.js';
 import { memoryCandidateSchema, memoryRecordSchema } from './memory.js';
 import { playerModelSchema } from './player-model.js';
@@ -64,6 +65,8 @@ export const turnResultSchema = z
     worldUpdate: worldStateSchema,
     /** P0 Transition System：本 Turn 的开场过场（可选，旧存档/旧路径缺省）。 */
     transition: transitionRecordSchema.optional(),
+    /** P0.5 Beat System：本次选择区间内产生的拍序列（旧档兼容 optional）。 */
+    beats: z.array(beatSchema).optional(),
     finalState: gameStateSchema,
   })
   .strict();

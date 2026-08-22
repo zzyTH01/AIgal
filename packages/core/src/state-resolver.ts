@@ -29,6 +29,8 @@ export type RelationshipNumericMetric = (typeof RELATIONSHIP_NUMERIC_METRICS)[nu
 
 export interface ResolverOptions {
   targetRelationshipId?: string;
+  /** P0.5：事件重要性系数（main 1.25 / side 1 / micro 0.75），在 clamp 前乘入原始 delta。 */
+  impactMultiplier?: number;
 }
 
 export interface MetricResolution {
@@ -113,7 +115,8 @@ export function resolveChoice(
         emotionModifier *
         repetitionModifier *
         riskModifier *
-        nonlinearFactor;
+        nonlinearFactor *
+        (options.impactMultiplier ?? 1);
       const delta = Math.round(rawDelta);
       const after = clamp(before + delta, 0, 100);
 

@@ -7,6 +7,7 @@ import {
   numericConditionSchema,
 } from './primitives.js';
 import { relationshipTypeSchema } from './relationship.js';
+import { eventImportanceSchema } from './beat.js';
 import { finalStateDeltaSchema } from './state-delta.js';
 
 const eventConditionValueSchema = z.union([
@@ -42,6 +43,8 @@ export const eventDefinitionSchema = z
     requiresCharacterIds: z.array(idSchema).optional(),
     requiresRelationshipType: relationshipTypeSchema.optional(),
     behaviorConstraints: z.array(z.string()).optional(),
+    /** P0.5 Beat System：重要性 → 拍数预算与数值放大（main ×1.25 / side ×1.0 / micro ×0.75）。 */
+    importance: eventImportanceSchema.default('side'),
   })
   .strict();
 

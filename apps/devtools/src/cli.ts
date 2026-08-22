@@ -91,7 +91,8 @@ function zArray<T>(schema: { parse(value: unknown): T }, value: unknown): T[] {
 }
 
 void main().catch((error) => {
-  console.error(String(error));
+  if (process.env.DEBUG_STACK) console.error(error);
+  else console.error(String(error));
   process.exitCode = 1;
 });
 

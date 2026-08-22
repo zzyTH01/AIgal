@@ -55,6 +55,7 @@ export function App() {
         ? [
             {
               eventId: 'event_designer',
+              importance: 'side' as const,
               type: 'daily' as const,
               rarity: 'common' as const,
               title: form.eventTitle,
@@ -149,8 +150,14 @@ export function App() {
       setSimulation('模拟中...');
       const runtime = new GameRuntime(projectToRuntimeConfig(buildProject));
       runtime.startGame();
-      const turn = await runtime.startTurn();
-      const choice = await runtime.chooseOption(turn.options[0]!.id);
+      await runtime.startTurn();
+      let view = await runtime.advance();
+      let guard = 0;
+      while (view.flowPhase !== 'awaiting-choice' && guard < 8) {
+        guard += 1;
+        view = await runtime.advance();
+      }
+      const choice = await runtime.chooseOption(view.options[0]!.id);
       setSimulation(`模拟完成：Day ${choice.state.run.day} / Turn ${choice.state.run.turn}`);
       setError('');
     } catch (err) {

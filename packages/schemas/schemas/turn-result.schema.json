@@ -2924,6 +2924,272 @@
       ],
       "additionalProperties": false
     },
+    "beats": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "type": "object",
+            "properties": {
+              "beatId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "kind": {
+                "type": "string",
+                "const": "narrative"
+              },
+              "narration": {
+                "type": "string",
+                "minLength": 1
+              },
+              "dialogues": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "speakerId": {
+                      "type": "string"
+                    },
+                    "text": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "required": [
+                    "speakerId",
+                    "text"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "source": {
+                "type": "string",
+                "enum": [
+                  "llm",
+                  "fallback"
+                ]
+              },
+              "branchPotential": {
+                "type": "string",
+                "enum": [
+                  "high",
+                  "mid",
+                  "low"
+                ],
+                "default": "mid"
+              },
+              "nextSuggestion": {
+                "type": "string",
+                "enum": [
+                  "choice",
+                  "beat",
+                  "end"
+                ]
+              },
+              "emotionDrift": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "number"
+                }
+              }
+            },
+            "required": [
+              "beatId",
+              "kind",
+              "narration",
+              "dialogues",
+              "source"
+            ],
+            "additionalProperties": false
+          },
+          {
+            "type": "object",
+            "properties": {
+              "beatId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "kind": {
+                "type": "string",
+                "const": "choice"
+              },
+              "intro": {
+                "type": "string",
+                "maxLength": 160
+              },
+              "options": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "presentation": {
+                      "type": "object",
+                      "properties": {
+                        "text": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "tone": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "text",
+                        "tone"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "behavior": {
+                      "type": "object",
+                      "properties": {
+                        "actions": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1
+                        },
+                        "intent": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "minItems": 1
+                        },
+                        "risk": {
+                          "type": "number",
+                          "minimum": 0,
+                          "maximum": 1
+                        }
+                      },
+                      "required": [
+                        "actions",
+                        "intent",
+                        "risk"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "gameplay": {
+                      "type": "object",
+                      "properties": {
+                        "progress": {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      },
+                      "required": [
+                        "progress"
+                      ],
+                      "additionalProperties": false
+                    },
+                    "effects": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "properties": {
+                          "base": {
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "base"
+                        ],
+                        "additionalProperties": false
+                      }
+                    },
+                    "conditions": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "anyOf": [
+                          {
+                            "type": "boolean"
+                          },
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "min": {
+                                "type": "number"
+                              },
+                              "max": {
+                                "type": "number"
+                              }
+                            },
+                            "additionalProperties": false
+                          }
+                        ]
+                      }
+                    },
+                    "generation": {
+                      "type": "object",
+                      "properties": {
+                        "must_fit_character": {
+                          "type": "boolean"
+                        },
+                        "must_fit_context": {
+                          "type": "boolean"
+                        },
+                        "variation": {
+                          "type": "string",
+                          "enum": [
+                            "low",
+                            "medium",
+                            "high"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "must_fit_character",
+                        "must_fit_context",
+                        "variation"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "presentation",
+                    "behavior",
+                    "gameplay",
+                    "effects",
+                    "conditions",
+                    "generation"
+                  ],
+                  "additionalProperties": false
+                },
+                "minItems": 2,
+                "maxItems": 4
+              },
+              "source": {
+                "type": "string",
+                "enum": [
+                  "llm",
+                  "fallback"
+                ]
+              }
+            },
+            "required": [
+              "beatId",
+              "kind",
+              "options",
+              "source"
+            ],
+            "additionalProperties": false
+          }
+        ]
+      }
+    },
     "finalState": {
       "type": "object",
       "properties": {

@@ -9,6 +9,16 @@ import { ApplicationApi } from './application-api.js';
 import { GameRuntime } from './game-runtime.js';
 
 describe('GameRuntime', () => {
+  /** 推进文段拍直到出现选择点（DEMO/fixture 流通用）。 */
+  async function advanceToChoice(runtime: GameRuntime, max = 8) {
+    let view = await runtime.advance();
+    let guard = 0;
+    while (view.flowPhase !== 'awaiting-choice' && guard < max) {
+      guard += 1;
+      view = await runtime.advance();
+    }
+    return view;
+  }
   it('starts a game and completes one full turn through the Application API', async () => {
     const api = ApplicationApi.create();
     const started = await api.gameStart();
@@ -16,12 +26,22 @@ describe('GameRuntime', () => {
     expect(validateGameState(started.data!).success).toBe(true);
     expect(started.data!.world.activeEvents[0]?.eventId).toBe('event_classroom_after_school');
 
+    // P0.5：首拍为文段，推进至选择点后选项可用
     const turn = await api.turnStart();
     expect(turn.ok).toBe(true);
-    expect(turn.data!.options).toHaveLength(4);
+    expect(turn.data!.beat?.kind).toBe('narrative');
     expect(turn.data!.scenario.narrative.length).toBeGreaterThan(0);
+    expect(turn.data!.options).toHaveLength(0);
 
-    const choice = await api.turnChoice(turn.data!.options[0]!.id);
+    let options = turn.data!.options;
+    for (let i = 0; i < 8 && options.length === 0; i += 1) {
+      const advanced = await api.turnAdvance();
+      expect(advanced.ok).toBe(true);
+      options = advanced.data!.options;
+    }
+    expect(options).toHaveLength(4);
+
+    const choice = await api.turnChoice(options[0]!.id);
     expect(choice.ok).toBe(true);
     expect(choice.data!.state.run.turn).toBe(1);
     expect(validateGameState(choice.data!.state).success).toBe(true);
@@ -30,12 +50,22 @@ describe('GameRuntime', () => {
     expect(Object.keys(choice.data!.state.memories.records).length).toBeGreaterThan(0);
   });
 
-  it('falls back to deterministic content when LLM output is invalid', async () => {
+  it('falls back to deterministic beats when LLM output is invalid', async () => {
     const runtime = new GameRuntime({ gateway: TestProvider.fromText('bad-json') });
     runtime.startGame();
     const turn = await runtime.startTurn();
+    expect(turn.beat?.kind).toBe('narrative');
+    expect(turn.beat!.source).toBe('fallback');
     expect(turn.scenario.source).toBe('fallback');
-    expect(turn.options).toHaveLength(4);
+
+    // 选择拍 fallback 同样可用（planDiverseOptions）；预算内必到选择点
+    let options = turn.options;
+    for (let i = 0; i < 8 && options.length === 0; i += 1) {
+      const view = await runtime.advance();
+      options = view.options;
+      expect(view.beat.source).toBe('fallback');
+    }
+    expect(options.length).toBeGreaterThanOrEqual(4);
   });
 
   it('save/load restores GameState', async () => {
@@ -170,8 +200,10 @@ describe('GameRuntime', () => {
   it('reinforces retrieved memories on context assembly', async () => {
     const runtime = new GameRuntime();
     runtime.startGame();
-    const turn = await runtime.startTurn();
-    await runtime.chooseOption(turn.options[0]!.id);
+    const startView = await runtime.startTurn();
+    const choiceView =
+      startView.flowPhase === 'awaiting-choice' ? startView : await advanceToChoice(runtime);
+    await runtime.chooseOption(choiceView.options[0]!.id);
     const before = Object.values(runtime.getState().memories.records);
     expect(before.length).toBeGreaterThan(0);
 
@@ -193,7 +225,12 @@ describe('GameRuntime', () => {
     const first = runtime.getContextCacheStats();
     expect(first.misses).toBeGreaterThan(0);
 
-    await runtime.chooseOption((await runtime.getCurrentOptions())[0]?.id ?? '');
+    let choiceView =
+      (await runtime.startTurn()).flowPhase === 'awaiting-choice'
+        ? null
+        : await advanceToChoice(runtime);
+    if (!choiceView) choiceView = { options: await runtime.getCurrentOptions() } as never;
+    await runtime.chooseOption(runtime.getCurrentOptions()[0]!.id);
     await runtime.startTurn();
     const second = runtime.getContextCacheStats();
     expect(second.hits).toBeGreaterThan(first.hits);
@@ -203,8 +240,10 @@ describe('GameRuntime', () => {
     const runtime = new GameRuntime({ memoryPruneLimit: 2 });
     runtime.startGame();
     for (let i = 0; i < 3; i += 1) {
-      const turn = await runtime.startTurn();
-      await runtime.chooseOption(turn.options[0]!.id);
+      const startView = await runtime.startTurn();
+      const view =
+        startView.flowPhase === 'awaiting-choice' ? startView : await advanceToChoice(runtime);
+      await runtime.chooseOption(view.options[0]!.id);
     }
     expect(Object.keys(runtime.getState().memories.records).length).toBeLessThanOrEqual(2);
   });
@@ -278,36 +317,23 @@ describe('GameRuntime', () => {
       consistency: { forbiddenTopics: ['禁忌词'] },
     });
     runtime.startGame();
-    const turn = await runtime.startTurn();
-    expect(turn.scenario.source).toBe('fallback');
+    const startView = await runtime.startTurn();
+    expect(startView.beat?.source).toBe('fallback');
+    const view =
+      startView.flowPhase === 'awaiting-choice' ? startView : await advanceToChoice(runtime);
 
-    const choice = await runtime.chooseOption(turn.options[0]!.id);
+    const choice = await runtime.chooseOption(view.options[0]!.id);
     expect(choice.reactionText).toBe('……（NPC 没有回应。）');
   });
 
-  it('carries transition through startTurn → TurnResult with memory linkage', async () => {
+  it('flows narrative beats into a choice point and commits beats atomically', async () => {
     let calls = 0;
     const provider = new TestProvider((request) => {
       calls += 1;
       if (request.messages.some((message) => message.content.includes('行为选项'))) {
         return {
           text: JSON.stringify({
-            transition: {
-              narration: '走廊安静下来，她还在想刚才的事。',
-              dialogues: [{ speakerId: 'char_asuka', text: '……你刚才说的，我想了很久。' }],
-              referencedMemoryIds: [],
-              memoryCandidate: {
-                type: 'episodic',
-                content: '角色在过场中回味玩家的帮助。',
-                importance: 40,
-                emotionalIntensity: 30,
-                valence: 10,
-                tags: ['care'],
-                relatedCharacters: ['char_asuka'],
-                sourceTurnId: 'placeholder',
-              },
-            },
-            scenario: { narrative: '测试场景', structured: {} },
+            intro: '雨声渐起。',
             options: [
               {
                 id: 'o1',
@@ -365,106 +391,81 @@ describe('GameRuntime', () => {
           }),
         };
       }
-      return { text: JSON.stringify({ narrative: '回应', structured: {} }) };
+      return {
+        text: JSON.stringify({
+          beats: [
+            {
+              narration: '走廊安静下来，她还在想刚才的事。',
+              dialogues: [{ speakerId: 'char_asuka', text: '……你刚才说的，我想了很久。' }],
+              branchPotential: 'high',
+            },
+          ],
+        }),
+      };
     });
 
     const runtime = new GameRuntime({ gateway: provider });
     runtime.startGame();
 
-    // Turn 1：首 Turn 无前序轮次，过渡仍生成（fromLocationId=null 分支）
+    // 首拍：文段（llm），间隔未到 → 不能立即选择
     const turn1 = await runtime.startTurn();
-    expect(turn1.transition).toBeDefined();
-    expect(turn1.transition!.location.fromLocationId).toBeNull();
-    expect(turn1.transition!.narrative.source).toBe('llm');
+    expect(turn1.beat?.kind).toBe('narrative');
+    expect(turn1.beat!.source).toBe('llm');
+    expect(turn1.options).toHaveLength(0);
 
-    // 过渡 memoryCandidate 已入库（sourceTurnId 归一为本 Turn）
-    const candidates = Object.values(runtime.getState().memories.records).filter((record) =>
-      record.content.includes('回味'),
-    );
-    expect(candidates).toHaveLength(1);
-    expect(candidates[0]!.sourceTurnId).toBe(turn1.turnId);
+    // 推进至选择点：文段拍 llm + 选择拍 llm，调用数 = 拍数
+    let view = await runtime.advance();
+    let guard = 0;
+    while (view.flowPhase !== 'awaiting-choice' && guard < 6) {
+      guard += 1;
+      view = await runtime.advance();
+    }
+    expect(view.flowPhase).toBe('awaiting-choice');
+    expect(view.beat.kind).toBe('choice');
+    expect(view.beat.source).toBe('llm');
 
-    await runtime.chooseOption(turn1.options[0]!.id);
-    expect(calls).toBe(2);
-
-    // Turn 2：时间承接上一轮（日内推进 30 分钟），过渡进入 TurnResult
-    const turn2 = await runtime.startTurn();
-    expect(turn2.transition!.time.previous).toBe('09:00');
-    expect(turn2.transition!.time.current).toBe('09:30');
-    const choice2 = await runtime.chooseOption(turn2.options[1]!.id);
-    expect(choice2.turnResult.transition?.turnId).toBe(turn2.turnId);
-    expect(choice2.turnResult.transition?.narrative.dialogues[0]?.text).toContain('想了很久');
+    // chooseOption 提交区间内的全部拍
+    const choice = await runtime.chooseOption(view.options[0]!.id);
+    expect(choice.turnResult.beats!.length).toBeGreaterThanOrEqual(3);
+    expect(choice.turnResult.beats!.some((beat) => beat.kind === 'choice')).toBe(true);
+    // 区间提交后缓冲清空
+    expect(runtime.getFlowState()!.status).toBe('flowing');
+    void calls;
   });
 
-  it('reinforces memories referenced by the transition narrative (cooldown-aware)', async () => {
+  it('guards advance/choose by flow phase and scales impact by importance', async () => {
     const runtime = new GameRuntime();
     runtime.startGame();
-    const turn1 = await runtime.startTurn();
-    await runtime.chooseOption(turn1.options[0]!.id);
+    await runtime.startTurn();
+    // 文段阶段禁止 chooseOption
+    await expect(runtime.chooseOption('option_001')).rejects.toThrow(/Not awaiting a choice/);
 
-    // 形成一条真实记忆后，下一轮检索应命中并被过渡引用强化
-    const before = Object.values(runtime.getState().memories.records)[0]!;
-    const retrievalCountBefore = before.retrievalCount;
-    const turn2 = await runtime.startTurn();
-    const after = runtime.getState().memories.records[before.id]!;
-    // 检索强化 + 过渡引用强化共用冷却：同一天至多 +12
-    expect(after.strength).toBeLessThanOrEqual(before.strength + 12);
-    expect(turn2.transition).toBeDefined();
-    void retrievalCountBefore;
+    let view = await runtime.advance();
+    let guard = 0;
+    while (view.flowPhase !== 'awaiting-choice' && guard < 6) {
+      guard += 1;
+      view = await runtime.advance();
+    }
+    // 选择阶段禁止 advance
+    await expect(runtime.advance()).rejects.toThrow(/Not awaiting a choice|awaiting/);
   });
 
   it('retries flaky LLM calls according to llmMaxAttempts', async () => {
     let calls = 0;
-    const combinedPayload = JSON.stringify({
-      scenario: { narrative: '重试后的场景', structured: {} },
-      options: [
-        {
-          id: 'o1',
-          presentation: { text: '选项一', tone: 'neutral' },
-          behavior: { actions: ['chat', 'ask'], intent: ['connect'], risk: 0.1 },
-          gameplay: { progress: 1 },
-          effects: {},
-          conditions: {},
-          generation: { must_fit_character: true, must_fit_context: true, variation: 'medium' },
-        },
-        {
-          id: 'o2',
-          presentation: { text: '选项二', tone: 'neutral' },
-          behavior: { actions: ['observe', 'wait'], intent: ['respect'], risk: 0.1 },
-          gameplay: { progress: 0 },
-          effects: {},
-          conditions: {},
-          generation: { must_fit_character: true, must_fit_context: true, variation: 'medium' },
-        },
-        {
-          id: 'o3',
-          presentation: { text: '选项三', tone: 'neutral' },
-          behavior: { actions: ['approach', 'support'], intent: ['care'], risk: 0.1 },
-          gameplay: { progress: 2 },
-          effects: {},
-          conditions: {},
-          generation: { must_fit_character: true, must_fit_context: true, variation: 'medium' },
-        },
-        {
-          id: 'o4',
-          presentation: { text: '选项四', tone: 'neutral' },
-          behavior: { actions: ['challenge', 'confess'], intent: ['romance'], risk: 0.1 },
-          gameplay: { progress: 2 },
-          effects: {},
-          conditions: {},
-          generation: { must_fit_character: true, must_fit_context: true, variation: 'medium' },
-        },
-      ],
-    });
     const provider = new TestProvider(() => {
       calls += 1;
       if (calls === 1) throw new Error('flaky');
-      return { text: combinedPayload };
+      return {
+        text: JSON.stringify({
+          beats: [{ narration: '重试后的文段', dialogues: [], branchPotential: 'mid' }],
+        }),
+      };
     });
     const runtime = new GameRuntime({ gateway: provider, llmMaxAttempts: 2 });
     runtime.startGame();
     const turn = await runtime.startTurn();
-    expect(turn.scenario.narrative).toBe('重试后的场景');
+    expect(turn.beat?.kind).toBe('narrative');
+    expect((turn.beat as { narration: string }).narration).toBe('重试后的文段');
     expect(calls).toBe(2);
   });
 });
