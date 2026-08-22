@@ -1,8 +1,8 @@
 # AI GALGAME Framework
-## 总设计文档 Master Design v1.4（唯一权威基线）
+## 总设计文档 Master Design v1.5（唯一权威基线）
 
-> 版本：v1.4 ｜ 状态：Phase 0.5–12 与 Completion Plan A–H 已完成；§11 事件系统升级（Life Engine）为**已设计未实现**，规划见 `EVENT_LIFE_PLAN.md` ｜ 语言：中文
-> 变更记录：v1.4（2026-08-21）§11.2 Transition 补充**表现层设计**（旁白+对话文段生成、Memory 联动、合并调用、日内时间流动）；v1.3 并入事件系统补充规划。
+> 版本：v1.5 ｜ 状态：Phase 0.5–12 与 Completion Plan A–H 已完成；Life Engine（§11）P0 已完成，**P0.5–P5 为已设计未实现**，规划见 `EVENT_LIFE_PLAN.md` ｜ 语言：中文
+> 变更记录：v1.5（2026-08-22）新增 **§11.11 Beat System**（事件内连续叙事流）定案；v1.4 §11.2.1 过渡表现层；v1.3 并入事件系统补充规划。
 >
 > 本文档是对此前六份 v0.1 设计文档的分析、综合与定案，是项目**唯一的权威设计基线**。
 > 旧文档已归档至 `docs/design-history/`，仅供追溯设计过程，不再作为实现依据。
@@ -840,7 +840,25 @@ BAD END 已形成完整因果链（挑衅 → conflict 上升 → BAD END → En
 
 ## 11.10 最终愿景
 
-> **Event System 是基础设施；Transition System 是连接；Memory 是过去；Intent 是未来；Character State 是现在。**
+> **Event System 是基础设施；Transition System 是连接；Beat System 是事件内的呼吸与节奏；Memory 是过去；Intent 是未来；Character State 是现在。**
 > 最终构成：**一个能够在玩家参与下持续演化的 AI Character Life System。**
 
-实现优先级（详见 `EVENT_LIFE_PLAN.md`）：**P0 Transition → P1 Pending Intent → P2 Autonomous Event → P3 Micro Event → P4 Relationship Narrative State → P5 Event Scheduler**。
+## 11.11 Beat System（P0.5）—— 事件内连续叙事流（v1.5 定案）
+
+> 状态：**已定案，未实现**。完整设计（契约/接口/类/开发计划 T1–T8）见 `BEAT_SYSTEM_DESIGN.md`。
+
+事件内部不再是"每轮必选的回合制问答"，而是**连续叙事流**：
+
+```text
+选择 → 文段拍 → 文段拍 → 选择点 → 文段 → … → 事件结束
+```
+
+- **两类拍**：NarrativeBeat（旁白+对话，仅轻量情绪漂移）/ ChoiceBeat（引子+选项，正常结算）；契约互斥，文段在结构上不可能预支选项。
+- **FlowController 裁决节奏**：下一拍类型由确定性标准决定——预算（maxBeats/maxChoices）、间隔（两个选择点间 ≥2 文段）、分支价值（LLM 建议仅为信号）；LLM 建议、引擎裁决。
+- **事件重要性权重**：`importance: main/side/micro` 同时决定拍数预算（main 8–12 拍 / micro 2–3 拍）与数值影响系数（×1.25 / ×0.75）。
+- **双向因果**：事件内滚动上下文 beatSummaries 全量进入下一选择点生成——选项影响文段，文段成为下一选项的土壤。
+- **双推进模式**：手动 ▼ 继续 / 自动连播，到选择点必停（UI 行为，Runtime 不感知差异）。
+- **事务边界不变**：Choice 区间原子提交（D1），Beat 即时展示不入档；事件收束为 summary 记忆入库，事件间传递零新通道。
+- **实现位置**：EVENT_LIFE_PLAN **P0.5**（P1 之前），T1–T8 分步落地。
+
+实现优先级（详见 `EVENT_LIFE_PLAN.md`）：**P0 Transition ✅ → P0.5 Beat System → P1 Pending Intent → P2 Autonomous Event → P3 Micro Event → P4 Relationship Narrative State → P5 Event Scheduler**。

@@ -1,9 +1,9 @@
 # AI GALGAME Framework
 
-## 事件系统升级计划 Event Life Plan v1.1（Life Engine）
+## 事件系统升级计划 Event Life Plan v1.2（Life Engine）
 
-> 版本：v1.1 ｜ 依据：`AI_GALGAME_Master_Design_v1.0.md` §11（补充设计：事件系统过渡与补充规划）+ `AIgal_事件系统过渡与补充规划.md`
-> 变更记录：v1.1（2026-08-21）P0 增补**过渡文段生成（旁白+对话）**、**Memory 联动三件套**、**合并调用**、**日内时间流动前置契约**与对应验收标准（对齐 Master Design v1.4 §11.2.1）。
+> 版本：v1.2 ｜ 依据：`AI_GALGAME_Master_Design_v1.0.md` §11（v1.5）+ `AIgal_事件系统过渡与补充规划.md` + `BEAT_SYSTEM_DESIGN.md`
+> 变更记录：v1.2（2026-08-22）新增 **P0.5 Beat System**（事件内连续叙事流，设计详见 `BEAT_SYSTEM_DESIGN.md`）；v1.1（2026-08-21）P0 增补过渡表现层；v1.0 初版。
 >
 > 本计划是**下一阶段改进方向**：把当前已成立的 Event Engine 升级为 **Life Engine**。每阶段有目标、任务清单、验收标准与验证命令，验收通过后进入下一阶段。
 > 状态标记：⬜ 未开始 / 🔄 进行中 / ✅ 已完成。
@@ -15,7 +15,7 @@
 - **背景**：Phase 0.5–12 与 Completion Plan A–H 已完成，事件闭环（场景→选项→行为→AI反应→状态→记忆→Ending→跨局）成立。真实 LLM 长对话验证了"角色记得你 + 关系随互动成长"。
 - **问题**：事件之间缺乏中间层，体验是 `Event A → Event B → Event C` 的"事件硬切"，而非连续、可变化、可自我运行的角色生活。
 - **目标**：从"玩家触发事件"升级为"**与一个会持续生活和变化的角色共同经历时间**"。
-- **实现优先级（来自补充设计 §12）**：P0 Transition → P1 Pending Intent → P2 Autonomous Event → P3 Micro Event → P4 Relationship Narrative State → P5 Event Scheduler。
+- **实现优先级（来自补充设计 §12）**：P0 Transition → **P0.5 Beat System** → P1 Pending Intent → P2 Autonomous Event → P3 Micro Event → P4 Relationship Narrative State → P5 Event Scheduler。
 
 ---
 
@@ -115,11 +115,48 @@ pnpm --filter @ag/world test && pnpm --filter @ag/narrative test && pnpm --filte
 
 ## 2.6 技术设计
 
-接口、类与实现顺序详见文末 [§11 P0 技术设计](#11-p0-技术设计接口类与实现顺序)。
+接口、类与实现顺序详见文末 [§12 P0 技术设计](#12-p0-技术设计接口类与实现顺序)。
 
 ---
 
-# 3. Phase P1 — Pending Intent
+# 3. Phase P0.5 — Beat System（事件内连续叙事流）
+
+- **状态**：⬜ 未开始
+- **设计文档**：`BEAT_SYSTEM_DESIGN.md`（唯一实现依据：契约/接口/类/兼容性全在此）
+
+## 3.1 目标
+
+把"每轮必选的回合制问答"重构为**连续叙事流**：选择 → 文段 → 文段 → 选择 → … → 事件结束；选项与文段双向因果，节奏由确定性 FlowController 裁决（预算/间隔/分支价值），事件重要性权重决定拍数预算与数值放大，双推进模式（手动 ▼ / 自动连播）到选项必停。
+
+## 3.2 任务清单（T1–T8）
+
+- [ ] **T1 schemas**：`beat.ts` 四契约 + `TurnResult.beats?` + `EventDefinition.importance`。
+- [ ] **T2 core**：FlowController（nextStep/registerBeat）+ textSimilarity + `ResolveChoiceOptions.impactMultiplier`。
+- [ ] **T3 narrative**：generateNarrativeBeats（1–2 拁批量）+ fallback + 文段/选项相似度去重校验。
+- [ ] **T4 narrative**：generateChoiceBeat（combined 能力迁移，剥离过渡职责）。
+- [ ] **T5 runtime**：flow 状态机 + `advance()` 门禁 + pendingBeats 区间提交 + impactScale 接线。
+- [ ] **T6 player**：FlowControls（▼ 继续 / 自动连播），到选择点必停。
+- [ ] **T7 devtools**：live-play/live-verify 拍维度指标 + simulate 预算参数校准。
+- [ ] **T8 真实 LLM 验收**：live-play ≥20 Turn 对照设计文档 §6 八条标准出报告。
+
+## 3.3 验收标准
+
+见 `BEAT_SYSTEM_DESIGN.md` §6（八条），全部通过方可进入 P1。
+
+## 3.4 验证命令
+
+```bash
+pnpm --filter @ag/core test && pnpm --filter @ag/narrative test && pnpm --filter @ag/runtime test && pnpm test
+# 手动：ag-devtools live-play --turns 20 --out beat-playtest.md（真实 LLM）
+```
+
+## 3.5 涉及模块
+
+`@ag/schemas`（beat 契约）、`@ag/core`（FlowController/impactMultiplier）、`@ag/narrative`（两类拍生成器）、`@ag/memory`（tokenize 复用）、`@ag/runtime`（flow 状态机）、`apps/player`、`apps/devtools`。
+
+---
+
+# 4. Phase P1 — Pending Intent
 
 - **状态**：⬜ 未开始
 
@@ -152,7 +189,7 @@ pnpm --filter @ag/runtime test && pnpm --filter @ag/devtools test && pnpm test
 
 ---
 
-# 4. Phase P2 — Character Autonomous Event
+# 5. Phase P2 — Character Autonomous Event
 
 - **状态**：⬜ 未开始
 
@@ -184,7 +221,7 @@ pnpm --filter @ag/narrative test && pnpm --filter @ag/runtime test && pnpm test
 
 ---
 
-# 5. Phase P3 — Micro Events / Life Events
+# 6. Phase P3 — Micro Events / Life Events
 
 - **状态**：⬜ 未开始
 
@@ -194,7 +231,7 @@ pnpm --filter @ag/narrative test && pnpm --filter @ag/runtime test && pnpm test
 
 ## 5.2 任务清单
 
-- [ ] **事件层级字段**：`EventDefinition` 增加 `level: 'main' | 'side' | 'micro'`。
+- [ ] **事件层级字段**：~~`EventDefinition` 增加 `level`~~ 已由 P0.5 的 `importance` 提前落地，本阶段直接复用。
 - [ ] **Micro Event 模板**：偶遇、一句话、短暂互动、环境变化、角色独处（不推动重大剧情，只维持世界运行感）。
 - [ ] **Micro Event 生成**：可程序化（环境/位置驱动）或 LLM 生成；低权重、高频。
 - [ ] **调度区分**：P5 调度器按层级分配权重（Main 低权重高影响、Micro 高权重低影响）。
@@ -216,7 +253,7 @@ pnpm --filter @ag/world test && pnpm test
 
 ---
 
-# 6. Phase P4 — Relationship Narrative State
+# 7. Phase P4 — Relationship Narrative State
 
 - **状态**：⬜ 未开始
 
@@ -250,7 +287,7 @@ pnpm --filter @ag/schemas test && pnpm --filter @ag/runtime test && pnpm test
 
 ---
 
-# 7. Phase P5 — Event Scheduler
+# 8. Phase P5 — Event Scheduler
 
 - **状态**：⬜ 未开始
 
@@ -284,7 +321,7 @@ pnpm --filter @ag/world test && pnpm --filter @ag/devtools test && pnpm test
 
 ---
 
-# 8. 核心设计原则（贯穿实现）
+# 9. 核心设计原则（贯穿实现）
 
 1. **不要为了填充而填充**：过渡的意义是建立因果连续性，而非增加文本量。
 2. **Memory ≠ Intent**：两者分离（过去 vs 现在想做什么）。
@@ -295,7 +332,7 @@ pnpm --filter @ag/world test && pnpm --filter @ag/devtools test && pnpm test
 
 ---
 
-# 9. 最终验收标准
+# 10. 最终验收标准
 
 下一阶段完成后，AIgal 应能出现：
 
@@ -310,13 +347,14 @@ pnpm --filter @ag/world test && pnpm --filter @ag/devtools test && pnpm test
 
 ---
 
-# 10. 执行顺序与依赖
+# 11. 执行顺序与依赖
 
 ```text
-P0 Transition → P1 Pending Intent → P2 Autonomous Event → P3 Micro Event → P4 Relationship Narrative State → P5 Event Scheduler
+P0 Transition → **P0.5 Beat System** → P1 Pending Intent → P2 Autonomous Event → P3 Micro Event → P4 Relationship Narrative State → P5 Event Scheduler
 ```
 
 - **P0 是基础**：没有 Transition，Autonomous/Micro 无从衔接。
+- **P0.5 是体验骨架**：事件内连续叙事流先于一切新事件类型；其 `importance` 字段即 P3 的 level，P3 直接复用。
 - **P1 → P2 依赖**：Autonomous Event 需要 Pending Intent 作为触发源。
 - **P3 依赖 P0**：Micro Event 需要 Transition 提供的生活流。
 - **P4 与 P1/P2 互馈**：narrative state（desire/unresolved）驱动意图，意图反馈到叙事状态。
@@ -325,11 +363,11 @@ P0 Transition → P1 Pending Intent → P2 Autonomous Event → P3 Micro Event �
 
 ---
 
-# 11. P0 技术设计：接口、类与实现顺序
+# 12. P0 技术设计：接口、类与实现顺序
 
 > 本节是 P0 的可执行技术方案，签名与现有代码库约定对齐（Zod strict、`schemaVersion: '0.1.0'`、双通道 `source: 'llm' | 'fallback'`）。
 
-## 11.1 契约层（@ag/schemas，新文件 `src/transition.ts`）
+## 12.1 契约层（@ag/schemas，新文件 `src/transition.ts`）
 
 ```typescript
 // 过渡对话行：narrator 表示旁白
@@ -399,7 +437,7 @@ turnResultSchema: { …, transition: transitionRecordSchema.optional() }
 // world.ts 不改 time 格式（保持 HH:mm 字符串），日内流动由推进规则产生
 ```
 
-## 11.2 Core 层：日内时间推进（`packages/core/src/progress-engine.ts`）
+## 12.2 Core 层：日内时间推进（`packages/core/src/progress-engine.ts`）
 
 ```typescript
 export const DEFAULT_TURN_TIME_STEP_MINUTES = 30;
@@ -417,7 +455,7 @@ export interface ResolveChoiceOptions {
 // applyChoiceToState：crossedDayBoundary === false 时调用 advanceIntradayTime
 ```
 
-## 11.3 Narrative 层：过渡文段生成（`packages/narrative/src/transition-generator.ts`）
+## 12.3 Narrative 层：过渡文段生成（`packages/narrative/src/transition-generator.ts`）
 
 ```typescript
 export interface TransitionContextInput {
@@ -457,7 +495,7 @@ export function fallbackTransition(input: TransitionContextInput): TransitionNar
 
 **Prompt 要点**：systemRules 复用 `context.systemRules`；user 消息包含 `[上一轮]`（optionActions/reactionSummary）、`[检索记忆N]`（id+content）、`[时间/地点/环境变化]`；要求输出严格 JSON（transitionLlmSchema），并声明"旁白描写环境与时间流逝，对话表现角色的余波情绪；若检索记忆与本过渡相关，用 referencedMemoryIds 标注并在文段中自然呼应"。
 
-## 11.4 合并调用（`packages/narrative/src/combined-generator.ts`，默认路径）
+## 12.4 合并调用（`packages/narrative/src/combined-generator.ts`，默认路径）
 
 ```typescript
 combinedGenerationSchema = z.object({
@@ -480,7 +518,7 @@ ScenarioOptionsResult {
 
 **调用次数不变：每 Turn 仍为 2 次（combined + reaction）。**
 
-## 11.5 Runtime 管线（`packages/runtime/src/game-runtime.ts`）
+## 12.5 Runtime 管线（`packages/runtime/src/game-runtime.ts`）
 
 ```typescript
 GameRuntime 新增私有成员：
@@ -507,17 +545,17 @@ chooseOption()：
 
 `TurnTransaction` 扩展：`setTransition(record: TransitionRecord): void`（镜像 `setReaction`，commitTurn 时写入 `TurnResult.transition`）。
 
-## 11.6 UI（apps/player，最小改动）
+## 12.6 UI（apps/player，最小改动）
 
 - `components/TransitionPanel.tsx`：渲染 `narration`（斜体/居中样式）与 `dialogues`（说话人名 + 台词）；props `{ transition }`。
 - `App.tsx`：`startTurn` 返回的 `transition` 存入 state，置于 NarrativePanel 之上；打字机复用 Typewriter。
 
-## 11.7 devtools（验证工具）
+## 12.7 devtools（验证工具）
 
 - `live-verify.ts`：perTurn 增加 `transitionSource`、`transitionReferencedMemories` 两列；summary 增加 transitionLlmRatio。
 - P0 完成后重跑真实 LLM 30 Turn，对照 §2.3 验收标准出报告。
 
-## 11.8 实现顺序（7 步，每步含测试）
+## 12.8 实现顺序（7 步，每步含测试）
 
 | 步骤 | 内容                                                                    | 测试                                                                                                            | 依赖  |
 | ---- | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------- | ----- |
@@ -529,7 +567,7 @@ chooseOption()：
 | S6   | player：TransitionPanel + App 接线                                      | 渲染测试（jsdom）                                                                                               | S5    |
 | S7   | devtools：live-verify 增强 + 真实 LLM 30 Turn 复验报告                  | 对照 §2.3 七条验收标准逐项打勾                                                                                  | S5    |
 
-## 11.9 兼容性影响与风险
+## 12.9 兼容性影响与风险
 
 - **Golden/simulate 指纹变化**：S2 时间流动改变确定性仿真轨迹——golden 测试为同 seed 自比较，不受影响；simulate 统计基线需在 P0 验收时重新采集一次。
 - **旧存档兼容**：transition 为 optional；旧档 load 后首个 startTurn 无 lastTurn/pendingTransition，走 null 分支（fromLocationId=null、无余波）。
