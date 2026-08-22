@@ -6,6 +6,7 @@ import {
   type ModelContext,
   type Option,
   type ProjectPolicy,
+  type TransitionRecord,
   type TurnResult,
 } from '@ag/schemas';
 import {
@@ -28,6 +29,7 @@ import {
   generateScenarioAndOptions,
   generateReaction,
   type CombinedGeneratorOptions,
+  type TransitionContextInput,
 } from '@ag/narrative';
 import {
   createGateway,
@@ -65,6 +67,8 @@ export interface StartTurnView {
   turnId: string;
   scenario: { narrative: string; source: 'llm' | 'fallback' };
   options: Option[];
+  /** P0：本 Turn 的开场过场（旁白+对话），UI 在选项列表前呈现。 */
+  transition?: TransitionRecord;
   state: GameState;
 }
 
@@ -164,6 +168,8 @@ export class GameRuntime {
   private readonly llmMaxAttempts: number;
   private readonly memoryPruneLimit: number;
   private readonly consistency?: { forbiddenTopics?: string[]; allowedCharacters?: string[] };
+  private pendingTransition?: TransitionRecord;
+  private lastOptionActions: string[] = [];
 
   constructor(config: RuntimeConfig = {}) {
     this.character = config.character ?? demoCharacter;
@@ -196,6 +202,37 @@ export class GameRuntime {
 
   getContextCacheStats(): ContextCacheStats {
     return this.contextCache.getStats();
+  }
+
+  /**
+   * P0 Memory 联动①：组装过渡输入——上一轮结果 + 检索记忆 + 时间/地点变化。
+   * 环境演化（evolveWorld）尚未接 runtime，environmentChanges 暂缺省。
+   */
+  private buildTransitionInput(state: GameState, context: ModelContext): TransitionContextInput {
+    const last = this.lastTurn;
+    return {
+      npcName: this.character.identity.name,
+      systemRules: context.systemRules,
+      lastTurn: last
+        ? {
+            optionActions: this.lastOptionActions,
+            reactionSummary: last.reaction.narrative.slice(0, 120),
+            newMemoryContents: last.newMemories.map((record) => record.content),
+          }
+        : undefined,
+      retrievedMemories: context.retrievedMemories,
+      timeChange: last
+        ? {
+            previous: last.stateBefore.run.time,
+            current: state.run.time,
+            crossedDayBoundary: last.stateBefore.run.day !== state.run.day,
+          }
+        : { previous: state.run.time, current: state.run.time, crossedDayBoundary: false },
+      locationChange: {
+        fromLocationId: last?.stateBefore.world.currentLocationId ?? null,
+        toLocationId: state.world.currentLocationId,
+      },
+    };
   }
 
   startGame(seed = 20260816): GameState {
@@ -236,6 +273,8 @@ export class GameRuntime {
     this.currentOptions = [];
     this.currentScenario = undefined;
     this.lastTurn = undefined;
+    this.pendingTransition = undefined;
+    this.lastOptionActions = [];
     return this.getState();
   }
 
@@ -273,7 +312,57 @@ export class GameRuntime {
     const generated = await generateScenarioAndOptions(context, this.gateway, {
       maxAttempts: this.llmMaxAttempts,
       consistency: this.consistency,
+      transition: this.buildTransitionInput(next, context),
     });
+
+    let pendingTransition: TransitionRecord | undefined;
+    const transitionResult = generated.transition;
+    if (transitionResult) {
+      const referencedIds = transitionResult.referencedMemoryIds;
+      // Memory 联动③："回想"产新忆（sourceTurnId 归一为本 Turn）。
+      if (transitionResult.memoryCandidate && retrievalCognition) {
+        const formed = formMemory(
+          next,
+          {
+            ...transitionResult.memoryCandidate,
+            sourceTurnId: context.turnId,
+          },
+          retrievalCognition,
+        );
+        next = formed.state;
+      }
+      pendingTransition = {
+        schemaVersion: '0.1.0',
+        turnId: context.turnId,
+        time: this.lastTurn
+          ? {
+              previous: this.lastTurn.stateBefore.run.time,
+              current: next.run.time,
+              crossedDayBoundary: this.lastTurn.stateBefore.run.day !== next.run.day,
+            }
+          : { previous: next.run.time, current: next.run.time, crossedDayBoundary: false },
+        location: {
+          fromLocationId: this.lastTurn?.stateBefore.world.currentLocationId ?? null,
+          toLocationId: next.world.currentLocationId,
+        },
+        emotionalAftermath:
+          referencedIds.length > 0
+            ? {
+                referencedMemoryIds: referencedIds,
+                summary: transitionResult.narration.slice(0, 80),
+              }
+            : undefined,
+        pendingIntentIds: [],
+        narrative: {
+          narration: transitionResult.narration,
+          dialogues: transitionResult.dialogues,
+          source: transitionResult.source,
+        },
+      };
+    }
+
+    this.state = next;
+    this.pendingTransition = pendingTransition;
     this.context = context;
     this.currentOptions = generated.options;
     this.currentScenario = {
@@ -285,6 +374,7 @@ export class GameRuntime {
       turnId: context.turnId,
       scenario: structuredClone(this.currentScenario),
       options: this.getCurrentOptions(),
+      transition: pendingTransition ? structuredClone(pendingTransition) : undefined,
       state: this.getState(),
     };
   }
@@ -294,6 +384,7 @@ export class GameRuntime {
     const option = this.currentOptions.find((candidate) => candidate.id === optionId);
     if (!option) throw new Error(`Unknown optionId: ${optionId}`);
     if (!this.context) throw new Error('No active turn; call startTurn first');
+    this.lastOptionActions = [...option.behavior.actions];
 
     const transaction = startTurn(state);
     const resolution = transaction.resolveChoice(option, { rng: this.rng });
@@ -324,6 +415,10 @@ export class GameRuntime {
     transaction.settle(() => next);
     transaction.setSecondaryDelta(secondaryDelta);
     transaction.setReaction({ narrative: reaction.narrative, structured: reaction.structured });
+    if (this.pendingTransition) {
+      transaction.setTransition(this.pendingTransition);
+      this.pendingTransition = undefined;
+    }
 
     const scenarioText = this.currentScenario?.narrative ?? '';
     const turnResult = transaction.commitTurn();
@@ -392,6 +487,8 @@ export class GameRuntime {
     this.currentScenario = undefined;
     this.context = undefined;
     this.lastTurn = undefined;
+    this.pendingTransition = undefined;
+    this.lastOptionActions = [];
     return this.getState();
   }
 
@@ -406,6 +503,8 @@ export class GameRuntime {
     this.currentOptions = [];
     this.context = undefined;
     this.currentScenario = undefined;
+    this.pendingTransition = undefined;
+    this.lastOptionActions = [];
     return this.getState();
   }
 

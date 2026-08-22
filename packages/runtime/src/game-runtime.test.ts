@@ -285,6 +285,134 @@ describe('GameRuntime', () => {
     expect(choice.reactionText).toBe('……（NPC 没有回应。）');
   });
 
+  it('carries transition through startTurn → TurnResult with memory linkage', async () => {
+    let calls = 0;
+    const provider = new TestProvider((request) => {
+      calls += 1;
+      if (request.messages.some((message) => message.content.includes('行为选项'))) {
+        return {
+          text: JSON.stringify({
+            transition: {
+              narration: '走廊安静下来，她还在想刚才的事。',
+              dialogues: [{ speakerId: 'char_asuka', text: '……你刚才说的，我想了很久。' }],
+              referencedMemoryIds: [],
+              memoryCandidate: {
+                type: 'episodic',
+                content: '角色在过场中回味玩家的帮助。',
+                importance: 40,
+                emotionalIntensity: 30,
+                valence: 10,
+                tags: ['care'],
+                relatedCharacters: ['char_asuka'],
+                sourceTurnId: 'placeholder',
+              },
+            },
+            scenario: { narrative: '测试场景', structured: {} },
+            options: [
+              {
+                id: 'o1',
+                presentation: { text: '选项一', tone: 'neutral' },
+                behavior: { actions: ['chat', 'ask'], intent: ['connect'], risk: 0.1 },
+                gameplay: { progress: 1 },
+                effects: {},
+                conditions: {},
+                generation: {
+                  must_fit_character: true,
+                  must_fit_context: true,
+                  variation: 'medium',
+                },
+              },
+              {
+                id: 'o2',
+                presentation: { text: '选项二', tone: 'neutral' },
+                behavior: { actions: ['observe', 'wait'], intent: ['respect'], risk: 0.1 },
+                gameplay: { progress: 0 },
+                effects: {},
+                conditions: {},
+                generation: {
+                  must_fit_character: true,
+                  must_fit_context: true,
+                  variation: 'medium',
+                },
+              },
+              {
+                id: 'o3',
+                presentation: { text: '选项三', tone: 'neutral' },
+                behavior: { actions: ['approach', 'support'], intent: ['care'], risk: 0.1 },
+                gameplay: { progress: 2 },
+                effects: {},
+                conditions: {},
+                generation: {
+                  must_fit_character: true,
+                  must_fit_context: true,
+                  variation: 'medium',
+                },
+              },
+              {
+                id: 'o4',
+                presentation: { text: '选项四', tone: 'neutral' },
+                behavior: { actions: ['challenge', 'confess'], intent: ['romance'], risk: 0.1 },
+                gameplay: { progress: 2 },
+                effects: {},
+                conditions: {},
+                generation: {
+                  must_fit_character: true,
+                  must_fit_context: true,
+                  variation: 'medium',
+                },
+              },
+            ],
+          }),
+        };
+      }
+      return { text: JSON.stringify({ narrative: '回应', structured: {} }) };
+    });
+
+    const runtime = new GameRuntime({ gateway: provider });
+    runtime.startGame();
+
+    // Turn 1：首 Turn 无前序轮次，过渡仍生成（fromLocationId=null 分支）
+    const turn1 = await runtime.startTurn();
+    expect(turn1.transition).toBeDefined();
+    expect(turn1.transition!.location.fromLocationId).toBeNull();
+    expect(turn1.transition!.narrative.source).toBe('llm');
+
+    // 过渡 memoryCandidate 已入库（sourceTurnId 归一为本 Turn）
+    const candidates = Object.values(runtime.getState().memories.records).filter((record) =>
+      record.content.includes('回味'),
+    );
+    expect(candidates).toHaveLength(1);
+    expect(candidates[0]!.sourceTurnId).toBe(turn1.turnId);
+
+    await runtime.chooseOption(turn1.options[0]!.id);
+    expect(calls).toBe(2);
+
+    // Turn 2：时间承接上一轮（日内推进 30 分钟），过渡进入 TurnResult
+    const turn2 = await runtime.startTurn();
+    expect(turn2.transition!.time.previous).toBe('09:00');
+    expect(turn2.transition!.time.current).toBe('09:30');
+    const choice2 = await runtime.chooseOption(turn2.options[1]!.id);
+    expect(choice2.turnResult.transition?.turnId).toBe(turn2.turnId);
+    expect(choice2.turnResult.transition?.narrative.dialogues[0]?.text).toContain('想了很久');
+  });
+
+  it('reinforces memories referenced by the transition narrative (cooldown-aware)', async () => {
+    const runtime = new GameRuntime();
+    runtime.startGame();
+    const turn1 = await runtime.startTurn();
+    await runtime.chooseOption(turn1.options[0]!.id);
+
+    // 形成一条真实记忆后，下一轮检索应命中并被过渡引用强化
+    const before = Object.values(runtime.getState().memories.records)[0]!;
+    const retrievalCountBefore = before.retrievalCount;
+    const turn2 = await runtime.startTurn();
+    const after = runtime.getState().memories.records[before.id]!;
+    // 检索强化 + 过渡引用强化共用冷却：同一天至多 +12
+    expect(after.strength).toBeLessThanOrEqual(before.strength + 12);
+    expect(turn2.transition).toBeDefined();
+    void retrievalCountBefore;
+  });
+
   it('retries flaky LLM calls according to llmMaxAttempts', async () => {
     let calls = 0;
     const combinedPayload = JSON.stringify({

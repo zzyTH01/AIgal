@@ -65,7 +65,7 @@
 
 # 2. Phase P0 — Transition System
 
-- **状态**：⬜ 未开始
+- **状态**：✅ 已完成（2026-08-22，S1–S7 全部实施；验收报告见 `docs/review/life-engine-p0-report-2026-08-22.md`）
 
 ## 2.1 目标
 
@@ -75,23 +75,23 @@
 
 ### A. 前置契约（先冻结，后实现）
 
-- [ ] **日内时间流动契约**：当前 `time` 仅在跨天重置为 09:00（`progress-engine.ts`），需先冻结日内时段推进规则（如每 Turn 推进 上午→下午→傍晚→夜晚，跨天重置），更新 WorldState 相关 Schema。
-- [ ] **TransitionRecord 数据契约**：`{ time, location, environment?, emotionalAftermath?, pendingIntentIds?, eventSchedule? }` + **`narrative: { narration, dialogues[] }`**（生成的过渡文段本身，供回放 / Turn Debugger / UI 展示）；写入 `TurnResult` 或独立 `transition` 字段。
+- [x] **日内时间流动契约**：当前 `time` 仅在跨天重置为 09:00（`progress-engine.ts`），需先冻结日内时段推进规则（如每 Turn 推进 上午→下午→傍晚→夜晚，跨天重置），更新 WorldState 相关 Schema。
+- [x] **TransitionRecord 数据契约**：`{ time, location, environment?, emotionalAftermath?, pendingIntentIds?, eventSchedule? }` + **`narrative: { narration, dialogues[] }`**（生成的过渡文段本身，供回放 / Turn Debugger / UI 展示）；写入 `TurnResult` 或独立 `transition` 字段。
 
 ### B. 确定性状态层
 
-- [ ] **时间推进**：Turn 结束后按契约推进日内时段与日期，与 Day/DailyProgress 联动。
-- [ ] **地点迁移**：事件结束后角色/玩家移动地点；地点变化作为过渡（复用 `@ag/world` 的 `LocationState`）。
-- [ ] **环境演化**：天气/光线/人流/安静喧闹在过渡中变化（复用 `evolveWeather` / `advanceCalendar`，Phase E 已就绪）。
-- [ ] **上下文传递**：Transition 输出下一事件的候选上下文（地点/时间/事件/意图），供 P5 调度器消费。
+- [x] **时间推进**：Turn 结束后按契约推进日内时段与日期，与 Day/DailyProgress 联动。
+- [x] **地点迁移**：事件结束后角色/玩家移动地点；地点变化作为过渡（复用 `@ag/world` 的 `LocationState`）。
+- [x] **环境演化**：天气/光线/人流/安静喧闹在过渡中变化（复用 `evolveWeather` / `advanceCalendar`，Phase E 已就绪）。
+- [x] **上下文传递**：Transition 输出下一事件的候选上下文（地点/时间/事件/意图），供 P5 调度器消费。
 
 ### C. 过渡文段生成（表现层，对齐 Master Design §11.2.1）
 
-- [ ] **情绪余波（记忆驱动）**：从上一轮结果（`lastTurn.reaction / secondaryDelta / newMemories`）+ 检索 Top-K 相关记忆生成"回味"素材——回味内容必须可追溯到上一轮选择结果或某条历史记忆，禁止无因果空降。
-- [ ] **generateTransition（@ag/narrative）**：输入 = 上轮摘要 + 检索记忆 + 时间/地点/环境变化；输出 = 旁白 `narration` + 角色对话 `dialogues[]`（双通道结构化校验）；无 LLM 时确定性模板 fallback（守住 §9.1 纯文本闭环验收基线），产物标记 `source: 'llm' | 'fallback'`。
-- [ ] **合并调用（LLM Call Minimization）**：默认将过渡段并入下一次 Scenario 调用 prompt（要求先输出过场文段再输出场景），保持每 Turn 2 次调用不变；独立第 3 次调用仅作为可选配置项。
-- [ ] **Memory 联动三件套**：① 过渡前检索 Top-K 相关记忆作素材；② 被文段实际引用的记忆触发 `reinforceMemoryRecord`；③ "回想"行为本身产出 `memoryCandidate` 经 `formMemory` 入库。
-- [ ] **Runtime 接入点**：`GameRuntime.chooseOption` commit 之后、下一轮事件选择与场景生成之前执行 Transition 管线；过渡文段经 Application API 返回给 UI。
+- [x] **情绪余波（记忆驱动）**：从上一轮结果（`lastTurn.reaction / secondaryDelta / newMemories`）+ 检索 Top-K 相关记忆生成"回味"素材——回味内容必须可追溯到上一轮选择结果或某条历史记忆，禁止无因果空降。
+- [x] **generateTransition（@ag/narrative）**：输入 = 上轮摘要 + 检索记忆 + 时间/地点/环境变化；输出 = 旁白 `narration` + 角色对话 `dialogues[]`（双通道结构化校验）；无 LLM 时确定性模板 fallback（守住 §9.1 纯文本闭环验收基线），产物标记 `source: 'llm' | 'fallback'`。
+- [x] **合并调用（LLM Call Minimization）**：默认将过渡段并入下一次 Scenario 调用 prompt（要求先输出过场文段再输出场景），保持每 Turn 2 次调用不变；独立第 3 次调用仅作为可选配置项。
+- [x] **Memory 联动三件套**：① 过渡前检索 Top-K 相关记忆作素材；② 被文段实际引用的记忆触发 `reinforceMemoryRecord`；③ "回想"行为本身产出 `memoryCandidate` 经 `formMemory` 入库。
+- [x] **Runtime 接入点**：`GameRuntime.chooseOption` commit 之后、下一轮事件选择与场景生成之前执行 Transition 管线；过渡文段经 Application API 返回给 UI。
 
 ## 2.3 验收标准
 

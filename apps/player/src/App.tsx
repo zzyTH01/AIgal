@@ -43,11 +43,30 @@ export function App() {
     setError(null);
     const result = await api.nextTurn();
     if (result.ok && result.data) {
-      setState(result.data.state);
-      setOptions(result.data.options);
+      const data = result.data;
+      setState(data.state);
+      setOptions(data.options);
+      const speakerLabel = (speakerId: string) => {
+        const name = data.state.characters[speakerId]?.identity.name;
+        return name ? `${name}：` : '';
+      };
       setNarrative((entries) => [
         ...entries,
-        { id: `scenario_${result.data!.turnId}`, text: result.data!.scenario.narrative },
+        ...(data.transition
+          ? ([
+              {
+                id: `transition_${data.turnId}`,
+                text: data.transition.narrative.narration,
+                kind: 'transition',
+              },
+              ...data.transition.narrative.dialogues.map((dialogue, index) => ({
+                id: `transition_dlg_${data.turnId}_${index}`,
+                text: `${speakerLabel(dialogue.speakerId)}${dialogue.text}`,
+                kind: 'transition',
+              })),
+            ] as NarrativeEntry[])
+          : []),
+        { id: `scenario_${data.turnId}`, text: data.scenario.narrative, kind: 'scenario' },
       ]);
     } else {
       setError(result.error ?? '生成失败');

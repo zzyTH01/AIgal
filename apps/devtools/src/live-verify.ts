@@ -12,6 +12,10 @@ export interface LiveTurnMetric {
   time: string;
   scenarioSource: 'llm' | 'fallback';
   reactionSource: 'llm' | 'fallback' | 'inferred-fallback';
+  /** P0 过渡文段来源；'none' 表示本 Turn 无过渡记录。 */
+  transitionSource: 'llm' | 'fallback' | 'none';
+  /** 过渡文段引用的历史记忆数（Memory 联动②）。 */
+  transitionReferencedMemories: number;
   optionActions: string[];
   newMemories: number;
   recordCount: number;
@@ -34,6 +38,9 @@ export interface LiveVerifyReport {
   daysElapsed: number;
   scenarioLlmRatio: number;
   reactionLlmRatio: number;
+  /** P0：过渡文段 llm 占比（分母为生成了过渡的 Turn 数）。 */
+  transitionLlmRatio: number;
+  transitionsGenerated: number;
   memoriesFormedTotal: number;
   finalRecordCount: number;
   /** 活跃记忆 = records 中未被遗忘标记的记录（可被检索召回）。 */
@@ -116,11 +123,17 @@ export async function runLiveVerification(
   const perTurn: LiveTurnMetric[] = [];
   let scenarioLlm = 0;
   let reactionLlm = 0;
+  let transitionsGenerated = 0;
+  let transitionLlmCount = 0;
   let formedTotal = 0;
 
   for (let index = 0; index < turnsRequested; index += 1) {
     const startView = await runtime.startTurn();
     if (startView.scenario.source === 'llm') scenarioLlm += 1;
+    if (startView.transition) {
+      transitionsGenerated += 1;
+      if (startView.transition.narrative.source === 'llm') transitionLlmCount += 1;
+    }
 
     const option = startView.options[index % Math.max(1, startView.options.length)]!;
     const choice = await runtime.chooseOption(option.id);
@@ -137,6 +150,9 @@ export async function runLiveVerification(
       day: choice.state.run.day,
       time: choice.state.run.time,
       scenarioSource: startView.scenario.source,
+      transitionSource: startView.transition?.narrative.source ?? 'none',
+      transitionReferencedMemories:
+        startView.transition?.emotionalAftermath?.referencedMemoryIds.length ?? 0,
       reactionSource: reactionIsFallback ? 'inferred-fallback' : 'llm',
       optionActions: option.behavior.actions,
       newMemories: choice.turnResult.newMemories.length,
@@ -165,6 +181,8 @@ export async function runLiveVerification(
     daysElapsed: finalState.run.day,
     scenarioLlmRatio: perTurn.length > 0 ? scenarioLlm / perTurn.length : 0,
     reactionLlmRatio: perTurn.length > 0 ? reactionLlm / perTurn.length : 0,
+    transitionLlmRatio: transitionsGenerated > 0 ? transitionLlmCount / transitionsGenerated : 0,
+    transitionsGenerated,
     memoriesFormedTotal: formedTotal,
     finalRecordCount: finalStats.recordCount,
     activeRecordCount: finalStats.activeRecordCount,

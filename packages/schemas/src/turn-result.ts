@@ -4,6 +4,7 @@ import { memoryCandidateSchema, memoryRecordSchema } from './memory.js';
 import { playerModelSchema } from './player-model.js';
 import { idSchema, percentSchema, schemaVersionSchema } from './primitives.js';
 import { finalStateDeltaSchema } from './state-delta.js';
+import { transitionRecordSchema } from './transition.js';
 import { worldStateSchema } from './world.js';
 
 export const turnChoiceSchema = z
@@ -61,6 +62,8 @@ export const turnResultSchema = z
     newMemories: z.array(memoryRecordSchema),
     playerModel: playerModelSchema,
     worldUpdate: worldStateSchema,
+    /** P0 Transition System：本 Turn 的开场过场（可选，旧存档/旧路径缺省）。 */
+    transition: transitionRecordSchema.optional(),
     finalState: gameStateSchema,
   })
   .strict();

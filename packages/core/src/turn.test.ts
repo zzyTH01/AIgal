@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { finalStateDeltaSchema } from '@ag/schemas';
 import { cloneGameState } from './game-state.js';
+import { advanceIntradayTime } from './progress-engine.js';
 import { makeCoreGameState, restOption, supportOption } from './test-data.js';
 import { findPrimaryRelationshipId, formatTurnId, startTurn } from './turn.js';
 
@@ -70,6 +71,30 @@ describe('Turn transaction shell', () => {
     expect(resolution.state.world.day).toBe(2);
     expect(resolution.state.world.time).toBe('09:00');
     expect(resolution.state.world.weekday).toBe('tuesday');
+  });
+
+  it('advances intraday time per turn and resets on day boundary', () => {
+    const state = makeCoreGameState();
+    const transaction = startTurn(state);
+    const resolution = transaction.resolveChoice(supportOption);
+    expect(resolution.crossedDayBoundary).toBe(false);
+    expect(resolution.state.run.time).toBe('09:30');
+    expect(resolution.state.world.time).toBe('09:30');
+
+    expect(advanceIntradayTime(resolution.state, 30).run.time).toBe('10:00');
+    expect(advanceIntradayTime(resolution.state, 0).run.time).toBe('09:30');
+  });
+
+  it('caps intraday time at 23:59 and can disable stepping with 0', () => {
+    const late = makeCoreGameState();
+    late.run.time = '23:45';
+    late.world.time = '23:45';
+    expect(advanceIntradayTime(late, 30).run.time).toBe('23:59');
+
+    const fixed = makeCoreGameState();
+    const transaction = startTurn(fixed);
+    const resolution = transaction.resolveChoice(restOption, { turnTimeStepMinutes: 0 });
+    expect(resolution.state.run.time).toBe('09:00');
   });
 
   it('rolls back to state before turn and allows re-resolution', () => {

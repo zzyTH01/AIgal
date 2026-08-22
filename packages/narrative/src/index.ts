@@ -6,4 +6,5 @@ export * from './scenario-generator.js';
 export * from './option-planner.js';
 export * from './reaction-generator.js';
 export * from './combined-generator.js';
+export * from './transition-generator.js';
 export * from './turn-pipeline.js';

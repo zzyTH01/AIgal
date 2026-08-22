@@ -4092,6 +4092,153 @@
             ],
             "additionalProperties": false
           },
+          "transition": {
+            "type": "object",
+            "properties": {
+              "schemaVersion": {
+                "type": "string",
+                "const": "0.1.0"
+              },
+              "turnId": {
+                "type": "string",
+                "minLength": 1
+              },
+              "time": {
+                "type": "object",
+                "properties": {
+                  "previous": {
+                    "type": "string",
+                    "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+                  },
+                  "current": {
+                    "type": "string",
+                    "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+                  },
+                  "crossedDayBoundary": {
+                    "type": "boolean"
+                  }
+                },
+                "required": [
+                  "previous",
+                  "current",
+                  "crossedDayBoundary"
+                ],
+                "additionalProperties": false
+              },
+              "location": {
+                "type": "object",
+                "properties": {
+                  "fromLocationId": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "toLocationId": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "fromLocationId",
+                  "toLocationId"
+                ],
+                "additionalProperties": false
+              },
+              "environment": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": [
+                    "string",
+                    "number"
+                  ]
+                }
+              },
+              "emotionalAftermath": {
+                "type": "object",
+                "properties": {
+                  "referencedMemoryIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "summary": {
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "referencedMemoryIds",
+                  "summary"
+                ],
+                "additionalProperties": false
+              },
+              "pendingIntentIds": {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "default": []
+              },
+              "narrative": {
+                "type": "object",
+                "properties": {
+                  "narration": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "dialogues": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "speakerId": {
+                          "type": "string"
+                        },
+                        "text": {
+                          "type": "string",
+                          "minLength": 1
+                        }
+                      },
+                      "required": [
+                        "speakerId",
+                        "text"
+                      ],
+                      "additionalProperties": false
+                    }
+                  },
+                  "source": {
+                    "type": "string",
+                    "enum": [
+                      "llm",
+                      "fallback"
+                    ]
+                  }
+                },
+                "required": [
+                  "narration",
+                  "dialogues",
+                  "source"
+                ],
+                "additionalProperties": false
+              }
+            },
+            "required": [
+              "schemaVersion",
+              "turnId",
+              "time",
+              "location",
+              "narrative"
+            ],
+            "additionalProperties": false
+          },
           "finalState": {
             "type": "object",
             "properties": {

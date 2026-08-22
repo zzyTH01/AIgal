@@ -2,6 +2,7 @@ import {
   finalStateDeltaSchema,
   npcReactionSchema,
   optionSchema,
+  transitionRecordSchema,
   turnResultSchema,
   type BaseStateDelta,
   type FinalStateDelta,
@@ -10,10 +11,16 @@ import {
   type NPCReaction,
   type Option,
   type RelationshipState,
+  type TransitionRecord,
   type TurnResult,
 } from '@ag/schemas';
 import { applyDelta, clamp, cloneGameState, validateGameState } from './game-state.js';
-import { advanceDay, isDayComplete } from './progress-engine.js';
+import {
+  advanceDay,
+  advanceIntradayTime,
+  DEFAULT_TURN_TIME_STEP_MINUTES,
+  isDayComplete,
+} from './progress-engine.js';
 import { ALWAYS_SUCCESS_RNG, type RNG } from './rng.js';
 import { observePlayerChoice, resolveChoice as resolveChoiceEffects } from './state-resolver.js';
 
@@ -35,6 +42,8 @@ export interface ResolveChoiceOptions {
   nextDayStartTime?: string;
   /** Phase 3 起用于 Risk 分支；缺省为永远成功。 */
   rng?: RNG;
+  /** P0 日内时间推进：每 Turn 推进分钟数；0 关闭（兼容旧 golden）。缺省 30。 */
+  turnTimeStepMinutes?: number;
 }
 
 export interface ChoiceResolution {
@@ -85,6 +94,12 @@ export function applyChoiceToState(
   if (crossedDayBoundary) {
     // 天数推进只有 advanceDay 一条权威路径；weekday/time/progress 一并由它推进。
     nextState = advanceDay(nextState, options.nextDayStartTime ?? '09:00');
+  } else {
+    // P0 日内时间流动：未跨天时按步长推进（Time Engine 权威写入）。
+    nextState = advanceIntradayTime(
+      nextState,
+      options.turnTimeStepMinutes ?? DEFAULT_TURN_TIME_STEP_MINUTES,
+    );
   }
 
   const turnId = formatTurnId(nextState.run.runId, before.run.day, nextTurn);
@@ -110,6 +125,7 @@ export class TurnTransaction {
   private directDelta?: FinalStateDelta;
   private secondaryDelta?: FinalStateDelta;
   private reaction?: NPCReaction;
+  private transition?: TransitionRecord;
   private committed = false;
 
   private constructor(state: GameState) {
@@ -157,6 +173,11 @@ export class TurnTransaction {
     this.reaction = npcReactionSchema.parse(reaction);
   }
 
+  /** P0：写入本 Turn 的开场过场（由 Runtime 在 startTurn 阶段组装）。 */
+  setTransition(record: TransitionRecord): void {
+    this.transition = transitionRecordSchema.parse(record);
+  }
+
   commitTurn(): TurnResult {
     if (!this.selectedOptionId || !this.directDelta) {
       throw new Error('Cannot commit a turn before resolveChoice');
@@ -177,6 +198,7 @@ export class TurnTransaction {
       newMemories,
       playerModel: cloneGameState(this.currentState.playerModel),
       worldUpdate: cloneGameState(this.currentState.world),
+      transition: this.transition ? transitionRecordSchema.parse(this.transition) : undefined,
       finalState: cloneGameState(this.currentState),
     };
     this.committed = true;

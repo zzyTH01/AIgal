@@ -54,6 +54,35 @@ export function advanceDay(state: GameState, nextDayStartTime = '09:00'): GameSt
   return next;
 }
 
+export const DEFAULT_TURN_TIME_STEP_MINUTES = 30;
+const MAX_TIME_MINUTES = 23 * 60 + 59;
+
+/**
+ * 日内时间推进的唯一权威路径（P0 Transition 前置契约）：
+ * 每 Turn 推进 stepMinutes，23:59 封顶等待跨天（Day 结束仍由 DailyProgress 驱动）。
+ * 同时写 run.time 与 world.time。
+ */
+export function advanceIntradayTime(
+  state: GameState,
+  stepMinutes = DEFAULT_TURN_TIME_STEP_MINUTES,
+): GameState {
+  if (stepMinutes <= 0) return state;
+  const next = cloneGameState(state);
+  const parts = next.run.time.split(':');
+  const hours = Number(parts[0]);
+  const minutes = Number(parts[1]);
+  const current =
+    Number.isFinite(hours) && Number.isFinite(minutes) ? hours * 60 + minutes : 9 * 60;
+  const advanced = Math.min(MAX_TIME_MINUTES, current + Math.round(stepMinutes));
+  const hh = Math.floor(advanced / 60)
+    .toString()
+    .padStart(2, '0');
+  const mm = (advanced % 60).toString().padStart(2, '0');
+  next.run.time = `${hh}:${mm}`;
+  next.world.time = next.run.time;
+  return next;
+}
+
 const WEEKDAYS = [
   'monday',
   'tuesday',

@@ -15,6 +15,7 @@ export * from './option.js';
 export * from './state-delta.js';
 export * from './event.js';
 export * from './turn-result.js';
+export * from './transition.js';
 export * from './context.js';
 export * from './save.js';
 export * from './character-definition.js';
