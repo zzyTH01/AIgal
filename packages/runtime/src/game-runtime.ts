@@ -212,6 +212,7 @@ export class GameRuntime {
     const last = this.lastTurn;
     return {
       npcName: this.character.identity.name,
+      npcId: this.character.characterId,
       systemRules: context.systemRules,
       lastTurn: last
         ? {

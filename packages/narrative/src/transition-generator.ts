@@ -10,6 +10,8 @@ import { checkNarrativeConsistency } from './consistency-check.js';
 
 export interface TransitionContextInput {
   npcName: string;
+  /** 真实角色 id：对话 speakerId 必须用它，防止 LLM 自创 ID。 */
+  npcId?: string;
   /** 复用 Context 组装的 system rules；缺省用通用旁白指令。 */
   systemRules?: string;
   /** 内容承接：上一轮选择与反应摘要（禁止无因果空降过渡）。 */
@@ -181,6 +183,7 @@ function buildTransitionRequest(
               ]
             : ['没有可用的检索记忆时，不要虚构记忆引用。']),
           '旁白描写环境与时间流逝；对话表现角色的余波情绪（可为空数组）。',
+          `对话的 speakerId 必须使用「${input.npcId ?? input.npcName}」，不要自创角色 ID。`,
           '严格输出 JSON：',
           '{"narration":"旁白文段","dialogues":[{"speakerId":"char_xxx","text":"台词"}],"referencedMemoryIds":["mem_xxx"],"memoryCandidate":{"type":"episodic","content":"回想内容","importance":30,"emotionalIntensity":25,"valence":10,"tags":["care"],"relatedCharacters":["char_xxx"],"sourceTurnId":"当前 turnId"}}',
         ].join('\n'),

@@ -6,6 +6,8 @@ import { inspectMemory, inspectState } from './inspectors.js';
 import { TurnDebugger } from './turn-debugger.js';
 import { runV1Acceptance } from './acceptance.js';
 import { runLiveVerification } from './live-verify.js';
+import { runLivePlaythrough } from './live-play.js';
+import { writePlaythroughMarkdown } from './playthrough-markdown.js';
 
 async function main(): Promise<void> {
   const [command, ...args] = process.argv.slice(2);
@@ -46,6 +48,22 @@ async function main(): Promise<void> {
       console.log(JSON.stringify(report, null, 2));
       return;
     }
+    case 'live-play': {
+      const turns = readInt(args, '--turns', 20);
+      const seed = readInt(args, '--seed', 20260822);
+      const demo = args.includes('--demo');
+      const outIndex = args.indexOf('--out');
+      const out = outIndex >= 0 ? args[outIndex + 1] : undefined;
+      const report = await runLivePlaythrough(demo ? { turns, seed, env: {} } : { turns, seed });
+      const target = out ?? 'playthrough.md';
+      writePlaythroughMarkdown(
+        report,
+        `P0 过渡系统对局全记录（${report.providerConfigured ? '真实 DeepSeek' : 'DemoProvider'}）`,
+        target,
+      );
+      console.log(`written: ${target}`);
+      return;
+    }
     case 'debug-turn': {
       const [file, turnId] = args;
       if (!file || !turnId) throw new Error('usage: debug-turn <history.json> <turnId>');
@@ -57,7 +75,7 @@ async function main(): Promise<void> {
     }
     default:
       console.log(
-        'Usage:\n  ag-devtools simulate --runs 100 [--turns 50] [--seed 1000]\n  ag-devtools replay --seed 42\n  ag-devtools inspect <state.json>\n  ag-devtools debug-turn <history.json> <turnId>\n  ag-devtools acceptance\n  ag-devtools live-verify [--turns 30] [--seed 20260821]  # 真实 LLM 复验，经 LLM_* 环境变量配置 Provider',
+        'Usage:\n  ag-devtools simulate --runs 100 [--turns 50] [--seed 1000]\n  ag-devtools replay --seed 42\n  ag-devtools inspect <state.json>\n  ag-devtools debug-turn <history.json> <turnId>\n  ag-devtools acceptance\n  ag-devtools live-verify [--turns 30] [--seed 20260821]  # 真实 LLM 复验，经 LLM_* 环境变量配置 Provider\n  ag-devtools live-play [--turns 20] [--out playthrough.md] [--demo]  # 完整对局 Markdown 记录',
       );
   }
 }

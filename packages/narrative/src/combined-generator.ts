@@ -136,6 +136,7 @@ function buildCombinedRequest(
         '[过场要求] 在 scenario 与 options 之前，先输出 transition 段：旁白+对话的过渡文段，衔接上一轮与本场景。',
         `时间：${transitionInput.timeChange.previous} → ${transitionInput.timeChange.current}${transitionInput.timeChange.crossedDayBoundary ? '（跨天）' : ''}`,
         `地点：${transitionInput.locationChange.fromLocationId ?? '未知'} → ${transitionInput.locationChange.toLocationId}`,
+        `对话 speakerId 必须使用「${transitionInput.npcId ?? transitionInput.npcName}」，不要自创角色 ID。`,
         ...(transitionInput.lastTurn
           ? [
               `上一轮：玩家行为 ${transitionInput.lastTurn.optionActions.join('/')}；角色反应：${transitionInput.lastTurn.reactionSummary}`,
