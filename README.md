@@ -6,8 +6,12 @@
 
 ## 文档
 
-- **`AI_GALGAME_Master_Design_v1.0.md`** — 唯一权威设计基线（当前文档版本 v1.1；设计哲学、核心闭环、领域模型、分层架构、验收标准）
-- **`DEVELOPMENT_PLAN.md`** — 可执行的分阶段开发计划（Phase 0.5–12）
+- **`AI_GALGAME_Master_Design_v1.0.md`** — 唯一权威设计基线（**文件名保留 v1.0，内容版本 v1.5**；§11 Life Engine、§11.11 Beat System）
+- **`DEVELOPMENT_PLAN.md`** — 主线分阶段开发计划（Phase 0.5–12，已完成）
+- **`EVENT_LIFE_PLAN.md`** — Life Engine 实现计划（P0 Transition ✅ / P0.5 Beat System ✅ / P1–P5 待做）
+- **`BEAT_SYSTEM_DESIGN.md`** — Beat System 唯一实现依据：事件内连续叙事流（拍模型 / FlowController / motive 思维链机制）
+- `docs/review/known-issues.md` — 已确认问题与校准记录
+- `docs/review/` — 各阶段审计与真实 LLM 验收报告
 - `docs/design-history/` — 早期设计文档归档
 
 ## 快速开始
@@ -23,34 +27,48 @@ pnpm build
 pnpm test
 pnpm typecheck
 pnpm lint
+
+# 真实 LLM 对局记录（经 LLM_* 环境变量配置 Provider，如 DeepSeek）
+LLM_PROVIDER=openai-compatible \
+LLM_BASE_URL=https://api.deepseek.com \
+LLM_MODEL=deepseek-chat \
+LLM_API_KEY=sk-xxx \
+  ag-devtools live-play --turns 20 --out playthrough.md
+
+# 无 LLM 确定性仿真与验收
+ag-devtools simulate --runs 100
+ag-devtools acceptance
 ```
 
 ## 当前进度
 
-- ✅ Phase 0 — 设计冻结
-- ✅ Phase 0.5 — 工程初始化（pnpm + TypeScript monorepo）
-- ✅ Phase 1 — 数据契约冻结：`@ag/schemas` 已落地 TS 类型 + Zod 运行时校验 + JSON Schema（Draft 2020-12），全部 Schema 从 Zod 同源生成
-- ✅ Phase 2 — Pure Game Core：`@ag/core` 已具备 GameState 工厂 / applyDelta / diff / Progress / Turn 事务 / Rule / Ending / 50+ Turn 模拟器
-- ✅ Phase 3 — State Resolver：Modifier 链、非线性反馈、重复反馈、Risk 分支、非法 AI 值 fallback
-- ✅ Phase 4 — Event + RNG：xorshift128 可复现 RNG、EventPool、权重/条件/冷却/稀有度事件选择、WorldTick 骨架
-- ✅ Phase 5 — Narrative / Option Engine：LLM Port + TestProvider、Scenario/Option/Reaction 生成、非法输出 Retry→Fallback
-- ✅ Phase 6 — Memory / Context：记忆全生命周期、ContextBuilder + ContextBudget、不同认知 Profile 不同 Context
-- ✅ Phase 7 — LLM Gateway：OpenAI / Anthropic / OpenAI-Compatible 适配器、重试/超时/成本日志、Scenario+Options 合并调用
-- ✅ Phase 8 — SillyTavern Adapter：Character Card V2 / World Book / Context Bridge / Extension / Character Compiler
-- ✅ Phase 9 — Minimal Play UI：`@ag/runtime` 编排 + Application API + React Player（无输入框）
-- ✅ Phase 10 — Designer Mode：Character Creator、Project JSON 导入/导出、Design→Play 模拟
-- ✅ Phase 11 — Simulation / Debug：批量模拟统计、Turn Debugger、Inspectors、Replay/Golden、Memory 修剪
-- ✅ Phase 12 — Presentation Layer：立绘/背景占位、打字机、CG 收集、音频占位面板
-- 🎉 Phase 0–12 主线完成
-- ✅ Completion Plan A–H 已执行：核心循环补全、Roguelike 跨局、LLM 稳定性、可靠性/缓存、World 演化、Policy 执行、校准与自动化验收
-- ⏭️ 待办：真实 LLM 手动联调、部署层 HTTP / PNG Card / 音频资源接入
+### 主线（Phase 0.5–12）✅
+
+- ✅ Phase 1 — 数据契约冻结：`@ag/schemas` TS 类型 + Zod 运行时校验 + JSON Schema 同源生成
+- ✅ Phase 2–4 — Pure Game Core / StateResolver（Modifier 链）/ 可复现 RNG + EventPool + WorldTick
+- ✅ Phase 5–7 — Narrative / Option Engine、Memory / Context 全生命周期、LLM Gateway（OpenAI / Anthropic / OpenAI-Compatible）
+- ✅ Phase 8 — SillyTavern Adapter：Character Card V2 / World Book / Context Bridge / Compiler
+- ✅ Phase 9–12 — Runtime 编排 + Application API + React Player、Designer Mode、devtools 仿真调试、表现层
+- ✅ Completion Plan A–H — 二次结算、PlayerModel、Bad End→Meta 跨局、LLM 软多样性、一致性检查、天气/日历/NPC 日程、Policy 运行时
+
+### Life Engine（事件 → 生活流）🔄
+
+- ✅ **2026-08-21 审计接线修复**：ContextCache、检索强化、记忆修剪、一致性规则、重试配置接入生产路径
+- ✅ **P0 Transition System**：选项节点之间的过渡文段（旁白+对话）、日内时间流动、Memory 联动三件套（检索供素材→引用即强化→回想产新忆）、合并调用保持 2 次/Turn
+- ✅ **P0.5 Beat System**：事件内连续叙事流——选择 → 文段拍 → 选择点交替；FlowController 裁决节奏（预算/间隔/分支价值）；事件重要性权重（main/side/micro 决定拍数预算与数值放大）；双推进模式（▼ 手动 / 自动连播，到选项必停）；motive 思维链→扮演对象回流驱动叙事
+- ⏭️ **P1 Pending Intent** → P2 Autonomous Event → P3 Micro Events → P4 Relationship Narrative State → P5 Event Scheduler
+
+### 已验证能力（真实 DeepSeek 长对话）
+
+- 场景/选项/反应 llm 占比 ≥90%，过渡文段 88%+
+- "角色真的记得你"：记忆形成→检索注入→言行呼应全链路成立
+- 拍间复写已校准消除（相邻拍相似度 0.072）；跨局 Meta 继承闭环可自动化验收
 
 ## 仓库结构
 
 ```text
-packages/   @ag/* 库（schemas → core → world/character/option/memory/context → narrative → runtime → adapters）
-apps/       应用（player 玩家 UI / designer 设计器 / devtools 模拟与调试）
-projects/   示例游戏 Project 包
-saves/      运行时存档输出
-docs/       设计文档
+packages/        @ag/* 库（schemas → core → world/memory/context/narrative → runtime → adapters）
+apps/            player 玩家 UI / designer 设计器 / devtools 模拟·调试·真实对局记录
+projects/ saves/ 示例 Project 与运行时存档
+docs/            review 审计与验收报告 / design-history 归档
 ```
