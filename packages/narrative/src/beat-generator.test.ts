@@ -53,7 +53,46 @@ describe('generateNarrativeBeats', () => {
     expect(beats).toHaveLength(2);
     expect(beats[0]?.branchPotential).toBe('high');
     expect(beats[0]?.dialogues[0]?.speakerId).toBe('char_saber');
+    void beats;
+    const withMotive = await (async () => {
+      const p2 = new TestProvider(() => ({
+        text: JSON.stringify({
+          beats: [
+            {
+              narration: '她翻过一页书。',
+              dialogues: [],
+              branchPotential: 'low',
+              motive: '想确认对方是否值得托付信任',
+            },
+          ],
+        }),
+      }));
+      return (await generateNarrativeBeats(baseInput, p2))[0]!;
+    })();
+    expect(withMotive.motive).toBe('想确认对方是否值得托付信任');
     expect(provider.calls).toHaveLength(1);
+  });
+
+  it('rejects narration repeating recent summaries and falls back', async () => {
+    const opening =
+      '玩家在食堂陪伴她用餐，两人隔着桌沿轻声交谈，窗外的雨敲打着玻璃，她偶尔抬头望一眼';
+    const input = {
+      ...baseInput,
+      flow: { ...baseInput.flow, beatSummaries: [opening] },
+    };
+    // 开头 60 字符复写上一拍，后文试图稀释 → 仍应被开头对开头比较拦截
+    const provider = TestProvider.fromText(
+      JSON.stringify({
+        beats: [
+          {
+            narration: `${opening}。随后她起身离开，走向天台，展开了大量全新的情节与动作描写以稀释全文相似度指标。`,
+            dialogues: [],
+          },
+        ],
+      }),
+    );
+    const beats = await generateNarrativeBeats(input, provider);
+    expect(beats[0]?.source).toBe('fallback');
   });
 
   it('falls back to template when LLM output is invalid', async () => {

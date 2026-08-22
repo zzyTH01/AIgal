@@ -14,6 +14,8 @@ interface BeatLog {
   dialogues?: { speaker: string; text: string }[];
   intro?: string;
   branchPotential?: string;
+  /** 引擎留存的内心动机（不呈现给玩家，供检查）。 */
+  motive?: string;
 }
 
 interface TurnLog {
@@ -120,6 +122,7 @@ export async function runLivePlaythrough(options: LivePlayOptions = {}): Promise
             text: dialogue.text,
           })),
           branchPotential: beat.branchPotential,
+          motive: beat.motive,
         };
       }
       choicePoints += 1;

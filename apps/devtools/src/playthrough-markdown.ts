@@ -43,6 +43,7 @@ export function renderPlaythroughMarkdown(report: LivePlayReport, title: string)
         for (const dialogue of beat.dialogues ?? []) {
           lines.push(`> **${dialogue.speaker || '？'}**：${dialogue.text}`, '');
         }
+        if (beat.motive) lines.push(`*内心（引擎留存）：${beat.motive}*`, '');
       } else {
         lines.push(`### 选择点（${beat.source}）`, '');
         if (beat.intro) lines.push(`*${beat.intro}*`, '');

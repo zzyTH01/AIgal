@@ -35,6 +35,8 @@ export const narrativeBeatSchema = z
     nextSuggestion: nextStepSuggestionSchema.optional(),
     /** 轻量情绪漂移 { metric: delta }，引擎 clamp ±3。 */
     emotionDrift: z.record(z.string(), z.number()).optional(),
+    /** 思维链→扮演对象：角色此刻内心动机（引擎留存，回流 pendingTension，不呈现给玩家）。 */
+    motive: z.string().max(200).optional(),
   })
   .strict();
 export type NarrativeBeat = z.infer<typeof narrativeBeatSchema>;

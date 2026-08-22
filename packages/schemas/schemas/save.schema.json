@@ -4307,6 +4307,10 @@
                       "additionalProperties": {
                         "type": "number"
                       }
+                    },
+                    "motive": {
+                      "type": "string",
+                      "maxLength": 200
                     }
                   },
                   "required": [

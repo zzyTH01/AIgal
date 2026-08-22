@@ -37,7 +37,6 @@ import {
   generateReaction,
   generateNarrativeBeats,
   generateChoiceBeat,
-  fallbackNarrativeBeat,
   type BeatContextInput,
   type CombinedGeneratorOptions,
 } from '@ag/narrative';
@@ -430,11 +429,24 @@ export class GameRuntime {
     // 预算耗尽（无剩余选择）→ 事件收束：产出收尾文段并结束流；
     // 下一次 advance/startTurn 将自动开启新事件。
     if (this.flow.status === 'ended' || this.flow.beatsUsed >= this.flow.maxBeats) {
-      const closing = fallbackNarrativeBeat(this.buildBeatInput(state, context));
+      const closings = [
+        `（${state.run.time}）这一段时光告一段落，空气里的情绪慢慢沉淀下来。`,
+        `（${state.run.time}）话题渐渐落下帷幕，她望向窗外，像是在为刚才的一切画上句点。`,
+        `（${state.run.time}）喧闹退去，两人之间留下一段安静而余韵未散的空白。`,
+      ];
+      const pick = closings[Math.floor(this.rng.next() * closings.length)] ?? closings[0]!;
+      const closing: Beat = {
+        beatId: `${this.flow.beatsUsed + 1}`.padStart(3, '0'),
+        kind: 'narrative',
+        narration: pick,
+        dialogues: [],
+        source: 'fallback',
+        branchPotential: 'mid',
+      };
       this.flow = { ...this.flow, status: 'ended' };
       this.flowPhase = 'awaiting-advance';
       this.currentOptions = [];
-      this.currentScenario = { narrative: closing.narration, source: closing.source };
+      this.currentScenario = { narrative: pick, source: closing.source };
       return { beat: closing };
     }
 
@@ -473,6 +485,10 @@ export class GameRuntime {
     }
     beat = { ...beat, emotionDrift: undefined };
     this.flow = this.flowController.registerBeat(this.flow, beat, beat.narration.slice(0, 60));
+    // 思维链→扮演对象：内心动机回流为 pendingTension，驱动后续拍并作为 P1 Pending Intent 的数据源。
+    if (beat.motive) {
+      this.flow = { ...this.flow, pendingTension: beat.motive };
+    }
     this.flowPhase = 'awaiting-advance';
     this.currentOptions = [];
     this.currentScenario = { narrative: beat.narration, source: beat.source };

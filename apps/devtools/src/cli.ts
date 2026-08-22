@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { readFile } from 'node:fs/promises';
+import { readFile, writeFile } from 'node:fs/promises';
 import { gameStateSchema, turnResultSchema, type GameState, type TurnResult } from '@ag/schemas';
 import { simulateRuns, fingerprint } from './simulation-engine.js';
 import { inspectMemory, inspectState } from './inspectors.js';
@@ -61,6 +61,14 @@ async function main(): Promise<void> {
         `Beat System 对局全记录（${report.providerConfigured ? '真实 DeepSeek' : 'DemoProvider'}）`,
         target,
       );
+      const summaryJson = {
+        ratio: report.ratio,
+        totalNarrativeBeats: report.totalNarrativeBeats,
+        beats: report.turns.flatMap((turn) =>
+          turn.beats.map((beat) => ({ kind: beat.kind, source: beat.source })),
+        ),
+      };
+      await writeFile(`${target}.json`, JSON.stringify(summaryJson, null, 2));
       console.log(`written: ${target}`);
       return;
     }
