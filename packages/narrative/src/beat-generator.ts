@@ -83,6 +83,11 @@ export async function generateNarrativeBeats(
         allowedCharacters: options.consistency?.allowedCharacters,
       });
       if (issues.length > 0) throw new Error(`beat consistency: ${issues.join('; ')}`);
+      // 拍间去重：与既有摘要高度相似视为原地踏步
+      const recent = input.flow.beatSummaries.slice(-2);
+      if (parsed.beats.some((payload) => overlapsAny(payload.narration, recent))) {
+        throw new Error('beat repeats recent narration');
+      }
       return parsed.beats.slice(0, maxBeats).map((payload, index) => ({
         beatId: `${input.flow.beatsUsed + index + 1}`.padStart(3, '0'),
         kind: 'narrative',
@@ -211,6 +216,7 @@ function buildNarrativeRequest(
             ? ['若检索记忆与本拍相关，在文中自然呼应。']
             : ['没有可用检索记忆时，不要虚构记忆引用。']),
           '【职责边界】文段只写：上一选择的余波、时间/地点/环境流动、角色内心与记忆回味、张力铺垫。禁止描写任何玩家可选的具体行动，禁止替玩家做决定。',
+          '【连续性】每一拍必须推进情节或情绪（新细节/新动作/新想法），禁止重复此前文段的场景与措辞；若已有文段，从其结尾自然续写。',
           `对话 speakerId 必须使用「${input.npcId ?? input.npcName}」，不要自创角色 ID。`,
           '每个文段拍给出 branchPotential（此处是否值得让玩家做出有分歧的选择）与 nextSuggestion（仅建议）。',
           '严格输出 JSON：',

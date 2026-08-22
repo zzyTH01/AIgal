@@ -58,7 +58,7 @@ async function main(): Promise<void> {
       const target = out ?? 'playthrough.md';
       writePlaythroughMarkdown(
         report,
-        `P0 过渡系统对局全记录（${report.providerConfigured ? '真实 DeepSeek' : 'DemoProvider'}）`,
+        `Beat System 对局全记录（${report.providerConfigured ? '真实 DeepSeek' : 'DemoProvider'}）`,
         target,
       );
       console.log(`written: ${target}`);

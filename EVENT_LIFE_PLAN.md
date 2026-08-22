@@ -121,8 +121,7 @@ pnpm --filter @ag/world test && pnpm --filter @ag/narrative test && pnpm --filte
 
 # 3. Phase P0.5 — Beat System（事件内连续叙事流）
 
-- **状态**：⬜ 未开始
-- **设计文档**：`BEAT_SYSTEM_DESIGN.md`（唯一实现依据：契约/接口/类/兼容性全在此）
+- **状态**：✅ 已完成（2026-08-22，T1–T8 全部实施；验收报告见 `docs/review/beat-system-report-2026-08-22.md`，遗留拍间复写问题见 known-issues #15）
 
 ## 3.1 目标
 
