@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **AI GALGAME Framework**（tavern-gal）：一个以 SillyTavern 为可选 AI Runtime、以 GALGAME 选择式交互为表现形式、以 Game State 为核心、由 AI 动态叙事 + Roguelike 机制驱动的 AI 叙事游戏框架。
 
-当前仓库处于**Completion Plan v1.1 已执行 + 2026-08 审计修复 + Life Engine P0 已完成**阶段：权威架构由 `AI_GALGAME_Master_Design_v1.0.md` 定义（**注意：文件名保留 v1.0，内容版本已是 v1.5**，其 §11"Life Engine"中 P0 Transition 已实现，P0.5–P5 为已定案未实现；§11.11 Beat System 定义了事件内连续叙事流），`COMPLETION_PLAN.md` 记录 Phase A–H 补全结果。Phase 0.5–12 与补全计划已落地并通过自动化验收，但部分组件曾"实现未接线"，已于 2026-08-21 审计中接线（见 `docs/review/doc-vs-impl-audit-2026-08-21.md`）。任何实现工作开始前，必须先读权威设计文档与开发计划，不要凭推测自行发明架构。
+当前仓库处于**Completion Plan v1.1 已执行 + 2026-08 审计修复 + Life Engine P0/P0.5 已完成**阶段：权威架构由 `AI_GALGAME_Master_Design_v1.0.md` 定义（**注意：文件名保留 v1.0，内容版本已是 v1.5**，其 §11"Life Engine"中 P0 Transition 与 P0.5 Beat System 已实现，P1–P5 为已定案未实现；§11.11 Beat System 定义了事件内连续叙事流（含 motive 思维链机制）），`COMPLETION_PLAN.md` 记录 Phase A–H 补全结果。Phase 0.5–12 与补全计划已落地并通过自动化验收，但部分组件曾"实现未接线"，已于 2026-08-21 审计中接线（见 `docs/review/doc-vs-impl-audit-2026-08-21.md`）。任何实现工作开始前，必须先读权威设计文档与开发计划，不要凭推测自行发明架构。
 
 ### 权威文档（唯一事实来源）
 
@@ -14,7 +14,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | --------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `AI_GALGAME_Master_Design_v1.0.md`            | **唯一权威设计基线（最优先读）**。对六份 v0.1 设计文档的分析综合与定案：设计哲学、核心玩法闭环、职责边界、领域模型/数据契约、分层架构、数据所有权、技术栈定案、验收标准。§11 Life Engine（Transition/Pending Intent/Autonomous Event/Micro Event/Relationship Narrative State/Event Scheduler）**已设计未实现**。 |
 | `DEVELOPMENT_PLAN.md`                         | **可执行的分阶段开发计划**。Phase 0–12，每阶段含目标/验收标准/任务清单/测试/验证命令。执行开发时按此推进。                                                                                                                                                                                                        |
-| `EVENT_LIFE_PLAN.md`                          | Life Engine（Master Design §11）的 P0–P5 实现计划；P0 已完成，**P0.5 Beat System 为当前开发重点**。                                                                                                                                                                                                               |
+| `EVENT_LIFE_PLAN.md`                          | Life Engine（Master Design §11）的 P0–P5 实现计划；P0/P0.5 已完成，P1–P5 待做。                                                                                                                                                                                                                                   |
 | `BEAT_SYSTEM_DESIGN.md`                       | **P0.5 唯一实现依据**：事件内连续叙事流的契约/接口/类/开发计划（T1–T8）。                                                                                                                                                                                                                                         |
 | `docs/review/known-issues.md`                 | 已确认问题与待办清单（含真实 LLM 联调记录），动手前先查此文件避免重复劳动。                                                                                                                                                                                                                                       |
 | `docs/review/doc-vs-impl-audit-2026-08-21.md` | 文档 vs 实现差异审计与修复记录。                                                                                                                                                                                                                                                                                  |
@@ -144,7 +144,7 @@ Option 是 Behavior Object：`presentation`（玩家看到的语言）+ `behavio
 - **Phase 11 注意事项**：`pruneMemories` 曾只接在 devtools 仿真器，2026-08-21 起已接入 `GameRuntime` 主路径（`memoryPruneLimit` 可配，默认 100）。
 - **Completion Plan 已执行**：二次结算、PlayerModel 更新、记忆触发、Bad End→Meta Progression、LLM 软多样性、一致性检查、Context Cache、天气/日历/NPC 日程、Project Policy 运行时、设计器/校准/资源接口与自动化 V1 验收均已完成。
 - **2026-08-21 审计接线修复**：此前"实现未接线"的组件已接入生产路径——`ContextCache`（含 stable summary 进 system prompt）、检索强化 `reinforceMemoryRecord`（startTurn 检索后强化）、`pruneMemories`（chooseOption 后修剪）、一致性规则 `consistency.forbiddenTopics/allowedCharacters`（RuntimeConfig 注入 Scenario+Reaction）、`llmMaxAttempts` 可配置（原写死 1）。详见 `docs/review/doc-vs-impl-audit-2026-08-21.md`。
-- **仍未实现（设计已定案）**：Master Design §11 Life Engine（P0 Transition 已完成；**P0.5 Beat System 事件内连续叙事流为下一步**，P1–P5 待做）；Gemini/Local Provider；HTTP Application API；PNG 卡导入；设计器多数编辑器 UI（仅 7 字段表单）；真实立绘/音频资源；成本真实 token 计量。
-- **下一步**：Life Engine P0.5 Beat System（按 `BEAT_SYSTEM_DESIGN.md` T1–T8）→ P1–P5（按 `EVENT_LIFE_PLAN.md`）；真实 LLM 手动联调（DeepSeek 等）复验 source 占比与记忆形成；部署层 HTTP/PNG 卡/音频资源接入。
+- **仍未实现（设计已定案）**：Master Design §11 Life Engine（P0 Transition 已完成；P1–P5 待做；#15 拍间复写/stress 校准遗留）；Gemini/Local Provider；HTTP Application API；PNG 卡导入；设计器多数编辑器 UI（仅 7 字段表单）；真实立绘/音频资源；成本真实 token 计量。
+- **下一步**：#15 遗留校准（stress 归零/fallback 率/节奏变奏）→ Life Engine P1 Pending Intent（按 `EVENT_LIFE_PLAN.md`）；部署层 HTTP/PNG 卡/音频资源接入。
 
 验收基线（Phase 2 原则）：**核心玩法的纯文本闭环能连续跑几十个 Turn 而不破坏 GameState，且不接任何 LLM，才算 Game Core 成立。**

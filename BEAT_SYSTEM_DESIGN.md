@@ -1,8 +1,10 @@
 # Beat System 设计文档 —— 事件内连续叙事流（P0.5）
 
-> 版本：v1.0（2026-08-22）｜ 上位依据：`AI_GALGAME_Master_Design_v1.0.md` §11（v1.5 §11.11 定案）、`EVENT_LIFE_PLAN.md` P0.5
+> 版本：v1.1（2026-08-22）｜ 上位依据：`AI_GALGAME_Master_Design_v1.0.md` §11（v1.5 §11.11 定案）、`EVENT_LIFE_PLAN.md` P0.5
 > 决策记录：D1–D7 全部按推荐执行（见 §9）；新增**事件重要性权重**与**双推进模式**为用户定案。
-> 本文是 P0.5 的唯一实现依据：设计理念 + 数据契约 + 接口/类 + 开发计划。
+> 变更记录：v1.1 校准（known-issues #15）——相似度阈值 0.6→**0.45**、去重改为**开头对开头**比较、prompt 注入 `[禁止复用的开头描写]/[续写起点]`；新增 **motive 字段**（思维链→扮演对象，回流 `flow.pendingTension`，P1 数据源）；收尾模板三变体。
+>
+> 本文是 P0.5 的唯一实现依据：设计理念 + 数据契约 + 接口/类 + 开发计划。实现状态：T1–T8 ✅（验收见 `docs/review/beat-system-report-2026-08-22.md`）。
 
 ---
 
@@ -130,6 +132,8 @@ export const narrativeBeatSchema = z.object({
   nextSuggestion: nextStepSuggestionSchema.optional(),   // 仅建议
   /** 轻量情绪漂移（D4）：{ metric: delta }，引擎 clamp ±3。 */
   emotionDrift: z.record(z.string(), z.number()).optional(),
+  /** 思维链→扮演对象（v1.1）：角色内心动机，引擎留存回流 pendingTension，不呈现给玩家（P1 数据源）。 */
+  motive: z.string().max(200).optional(),
 }).strict();
 
 export const choiceBeatSchema = z.object({
@@ -215,7 +219,7 @@ export async function generateChoiceBeat(
 ): Promise<ChoiceBeat & { scenario: GeneratedScenario }>;
 ```
 
-Prompt 职责切分写死：文段 prompt 明示"只写余波/环境/回味；**禁止描写任何玩家可选的行动**"；返回 JSON 含 `branchPotential/nextSuggestion/emotionDrift`。
+Prompt 职责切分写死：文段 prompt 明示"只写余波/环境/回味；**禁止描写任何玩家可选的行动**"；返回 JSON 含 `branchPotential/nextSuggestion/emotionDrift/motive`。校准（v1.1）追加：`[禁止复用的开头描写]`/`[续写起点]` 注入与 [连续性]/[思维链] 指令；拍间去重为**开头对开头**比较（阈值 0.45）。
 
 ## 4.3 Runtime（@ag/runtime/game-runtime.ts）
 
