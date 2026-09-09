@@ -2,6 +2,7 @@ import {
   type Beat,
   type CharacterDefinition,
   type ChoiceBeat,
+  type BranchPotential,
   type EndingDefinition,
   type EventDefinition,
   type EventFlow,
@@ -200,6 +201,8 @@ export class GameRuntime {
   private pendingBeats: Beat[] = [];
   private flowPhase: FlowPhase = 'awaiting-choice';
   private lastChoiceResolution?: string;
+  /** P0.5 校准：上一 NarrativeBeat 的 branchPotential，供 nextStep 裁决（否则全按 mid 处理导致节奏固定）。 */
+  private lastBranchPotential?: BranchPotential;
 
   constructor(config: RuntimeConfig = {}) {
     this.character = config.character ?? demoCharacter;
@@ -450,7 +453,9 @@ export class GameRuntime {
       return { beat: closing };
     }
 
-    const step = this.flowController.nextStep(this.flow);
+    const step = this.flowController.nextStep(this.flow, {
+      branchPotential: this.lastBranchPotential,
+    });
     const input = this.buildBeatInput(state, context);
 
     if (step === 'choice') {
@@ -484,6 +489,8 @@ export class GameRuntime {
       state = this.applyEmotionDrift(state, beat.emotionDrift);
     }
     beat = { ...beat, emotionDrift: undefined };
+    // 保存 branchPotential 供下一次 nextStep 裁决；choice 拍后清除（下一拍重新由新文段拍建议）。
+    this.lastBranchPotential = beat.branchPotential;
     this.flow = this.flowController.registerBeat(this.flow, beat, beat.narration.slice(0, 60));
     // 思维链→扮演对象：内心动机回流为 pendingTension，驱动后续拍并作为 P1 Pending Intent 的数据源。
     if (beat.motive) {
@@ -501,7 +508,12 @@ export class GameRuntime {
     return { beat };
   }
 
-  /** D4：轻量情绪漂移，clamp ±3。 */
+  /**
+   * D4：轻量情绪漂移，clamp ±3。
+   * #15 校准（第三轮复验）：漂移只作用于 EmotionState（短期动态），
+   * 不作用于 psychology（stress/dependence 等）——psychology 只随互动结算变化，
+   * 否则 59 个文段拍的系统性负向漂移会把 stress 排干归零。
+   */
   private applyEmotionDrift(state: GameState, drift: Record<string, number>): GameState {
     const next = cloneGameState(state);
     const characterId = this.character.characterId;
@@ -510,10 +522,7 @@ export class GameRuntime {
     const clampDrift = (value: number, delta: number) =>
       Math.max(0, Math.min(100, value + Math.max(-3, Math.min(3, delta))));
     for (const [metric, delta] of Object.entries(drift)) {
-      if (metric in character.psychology) {
-        const psychology = character.psychology as unknown as Record<string, number>;
-        psychology[metric] = clampDrift(psychology[metric] ?? 50, delta ?? 0);
-      } else if (metric === 'valence' || metric === 'intensity' || metric === 'energy') {
+      if (metric === 'valence' || metric === 'intensity' || metric === 'energy') {
         character.emotion[metric] = clampDrift(character.emotion[metric] ?? 50, delta ?? 0);
       }
     }
@@ -571,6 +580,7 @@ export class GameRuntime {
     if (this.flow) {
       this.flow = { ...this.flow, status: 'flowing', pendingTension: undefined };
     }
+    this.lastBranchPotential = undefined;
     this.lastChoiceResolution = this.summarizeResolution(resolution);
 
     const scenarioText = this.currentScenario?.narrative ?? '';

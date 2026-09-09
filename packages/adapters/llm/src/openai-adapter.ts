@@ -35,6 +35,13 @@ export class OpenAIAdapter implements LLMGateway {
       temperature: request.temperature ?? this.config.temperature,
       max_tokens: request.maxTokens ?? this.config.maxTokens,
     };
+    // DeepSeek V4 系列 thinking mode：默认 enabled；disabled 关闭推理链（快 + temperature 生效）。
+    if (this.config.thinking === 'disabled') {
+      body.thinking = { type: 'disabled' };
+    }
+    if (this.config.reasoningEffort) {
+      body.reasoning_effort = this.config.reasoningEffort;
+    }
     if (request.responseSchema && typeof request.responseSchema === 'object') {
       body.response_format = {
         type: 'json_schema',

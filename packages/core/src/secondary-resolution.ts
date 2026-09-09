@@ -46,7 +46,8 @@ export function resolveSecondaryDelta(
 
   const emotionEnergyDelta = Math.round((positive ? 1 : negative ? -1 : 0) * scale);
   const valenceDelta = Math.round((positive ? 1 : negative ? -1 : 0) * scale * 2);
-  const stressDelta = Math.round((positive ? -1 : negative ? 1 : 0) * scale);
+  // 校准 #15 ②：二次结算 stress 限幅 ±1，防止高强度情绪 + Beat 漂移叠加导致快速归零。
+  const stressDelta = positive ? -1 : negative ? 1 : 0;
   const lonelinessDelta =
     reaction.intent && CLOSENESS_INTENTS.includes(reaction.intent.type)
       ? -Math.round(reaction.intent.intensity / 10)

@@ -73,6 +73,25 @@ describe('generateNarrativeBeats', () => {
     expect(provider.calls).toHaveLength(1);
   });
 
+  it('downgrades free-text nextSuggestion to undefined instead of failing the beat (V4 Flash 校准)', async () => {
+    const provider = new TestProvider(() => ({
+      text: JSON.stringify({
+        beats: [
+          {
+            narration: '她合上书，指尖在封面上停了片刻。',
+            dialogues: [],
+            branchPotential: 'mid',
+            nextSuggestion: '让Master主动上前搭话，或者默默离开',
+          },
+        ],
+      }),
+    }));
+    const beats = await generateNarrativeBeats(baseInput, provider);
+    expect(beats).toHaveLength(1);
+    expect(beats[0]?.source).toBe('llm');
+    expect(beats[0]?.nextSuggestion).toBeUndefined();
+  });
+
   it('rejects narration repeating recent summaries and falls back', async () => {
     const opening =
       '玩家在食堂陪伴她用餐，两人隔着桌沿轻声交谈，窗外的雨敲打着玻璃，她偶尔抬头望一眼';

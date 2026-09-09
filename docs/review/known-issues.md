@@ -67,10 +67,19 @@
 - **修复**：boost 26→12 + 同记忆 1 天冷却；检索权重引入 recency .20 并下调静态属性；consolidation 晋升阈值 50→35（防活跃池枯竭）；prune 对遗忘记录排序降级但总量仍受约束。
 - **复验**：30 轮后活跃记忆 11 条、0 饱和、最高强度 75.5，retrievalCountSum 106→26。对比数据见 `live-verify-report-2026-08-21.md` 第五节。
 
-### 15. Beat System：拍间措辞复写 + stress 归零 —— 🔄 部分修复（2026-08-22 第二轮校准）
+### 15. Beat System：拍间措辞复写 + stress 归零 —— ✅ 已修复（2026-09-10 第四轮 DeepSeek V4 Flash 复验全通过）
 - **已修复（拍间复写）**：阈值 0.6→0.45 + 开头对开头比较（slice 60 对齐摘要长度）+ prompt 注入 [禁止复用的开头]/[续写起点]/[连续性] 指令。复验：相邻拍平均相似度 0.098→0.072，>0.45 的相邻对 3→1，且唯一残留对是收尾模板自身（已改三变体随机）。LLM 文段拍之间零重复。
 - **思维链→扮演对象（新增机制）**：文段拍新增 `motive` 字段（角色内心动机），引擎留存回流 `flow.pendingTension` 驱动后续拍，作为 P1 Pending Intent 数据源；不呈现给玩家。真实对局覆盖率 47/47 且全部演化不重复。研究结论：不引入原始 CoT/reasoner 输出（成本/延迟/泄漏风险），以结构化 motive 承接其收益。
-- **仍未解决**：②stress 归零（漂移+二次结算叠加，纳入 #6 校准）；③节奏固定"3+1"（待 branchPotential 引导校准）；④fallback 率 ~22%（去重拦截+收束模板），llm 占比 78% 贴线，可经 prompt 精调回升。
+- **第三轮代码校准（2026-09-07）**：
+  - ②stress 归零：`resolveSecondaryDelta` stress delta 限幅 ±1（此前 `intensity/10` 最高一次 -7，叠加 Beat 漂移 ±3 快速归零）。
+  - ③节奏固定"3+1"：`GameRuntime.produceBeat` 未将 LLM `branchPotential` 传入 `FlowController.nextStep`（实际全部按 mid 处理）。已修复，现在 high 即刻出选择点、low 延迟，产生自然变奏。
+  - ④fallback 率：`generateNarrativeBeats` 重试时注入 [校正] 指令（"上次因重复被拒绝"），引导 LLM 换场景切入，预期降低重复拦截→fallback 的比例。
+  - 另：`DEFAULT_FLOW_BUDGET.similarityThreshold` 0.6→0.45 对齐第二轮校准定案（此前仅 Beat Generator 侧生效）。
+  - **待真实 LLM 复验**：上述校准需 `ag-devtools live-play --turns 20` 确认 stress 不再归零、节奏出现变奏、fallback 率下降。
+- **第四轮复验（2026-09-10，DeepSeek V4 Flash + thinking disabled）——三项指标全部通过，问题关闭**：
+  - **适配层修复**：①`LLM_THINKING`/`LLM_REASONING_EFFORT` 环境变量支持（V4 Flash 默认 thinking=high 消耗 token 且忽略 temperature，游戏路径需 disabled）；②文段拍 `nextSuggestion` 枚举校准——V4 Flash 常写自由文本导致整拍 Zod 报废（占 fallback ~90%），按"LLM 建议、引擎裁决"原则降级为 undefined；③beat 情绪漂移范围修正——只作用于 `EmotionState`（valence/intensity/energy），不再作用于 psychology.stress（否则 59 拍系统性负向漂移必然排干 stress）；④prompt 示例 `emotionDrift` 由 `{"stress":-1}` 改为 `{"valence":1}`（消除负向引导）。
+  - **复验指标**：文段拍 54%→**100% llm**；选择拍 95%；反应 100%；分支价值 high **22**/mid 29（节奏变奏成立）；stress 45→**43**（不再归零，仅 ±1 互动结算）；affection 42、trust 25、活跃记忆 12 条。对局记录 `v4flash-15-verify-playtest.md`。
+  - 运行配置：`LLM_PROVIDER=openai-compatible LLM_MODEL=deepseek-v4-flash LLM_THINKING=disabled LLM_TIMEOUT_MS=60000`。
 
 ---
 

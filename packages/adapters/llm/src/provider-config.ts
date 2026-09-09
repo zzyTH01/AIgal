@@ -1,4 +1,8 @@
 export type LLMProviderKind = 'openai' | 'anthropic' | 'openai-compatible';
+/** DeepSeek V4 系列 thinking mode 开关（OpenAI 格式 extra body）。 */
+export type LLMThinkingMode = 'enabled' | 'disabled';
+/** DeepSeek V4 系列 thinking effort 等级。 */
+export type LLMReasoningEffort = 'low' | 'medium' | 'high' | 'max';
 
 export interface LLMProviderConfig {
   kind: LLMProviderKind;
@@ -9,6 +13,10 @@ export interface LLMProviderConfig {
   maxRetries?: number;
   temperature?: number;
   maxTokens?: number;
+  /** thinking mode 开关：V4 系列默认 enabled（消耗 token 且忽略 temperature）。 */
+  thinking?: LLMThinkingMode;
+  /** thinking effort 等级：low/medium/high/max（仅 enabled 时生效）。 */
+  reasoningEffort?: LLMReasoningEffort;
   /** USD per 1K input/output tokens；缺省 0，只计数不算成本。 */
   costPerInputToken?: number;
   costPerOutputToken?: number;
@@ -39,6 +47,17 @@ export function loadProviderConfigFromEnv(
   const model = env.LLM_MODEL ?? (kind === 'anthropic' ? 'claude-3-5-haiku-latest' : 'gpt-4o-mini');
   const timeoutMs = env.LLM_TIMEOUT_MS ? Number(env.LLM_TIMEOUT_MS) : undefined;
   const maxRetries = env.LLM_MAX_RETRIES ? Number(env.LLM_MAX_RETRIES) : undefined;
+  const thinking =
+    env.LLM_THINKING === 'enabled' || env.LLM_THINKING === 'disabled'
+      ? (env.LLM_THINKING as LLMThinkingMode)
+      : undefined;
+  const reasoningEffort =
+    env.LLM_REASONING_EFFORT === 'low' ||
+    env.LLM_REASONING_EFFORT === 'medium' ||
+    env.LLM_REASONING_EFFORT === 'high' ||
+    env.LLM_REASONING_EFFORT === 'max'
+      ? (env.LLM_REASONING_EFFORT as LLMReasoningEffort)
+      : undefined;
   const costPerInputToken = env.LLM_COST_INPUT_PER_1K
     ? Number(env.LLM_COST_INPUT_PER_1K)
     : undefined;
@@ -64,6 +83,8 @@ export function loadProviderConfigFromEnv(
     maxRetries,
     temperature: env.LLM_TEMPERATURE ? Number(env.LLM_TEMPERATURE) : undefined,
     maxTokens: env.LLM_MAX_TOKENS ? Number(env.LLM_MAX_TOKENS) : undefined,
+    thinking,
+    reasoningEffort,
     costPerInputToken,
     costPerOutputToken,
   });

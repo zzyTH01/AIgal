@@ -28,4 +28,37 @@ describe('provider config', () => {
     expect(config.maxRetries).toBe(3);
     expect(config.costPerInputToken).toBe(0.001);
   });
+
+  it('loads thinking mode and reasoning effort from env', () => {
+    const config = loadProviderConfigFromEnv({
+      LLM_PROVIDER: 'openai-compatible',
+      LLM_API_KEY: 'k',
+      LLM_MODEL: 'deepseek-v4-flash',
+      LLM_THINKING: 'disabled',
+    });
+    expect(config.thinking).toBe('disabled');
+    expect(config.reasoningEffort).toBeUndefined();
+
+    const effortConfig = loadProviderConfigFromEnv({
+      LLM_PROVIDER: 'openai-compatible',
+      LLM_API_KEY: 'k',
+      LLM_MODEL: 'deepseek-v4-flash',
+      LLM_THINKING: 'enabled',
+      LLM_REASONING_EFFORT: 'low',
+    });
+    expect(effortConfig.thinking).toBe('enabled');
+    expect(effortConfig.reasoningEffort).toBe('low');
+  });
+
+  it('ignores invalid thinking/effort env values', () => {
+    const config = loadProviderConfigFromEnv({
+      LLM_PROVIDER: 'openai-compatible',
+      LLM_API_KEY: 'k',
+      LLM_MODEL: 'm',
+      LLM_THINKING: 'sometimes',
+      LLM_REASONING_EFFORT: 'ultra',
+    });
+    expect(config.thinking).toBeUndefined();
+    expect(config.reasoningEffort).toBeUndefined();
+  });
 });

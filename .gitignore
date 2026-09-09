@@ -24,3 +24,6 @@ saves/
 # 环境变量
 .env
 .env.*
+
+# 本机密钥文件
+API.md

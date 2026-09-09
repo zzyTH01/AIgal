@@ -22,7 +22,7 @@ export interface FlowBudgetConfig {
 
 export const DEFAULT_FLOW_BUDGET: FlowBudgetConfig = {
   minBeatsBetweenChoices: 2,
-  similarityThreshold: 0.6,
+  similarityThreshold: 0.45,
   defaults: {
     main: { minBeats: 8, maxBeats: 12, minChoices: 2, maxChoices: 4 },
     side: { minBeats: 5, maxBeats: 6, minChoices: 1, maxChoices: 2 },

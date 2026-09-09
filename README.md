@@ -60,9 +60,10 @@ ag-devtools acceptance
 
 ### 已验证能力（真实 DeepSeek 长对话）
 
-- 场景/选项/反应 llm 占比 ≥90%，过渡文段 88%+
+- 场景/选项/反应 llm 占比 ≥90%（V4 Flash 复验：文段拍 100% / 选择拍 95% / 反应 100%）
 - "角色真的记得你"：记忆形成→检索注入→言行呼应全链路成立
-- 拍间复写已校准消除（相邻拍相似度 0.072）；跨局 Meta 继承闭环可自动化验收
+- 拍间复写已校准消除（相邻拍相似度 0.072）；known-issues #15 全部关闭（2026-09-10：stress 不归零、节奏变奏、fallback 清零）；跨局 Meta 继承闭环可自动化验收
+- 推理模型（如 DeepSeek V4 Flash）需设置 `LLM_THINKING=disabled`：关闭思维链后 temperature 生效、响应速度快、structured JSON 输出稳定
 
 ## 仓库结构
 

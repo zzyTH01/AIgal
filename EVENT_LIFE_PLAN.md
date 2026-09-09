@@ -129,14 +129,14 @@ pnpm --filter @ag/world test && pnpm --filter @ag/narrative test && pnpm --filte
 
 ## 3.2 任务清单（T1–T8）
 
-- [ ] **T1 schemas**：`beat.ts` 四契约 + `TurnResult.beats?` + `EventDefinition.importance`。
-- [ ] **T2 core**：FlowController（nextStep/registerBeat）+ textSimilarity + `ResolveChoiceOptions.impactMultiplier`。
-- [ ] **T3 narrative**：generateNarrativeBeats（1–2 拁批量）+ fallback + 文段/选项相似度去重校验。
-- [ ] **T4 narrative**：generateChoiceBeat（combined 能力迁移，剥离过渡职责）。
-- [ ] **T5 runtime**：flow 状态机 + `advance()` 门禁 + pendingBeats 区间提交 + impactScale 接线。
-- [ ] **T6 player**：FlowControls（▼ 继续 / 自动连播），到选择点必停。
-- [ ] **T7 devtools**：live-play/live-verify 拍维度指标 + simulate 预算参数校准。
-- [ ] **T8 真实 LLM 验收**：live-play ≥20 Turn 对照设计文档 §6 八条标准出报告。
+- [x] **T1 schemas**：`beat.ts` 四契约 + `TurnResult.beats?` + `EventDefinition.importance`。
+- [x] **T2 core**：FlowController（nextStep/registerBeat）+ textSimilarity + `ResolveChoiceOptions.impactMultiplier`。
+- [x] **T3 narrative**：generateNarrativeBeats（1–2 拍批量）+ fallback + 文段/选项相似度去重校验。
+- [x] **T4 narrative**：generateChoiceBeat（combined 能力迁移，剥离过渡职责）。
+- [x] **T5 runtime**：flow 状态机 + `advance()` 门禁 + pendingBeats 区间提交 + impactScale 接线。
+- [x] **T6 player**：FlowControls（▼ 继续 / 自动连播），到选择点必停。
+- [x] **T7 devtools**：live-play/live-verify 拍维度指标 + simulate 预算参数校准。
+- [x] **T8 真实 LLM 验收**：live-play ≥20 Turn 对照设计文档 §6 八条标准出报告。
 
 ## 3.3 验收标准
 

@@ -1,7 +1,6 @@
 import { z } from 'zod';
 import {
   branchPotentialSchema,
-  nextStepSuggestionSchema,
   transitionDialogueSchema,
   type GameState,
   type NarrativeBeat,
@@ -36,7 +35,8 @@ const narrativeBeatLlmSchema = z.object({
   narration: z.string().min(1),
   dialogues: z.array(transitionDialogueSchema).default([]),
   branchPotential: branchPotentialSchema.default('mid'),
-  nextSuggestion: nextStepSuggestionSchema.optional(),
+  // V4 Flash 校准：模型常把 nextSuggestion 写成自由文本；引擎裁决原则下无效建议降级为 undefined，不报废整拍。
+  nextSuggestion: z.unknown().optional(),
   emotionDrift: z.record(z.string(), z.number()).optional(),
   /** 思维链→扮演对象：角色此刻内心动机（引擎留存驱动后续拍，不呈现给玩家）。 */
   motive: z.string().max(200).optional(),
@@ -83,7 +83,9 @@ export async function generateNarrativeBeats(
 
   for (let attempt = 0; attempt <= maxAttempts; attempt += 1) {
     try {
-      const response = await gateway.generate(buildNarrativeRequest(input, maxBeats, options));
+      const response = await gateway.generate(
+        buildNarrativeRequest(input, maxBeats, options, attempt > 0),
+      );
       const parsed = parseStructuredResponse(response.text, narrativeBatchSchema);
       const issues = checkNarrativeConsistency(parsed.beats[0]?.narration ?? '', {
         forbiddenTopics: options.consistency?.forbiddenTopics,
@@ -102,11 +104,22 @@ export async function generateNarrativeBeats(
         dialogues: payload.dialogues ?? [],
         source: 'llm',
         branchPotential: payload.branchPotential ?? 'mid',
-        nextSuggestion: payload.nextSuggestion,
+        nextSuggestion:
+          payload.nextSuggestion === 'choice' ||
+          payload.nextSuggestion === 'beat' ||
+          payload.nextSuggestion === 'end'
+            ? payload.nextSuggestion
+            : undefined,
         emotionDrift: payload.emotionDrift,
         motive: payload.motive,
       }));
     } catch (error) {
+      if (process.env.LLM_DEBUG) {
+        console.error(
+          `[beat-debug] narrative attempt ${attempt} failed:`,
+          error instanceof Error ? error.message : error,
+        );
+      }
       if (error instanceof LLMError && !error.retryable) break;
     }
   }
@@ -168,6 +181,9 @@ export async function generateChoiceBeat(
         rendered.length < minOptions ||
         !validateOptions(rendered, { gameState: input.currentState, diversityMode: 'soft' }).valid
       ) {
+        if (process.env.LLM_DEBUG) {
+          console.error('[beat-debug] choice rejected: too few options or validation failed');
+        }
         continue;
       }
       if (
@@ -187,6 +203,12 @@ export async function generateChoiceBeat(
         source: 'llm',
       };
     } catch (error) {
+      if (process.env.LLM_DEBUG) {
+        console.error(
+          `[beat-debug] choice attempt ${attempt} failed:`,
+          error instanceof Error ? error.message : error,
+        );
+      }
       if (error instanceof LLMError && !error.retryable) break;
     }
   }
@@ -203,6 +225,7 @@ function buildNarrativeRequest(
   input: BeatContextInput,
   maxBeats: number,
   options: BeatGeneratorOptions,
+  isRetry = false,
 ): LLMRequest {
   return {
     model: options.model,
@@ -219,6 +242,11 @@ function buildNarrativeRequest(
         role: 'user',
         content: [
           `【任务】为「${input.npcName}」的事件生成 ${maxBeats} 个文段拍（旁白+对话）。`,
+          ...(isRetry
+            ? [
+                '【校正】上一次输出因与近期拍重复被拒绝。你必须选择一个与所有已列出开头完全不同的场景、动作或视角切入，不要从同一场景重新描写。',
+              ]
+            : []),
           ...buildBaseUserLines(input),
           ...(input.retrievedMemories.length > 0
             ? ['若检索记忆与本拍相关，在文中自然呼应。']
@@ -227,9 +255,9 @@ function buildNarrativeRequest(
           '【连续性】从[续写起点]自然续写；严禁复用或改写[禁止复用的开头描写]中的任何句子作为开头；每一拍必须出现新的情节细节、动作或内心变化。',
           '【思维链】先用 motive 字段写下角色此刻的内心动机（一句话，引擎留存、不呈现给玩家），再让旁白与对话成为该动机的外在流露——动机要延续[角色内心动机（延续）]并向前演化。',
           `对话 speakerId 必须使用「${input.npcId ?? input.npcName}」，不要自创角色 ID。`,
-          '每个文段拍给出 branchPotential（此处是否值得让玩家做出有分歧的选择）与 nextSuggestion（仅建议）。',
+          '每个文段拍给出 branchPotential（high/mid/low，此处是否值得让玩家做出有分歧的选择）与 nextSuggestion（必须是 "choice"、"beat"、"end" 三个字符串之一，不得写其他内容）。',
           '严格输出 JSON：',
-          '{"beats":[{"narration":"旁白","dialogues":[{"speakerId":"角色ID","text":"台词"}],"branchPotential":"mid","nextSuggestion":"beat","emotionDrift":{"stress":-1},"motive":"角色此刻内心动机一句话"}]}',
+          '{"beats":[{"narration":"旁白","dialogues":[{"speakerId":"角色ID","text":"台词"}],"branchPotential":"mid","nextSuggestion":"beat","emotionDrift":{"valence":1},"motive":"角色此刻内心动机一句话"}]}',
         ].join('\n'),
       },
     ],

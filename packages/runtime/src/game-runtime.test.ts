@@ -50,6 +50,31 @@ describe('GameRuntime', () => {
     expect(Object.keys(choice.data!.state.memories.records).length).toBeGreaterThan(0);
   });
 
+  it('beat emotionDrift only affects EmotionState, never psychology (#15 stress 归零校准)', async () => {
+    // LLM 文段拍建议 stress -3：psychology.stress 不变；valence +2：emotion.valence 变化
+    const provider = TestProvider.fromText(
+      JSON.stringify({
+        beats: [
+          {
+            narration: '她望向窗外，轻声呼出一口气。',
+            dialogues: [],
+            branchPotential: 'mid',
+            emotionDrift: { stress: -3, valence: 2 },
+          },
+        ],
+      }),
+    );
+    const runtime = new GameRuntime({ gateway: provider });
+    const state = runtime.startGame();
+    const characterId = 'char_asuka';
+    const stressBefore = state.characters[characterId]?.psychology.stress ?? -1;
+    const valenceBefore = state.characters[characterId]?.emotion.valence ?? -1;
+    await runtime.startTurn();
+    const after = runtime.getState();
+    expect(after.characters[characterId]?.psychology.stress).toBe(stressBefore);
+    expect(after.characters[characterId]?.emotion.valence).toBe(valenceBefore + 2);
+  });
+
   it('falls back to deterministic beats when LLM output is invalid', async () => {
     const runtime = new GameRuntime({ gateway: TestProvider.fromText('bad-json') });
     runtime.startGame();

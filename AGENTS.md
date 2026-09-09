@@ -1,6 +1,6 @@
-# CLAUDE.md
+# AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Codex (Codex.ai/code) when working with code in this repository.
 
 ## 项目定位
 
@@ -166,7 +166,7 @@ Option 是 Behavior Object：`presentation`（玩家看到的语言）+ `behavio
 - **Phase 11 注意事项**：`pruneMemories` 曾只接在 devtools 仿真器，2026-08-21 起已接入 `GameRuntime` 主路径（`memoryPruneLimit` 可配，默认 100）。
 - **Completion Plan 已执行**：二次结算、PlayerModel 更新、记忆触发、Bad End→Meta Progression、LLM 软多样性、一致性检查、Context Cache、天气/日历/NPC 日程、Project Policy 运行时、设计器/校准/资源接口与自动化 V1 验收均已完成。
 - **2026-08-21 审计接线修复**：此前"实现未接线"的组件已接入生产路径——`ContextCache`（含 stable summary 进 system prompt）、检索强化 `reinforceMemoryRecord`（startTurn 检索后强化）、`pruneMemories`（chooseOption 后修剪）、一致性规则 `consistency.forbiddenTopics/allowedCharacters`（RuntimeConfig 注入 Scenario+Reaction）、`llmMaxAttempts` 可配置（原写死 1）。详见 `docs/review/doc-vs-impl-audit-2026-08-21.md`。
-- **仍未实现（设计已定案）**：Master Design §11 Life Engine（P0 Transition 已完成；P1–P5 待做；known-issues #15 部分修复——拍间复写已消除，遗留 stress 归零/fallback 率 ~22%/节奏固定"3+1"待校准）；Gemini/Local Provider；HTTP Application API；PNG 卡导入；设计器多数编辑器 UI（仅 7 字段表单）；真实立绘/音频资源；成本真实 token 计量。
-- **下一步**：#15 遗留校准（stress 归零/fallback 率/节奏变奏）→ Life Engine P1 Pending Intent（按 `EVENT_LIFE_PLAN.md`）；部署层 HTTP/PNG 卡/音频资源接入。
+- **仍未实现（设计已定案）**：Master Design §11 Life Engine（P0 Transition 与 P0.5 Beat System 已完成；known-issues #15 已于 2026-09-10 第四轮 DeepSeek V4 Flash 复验关闭——stress 45→43 不归零、文段拍 100% llm、high/mid 变奏成立；P1–P5 待做）；Gemini/Local Provider；HTTP Application API；PNG 卡导入；设计器多数编辑器 UI（仅 7 字段表单）；真实立绘/音频资源；成本真实 token 计量。
+- **下一步**：Life Engine P1 Pending Intent（按 `EVENT_LIFE_PLAN.md`，motive→pendingTension 已是 P1 数据源）；部署层 HTTP/PNG 卡/音频资源接入。注意：DeepSeek V4 Flash 等推理模型需 `LLM_THINKING=disabled`（见 `@ag/llm` provider-config）。
 
 验收基线（Phase 2 原则）：**核心玩法的纯文本闭环能连续跑几十个 Turn 而不破坏 GameState，且不接任何 LLM，才算 Game Core 成立。**

@@ -1,7 +1,7 @@
 # AI GALGAME Framework
 ## 总设计文档 Master Design v1.5（唯一权威基线）
 
-> 版本：v1.5 ｜ 状态：Phase 0.5–12 与 Completion Plan A–H 已完成；Life Engine（§11）P0 已完成，**P0.5–P5 为已设计未实现**，规划见 `EVENT_LIFE_PLAN.md` ｜ 语言：中文
+> 版本：v1.5 ｜ 状态：Phase 0.5–12 与 Completion Plan A–H 已完成；Life Engine（§11）P0 与 P0.5 已完成，**P1–P5 为已设计未实现**，规划见 `EVENT_LIFE_PLAN.md` ｜ 语言：中文
 > 变更记录：v1.5（2026-08-22）新增 **§11.11 Beat System**（事件内连续叙事流）定案；v1.4 §11.2.1 过渡表现层；v1.3 并入事件系统补充规划。
 >
 > 本文档是对此前六份 v0.1 设计文档的分析、综合与定案，是项目**唯一的权威设计基线**。
@@ -720,9 +720,9 @@ GameProject: project.json / characters/ / world/ / parameters/ / options/
 
 ---
 
-# 11. 补充设计：事件系统过渡与补充规划（Life Engine）—— ⚠️ 已设计，未实现
+# 11. 补充设计：事件系统过渡与补充规划（Life Engine）—— P0/P0.5 已完成，P1–P5 已设计未实现
 
-> **状态：未完成。** 本节的六个子系统（§11.2–§11.7）为**已定案但尚未实现**的设计承诺。
+> **状态：P0 Transition 与 P0.5 Beat System 已实现（验收报告见 `docs/review/`）；P1–P5（§11.3–§11.7）为**已定案但尚未实现**的设计承诺。
 > 来源：`AIgal_事件系统过渡与补充规划.md`（作者补充的设计理念，v1.3 正式并入）。
 > 实现规划：`EVENT_LIFE_PLAN.md`（P0–P5 分阶段，对应本节的六个子系统）。
 
@@ -740,7 +740,7 @@ GameProject: project.json / characters/ / world/ / parameters/ / options/
 > **事件不应该是孤立的剧情节点，而应该是角色生活中的高密度时刻。**
 > 即使玩家没有主动推动剧情，时间仍流逝、角色仍活动/思考/形成记忆/产生新意图、关系仍可能发生微小变化。
 
-## 11.2 Transition System（P0）—— ⚠️ 未实现
+## 11.2 Transition System（P0）—— ✅ 已实现
 
 事件结束后不直接进入下一个事件，而经过一个轻量 **Transition**：
 
@@ -765,7 +765,7 @@ Transition 不只是状态量，必须有**可读的过渡文段**，在相邻�
 - **LLM Call Minimization 不破坏**：默认将过渡段**并入下一次 Scenario 调用**（prompt 要求先输出过场文段再输出场景），保持每 Turn 2 次调用；独立第 3 次调用仅作为可选配置。
 - **接入点**：`chooseOption` commit 之后、下一轮事件选择与场景生成之前；生成的文段随 `TransitionRecord.narrative` 持久化（回放 / Turn Debugger / UI 展示）。
 
-## 11.3 Pending Intent（P1）—— ⚠️ 未实现
+## 11.3 Pending Intent（P1）—— ⚠️ 已设计未实现
 
 **Intent ≠ Memory。** Memory 表达"过去发生过什么"；Intent 表达"角色现在还想做什么"。
 
@@ -777,7 +777,7 @@ Transition 不只是状态量，必须有**可读的过渡文段**，在相邻�
 - 不应每轮都执行，需具备：**优先级、触发条件、最晚触发时间、适合地点、适合时间段、与角色状态相关的权重**。
 - **目标：让昨天发生的事情能够影响明天。**
 
-## 11.4 Character Autonomous Event（P2）—— ⚠️ 未实现
+## 11.4 Character Autonomous Event（P2）—— ⚠️ 已设计未实现
 
 角色不只是"等待玩家输入的 NPC"，而是"拥有自己的行为倾向、需求、记忆和未完成目标的角色"：
 
@@ -789,7 +789,7 @@ Transition 不只是状态量，必须有**可读的过渡文段**，在相邻�
 示例：玩家前一天陪角色讨论历史 → 产生 `pending_intent: 想继续历史讨论` → 次日角色**主动出现**："……等等。昨天你说的那些话，我后来想了很久。"
 **目标：让角色不再只是被动 NPC。**
 
-## 11.5 Micro Events / Life Events（P3）—— ⚠️ 未实现
+## 11.5 Micro Events / Life Events（P3）—— ⚠️ 已设计未实现
 
 三层事件结构，填充大事件之间的"空气"：
 
@@ -801,7 +801,7 @@ Transition 不只是状态量，必须有**可读的过渡文段**，在相邻�
 
 Micro Event 不负责推动重大剧情，只负责"**让世界看起来正在运行**"（角色朝玩家点头、独处看书、递一杯茶、留下书签）。
 
-## 11.6 Relationship Narrative State（P4）—— ⚠️ 未实现
+## 11.6 Relationship Narrative State（P4）—— ⚠️ 已设计未实现
 
 数值负责"量化"，叙事层负责"角色关系的叙事解释"：
 
@@ -813,7 +813,7 @@ Micro Event 不负责推动重大剧情，只负责"**让世界看起来正在�
 
 > **原则：数值 ≠ 人格。** `affection=40` 本身无叙事意义；重要的是"角色因为这些经历，开始越来越愿意向玩家倾诉"。
 
-## 11.7 Event Scheduling System（P5）—— ⚠️ 未实现
+## 11.7 Event Scheduling System（P5）—— ⚠️ 已设计未实现
 
 统一调度器，管理 Main / Side / Micro / Autonomous / Transition 事件：
 
@@ -845,7 +845,7 @@ BAD END 已形成完整因果链（挑衅 → conflict 上升 → BAD END → En
 
 ## 11.11 Beat System（P0.5）—— 事件内连续叙事流（v1.5 定案）
 
-> 状态：**已定案，未实现**。完整设计（契约/接口/类/开发计划 T1–T8）见 `BEAT_SYSTEM_DESIGN.md`。
+> 状态：**T1–T8 已实现，验收报告见 `docs/review/beat-system-report-2026-08-22.md`**。完整设计（契约/接口/类/开发计划 T1–T8）见 `BEAT_SYSTEM_DESIGN.md`。
 
 事件内部不再是"每轮必选的回合制问答"，而是**连续叙事流**：
 
@@ -861,4 +861,4 @@ BAD END 已形成完整因果链（挑衅 → conflict 上升 → BAD END → En
 - **事务边界不变**：Choice 区间原子提交（D1），Beat 即时展示不入档；事件收束为 summary 记忆入库，事件间传递零新通道。
 - **实现位置**：EVENT_LIFE_PLAN **P0.5**（P1 之前），T1–T8 分步落地。
 
-实现优先级（详见 `EVENT_LIFE_PLAN.md`）：**P0 Transition ✅ → P0.5 Beat System → P1 Pending Intent → P2 Autonomous Event → P3 Micro Event → P4 Relationship Narrative State → P5 Event Scheduler**。
+实现优先级（详见 `EVENT_LIFE_PLAN.md`）：**P0 Transition ✅ → P0.5 Beat System ✅ → P1 Pending Intent → P2 Autonomous Event → P3 Micro Event → P4 Relationship Narrative State → P5 Event Scheduler**。
