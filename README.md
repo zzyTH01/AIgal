@@ -8,7 +8,7 @@
 
 - **`AI_GALGAME_Master_Design_v1.0.md`** — 唯一权威设计基线（**文件名保留 v1.0，内容版本 v1.5**；§11 Life Engine、§11.11 Beat System）
 - **`DEVELOPMENT_PLAN.md`** — 主线分阶段开发计划（Phase 0.5–12，已完成）
-- **`EVENT_LIFE_PLAN.md`** — Life Engine 实现计划（P0 Transition ✅ / P0.5 Beat System ✅ / P1–P5 待做）
+- **`EVENT_LIFE_PLAN.md`** — Life Engine 实现计划（P0 ✅ / P0.5 ✅ / P1 ✅ / P2–P5 待做）
 - **`BEAT_SYSTEM_DESIGN.md`** — Beat System 唯一实现依据：事件内连续叙事流（拍模型 / FlowController / motive 思维链机制）
 - `docs/review/known-issues.md` — 已确认问题与校准记录
 - `docs/review/` — 各阶段审计与真实 LLM 验收报告

@@ -1,9 +1,9 @@
 # AI GALGAME Framework
 
-## 事件系统升级计划 Event Life Plan v1.2（Life Engine）
+## 事件系统升级计划 Event Life Plan v1.3（Life Engine）
 
-> 版本：v1.2 ｜ 依据：`AI_GALGAME_Master_Design_v1.0.md` §11（v1.5）+ `AIgal_事件系统过渡与补充规划.md` + `BEAT_SYSTEM_DESIGN.md`
-> 变更记录：v1.2（2026-08-22）新增 **P0.5 Beat System**（事件内连续叙事流，设计详见 `BEAT_SYSTEM_DESIGN.md`）；v1.1（2026-08-21）P0 增补过渡表现层；v1.0 初版。
+> 版本：v1.3 ｜ 依据：`AI_GALGAME_Master_Design_v1.0.md` §11（v1.5）+ `AIgal_事件系统过渡与补充规划.md` + `BEAT_SYSTEM_DESIGN.md`
+> 变更记录：v1.3（2026-09-10）P1 Pending Intent 完成标记（契约/引擎/接线 + 真实 LLM 复验）；v1.2（2026-08-22）新增 **P0.5 Beat System**（事件内连续叙事流，设计详见 `BEAT_SYSTEM_DESIGN.md`）；v1.1（2026-08-21）P0 增补过渡表现层；v1.0 初版。
 >
 > 本计划是**下一阶段改进方向**：把当前已成立的 Event Engine 升级为 **Life Engine**。每阶段有目标、任务清单、验收标准与验证命令，验收通过后进入下一阶段。
 > 状态标记：⬜ 未开始 / 🔄 进行中 / ✅ 已完成。

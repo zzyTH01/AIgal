@@ -1,7 +1,7 @@
 # AI GALGAME Framework
 ## 总设计文档 Master Design v1.5（唯一权威基线）
 
-> 版本：v1.5 ｜ 状态：Phase 0.5–12 与 Completion Plan A–H 已完成；Life Engine（§11）P0 与 P0.5 已完成，**P1–P5 为已设计未实现**，规划见 `EVENT_LIFE_PLAN.md` ｜ 语言：中文
+> 版本：v1.5 ｜ 状态：Phase 0.5–12 与 Completion Plan A–H 已完成；Life Engine（§11）P0、P0.5 与 P1 已完成，**P2–P5 为已设计未实现**，规划见 `EVENT_LIFE_PLAN.md` ｜ 语言：中文
 > 变更记录：v1.5（2026-08-22）新增 **§11.11 Beat System**（事件内连续叙事流）定案；v1.4 §11.2.1 过渡表现层；v1.3 并入事件系统补充规划。
 >
 > 本文档是对此前六份 v0.1 设计文档的分析、综合与定案，是项目**唯一的权威设计基线**。
@@ -720,9 +720,9 @@ GameProject: project.json / characters/ / world/ / parameters/ / options/
 
 ---
 
-# 11. 补充设计：事件系统过渡与补充规划（Life Engine）—— P0/P0.5 已完成，P1–P5 已设计未实现
+# 11. 补充设计：事件系统过渡与补充规划（Life Engine）—— P0/P0.5/P1 已完成，P2–P5 已设计未实现
 
-> **状态：P0 Transition 与 P0.5 Beat System 已实现（验收报告见 `docs/review/`）；P1–P5（§11.3–§11.7）为**已定案但尚未实现**的设计承诺。
+> **状态：P0 Transition、P0.5 Beat System 与 P1 Pending Intent 已实现（验收报告见 `docs/review/`，P1 真实 LLM 复验 `v4flash-p1-verify-playtest.md`）；P2–P5（§11.4–§11.7）为**已定案但尚未实现**的设计承诺。
 > 来源：`AIgal_事件系统过渡与补充规划.md`（作者补充的设计理念，v1.3 正式并入）。
 > 实现规划：`EVENT_LIFE_PLAN.md`（P0–P5 分阶段，对应本节的六个子系统）。
 
@@ -765,7 +765,7 @@ Transition 不只是状态量，必须有**可读的过渡文段**，在相邻�
 - **LLM Call Minimization 不破坏**：默认将过渡段**并入下一次 Scenario 调用**（prompt 要求先输出过场文段再输出场景），保持每 Turn 2 次调用；独立第 3 次调用仅作为可选配置。
 - **接入点**：`chooseOption` commit 之后、下一轮事件选择与场景生成之前；生成的文段随 `TransitionRecord.narrative` 持久化（回放 / Turn Debugger / UI 展示）。
 
-## 11.3 Pending Intent（P1）—— ⚠️ 已设计未实现
+## 11.3 Pending Intent（P1）—— ✅ 已实现（2026-09-10：`@ag/core/intent-engine` + runtime 触发接线；motive 思维链为意图数据源）
 
 **Intent ≠ Memory。** Memory 表达"过去发生过什么"；Intent 表达"角色现在还想做什么"。
 
@@ -861,4 +861,4 @@ BAD END 已形成完整因果链（挑衅 → conflict 上升 → BAD END → En
 - **事务边界不变**：Choice 区间原子提交（D1），Beat 即时展示不入档；事件收束为 summary 记忆入库，事件间传递零新通道。
 - **实现位置**：EVENT_LIFE_PLAN **P0.5**（P1 之前），T1–T8 分步落地。
 
-实现优先级（详见 `EVENT_LIFE_PLAN.md`）：**P0 Transition ✅ → P0.5 Beat System ✅ → P1 Pending Intent → P2 Autonomous Event → P3 Micro Event → P4 Relationship Narrative State → P5 Event Scheduler**。
+实现优先级（详见 `EVENT_LIFE_PLAN.md`）：**P0 Transition ✅ → P0.5 Beat System ✅ → P1 Pending Intent ✅ → P2 Autonomous Event → P3 Micro Event → P4 Relationship Narrative State → P5 Event Scheduler**。
