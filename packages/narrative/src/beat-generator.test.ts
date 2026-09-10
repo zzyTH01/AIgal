@@ -92,6 +92,40 @@ describe('generateNarrativeBeats', () => {
     expect(beats[0]?.nextSuggestion).toBeUndefined();
   });
 
+  it('autonomous 事件：prompt 注入 [自主发起] 指令，fallback 输出主动开场（V4/P2）', async () => {
+    const autonomousInput = {
+      ...baseInput,
+      autonomous: { summary: '想继续向玩家讲述真实历史', motive: '他愿意听，我想继续' },
+    };
+
+    // ① LLM 路径：请求 prompt 含 [自主发起] 指令与记忆呼应要求
+    const provider = new TestProvider(() => ({
+      text: JSON.stringify({
+        beats: [
+          {
+            narration: '走廊尽头传来急促的脚步声，她在你转身前开口。',
+            dialogues: [
+              { speakerId: 'char_saber', text: '……等等。昨天你说的那些话，我后来想了很久。' },
+            ],
+            branchPotential: 'high',
+            motive: '不想让这个话题就这样断掉',
+          },
+        ],
+      }),
+    }));
+    await generateNarrativeBeats(autonomousInput, provider);
+    expect(provider.calls).toHaveLength(1);
+    const prompt = JSON.stringify(provider.calls[0]?.messages ?? []);
+    expect(prompt).toContain('【自主发起】');
+    expect(prompt).toContain('想继续向玩家讲述真实历史');
+
+    // ② fallback 路径：确定性模板保留"主动出现"语义
+    const fallbackProvider = new TestProvider(() => ({ text: 'bad-json' }));
+    const beats = await generateNarrativeBeats(autonomousInput, fallbackProvider);
+    expect(beats[0]?.source).toBe('fallback');
+    expect(beats[0]?.narration).toContain('主动');
+  });
+
   it('rejects narration repeating recent summaries and falls back', async () => {
     const opening =
       '玩家在食堂陪伴她用餐，两人隔着桌沿轻声交谈，窗外的雨敲打着玻璃，她偶尔抬头望一眼';

@@ -1,9 +1,9 @@
 # AI GALGAME Framework
 
-## 事件系统升级计划 Event Life Plan v1.3（Life Engine）
+## 事件系统升级计划 Event Life Plan v1.4（Life Engine）
 
-> 版本：v1.3 ｜ 依据：`AI_GALGAME_Master_Design_v1.0.md` §11（v1.5）+ `AIgal_事件系统过渡与补充规划.md` + `BEAT_SYSTEM_DESIGN.md`
-> 变更记录：v1.3（2026-09-10）P1 Pending Intent 完成标记（契约/引擎/接线 + 真实 LLM 复验）；v1.2（2026-08-22）新增 **P0.5 Beat System**（事件内连续叙事流，设计详见 `BEAT_SYSTEM_DESIGN.md`）；v1.1（2026-08-21）P0 增补过渡表现层；v1.0 初版。
+> 版本：v1.4 ｜ 依据：`AI_GALGAME_Master_Design_v1.0.md` §11（v1.5）+ `AIgal_事件系统过渡与补充规划.md` + `BEAT_SYSTEM_DESIGN.md`
+> 变更记录：v1.4（2026-09-10）P2 Autonomous Event 完成标记（自主发起判定 + 事件合成 + 叙事 [自主发起] 指令 + 种子化真实 LLM 复验）；v1.3（2026-09-10）P1 Pending Intent 完成标记（契约/引擎/接线 + 真实 LLM 复验）；v1.2（2026-08-22）新增 **P0.5 Beat System**（事件内连续叙事流，设计详见 `BEAT_SYSTEM_DESIGN.md`）；v1.1（2026-08-21）P0 增补过渡表现层；v1.0 初版。
 >
 > 本计划是**下一阶段改进方向**：把当前已成立的 Event Engine 升级为 **Life Engine**。每阶段有目标、任务清单、验收标准与验证命令，验收通过后进入下一阶段。
 > 状态标记：⬜ 未开始 / 🔄 进行中 / ✅ 已完成。
@@ -190,7 +190,7 @@ pnpm --filter @ag/runtime test && pnpm --filter @ag/devtools test && pnpm test
 
 # 5. Phase P2 — Character Autonomous Event
 
-- **状态**：⬜ 未开始
+- **状态**：✅ 已完成（2026-09-10：自主发起判定 `pickUrgentIntent`（截止日/高优先级跨日）→ runtime 合成 `event_auto_*`（origin=autonomous）→ 叙事层 [自主发起]/[记忆驱动] 指令；真实 LLM 复验：种子化"玩家未到场"场景，角色主动出现并提及前一天的事（`v4flash-p2-autonomous-verify.md`，开场与设计示例 §11.4 高度一致）；另 12 Turn 常规对局 11/12 走 intent 被动触发（`v4flash-p2-verify-playtest.md`），验证 P1/P2 分层正确性）
 
 ## 4.1 目标
 
@@ -198,10 +198,10 @@ pnpm --filter @ag/runtime test && pnpm --filter @ag/devtools test && pnpm test
 
 ## 4.2 任务清单
 
-- [ ] **自主行为入口**：`GameRuntime` 支持"角色主动触发"路径（非玩家 startTurn）。
-- [ ] **AutonomousEvent 类型**：基于 Pending Intent 与角色状态（desire/memory），角色主动发起事件。
-- [ ] **记忆驱动自主**：角色按检索到的记忆主动提及过去（"昨天你说的那些话，我后来想了很久"）。
-- [ ] **生成与呈现**：Autonomous Event 的生成沿用双通道 LLM + fallback；玩家看到的是"角色主动出现/搭话"。
+- [x] **自主行为入口**：`GameRuntime.prepareTurnContext` 四步管线扩展 ④b——被动择机不匹配时 `pickUrgentIntent`（截止日已到 ∨ 高优先级≥70 跨日）判定角色主动发起；完成复用 P1 `currentIntentId` 管线。
+- [x] **AutonomousEvent 类型**：`EventInstance.origin: 'pool'|'intent'|'autonomous'`（含 WorldEventState 透传持久化）；合成 `event_auto_*`（title 不期而至）事件，优先于事件池。
+- [x] **记忆驱动自主**：`BeatContextInput.autonomous` → prompt [自主发起]/[自主动机]/[记忆驱动] 指令——开场从角色主动行为切入并自然提及 [检索记忆] 中的过去；fallback 确定性模板保留"主动走到你面前"语义（纯文本闭环基线不破坏）。
+- [x] **生成与呈现**：沿用双通道 LLM + fallback；live-play 轮头部新增 `来源 autonomous/intent/pool` 可观测。
 
 ## 4.3 验收标准
 

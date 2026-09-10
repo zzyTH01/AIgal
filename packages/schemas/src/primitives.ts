@@ -91,3 +91,12 @@ export type EventRarity = z.infer<typeof eventRaritySchema>;
 
 export const eventCategorySchema = eventTypeSchema;
 export const eventRarityTypeSchema = eventRaritySchema;
+
+/**
+ * P2 Autonomous Event：事件来源。
+ * pool=事件池择取（默认）；intent=Pending Intent 择机触发（P1）；
+ * autonomous=角色主动发起（P2——玩家未到场，角色主动寻找玩家）。
+ * 定义于 primitives 以避免 event↔world 循环导入。
+ */
+export const eventOriginSchema = z.enum(['pool', 'intent', 'autonomous']);
+export type EventOrigin = z.infer<typeof eventOriginSchema>;

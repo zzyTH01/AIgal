@@ -5,6 +5,7 @@ import {
   gameTimestampSchema,
   idSchema,
   numericConditionSchema,
+  eventOriginSchema,
 } from './primitives.js';
 import { relationshipTypeSchema } from './relationship.js';
 import { eventImportanceSchema } from './beat.js';
@@ -81,6 +82,7 @@ export const eventInstanceSchema = z
     status: eventInstanceStatusSchema,
     createdAt: gameTimestampSchema,
     resolvedAt: gameTimestampSchema.optional(),
+    origin: eventOriginSchema.optional(),
   })
   .strict();
 

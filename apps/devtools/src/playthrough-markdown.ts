@@ -34,7 +34,7 @@ export function renderPlaythroughMarkdown(report: LivePlayReport, title: string)
 
   for (const turn of report.turns) {
     lines.push(
-      `## 第 ${turn.index} 轮（Day ${turn.day} · ${turn.time} · ${turn.locationId} · 事件重要性 ${turn.eventImportance}）`,
+      `## 第 ${turn.index} 轮（Day ${turn.day} · ${turn.time} · ${turn.locationId} · 事件重要性 ${turn.eventImportance} · 来源 ${turn.eventOrigin}）`,
       '',
     );
 

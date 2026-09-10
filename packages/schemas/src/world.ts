@@ -8,6 +8,7 @@ import {
   seasonSchema,
   timeStringSchema,
   weekdaySchema,
+  eventOriginSchema,
 } from './primitives.js';
 
 /** 天气类型建议值：clear/cloudy/rain/storm/snow/fog/wind/other；Phase 4 由 World Engine 校验。 */
@@ -47,6 +48,8 @@ export const worldEventStateSchema = z
     description: z.string(),
     weight: z.number().nonnegative(),
     lastTriggeredDay: z.number().int().nonnegative().optional(),
+    /** P2：事件来源（pool/intent/autonomous），随 activeEvents 持久化便于检查与回放。 */
+    origin: eventOriginSchema.optional(),
   })
   .strict();
 

@@ -75,6 +75,14 @@
         "time"
       ],
       "additionalProperties": false
+    },
+    "origin": {
+      "type": "string",
+      "enum": [
+        "pool",
+        "intent",
+        "autonomous"
+      ]
     }
   },
   "required": [

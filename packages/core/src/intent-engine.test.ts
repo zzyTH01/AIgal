@@ -9,6 +9,7 @@ import {
   markIntentTriggered,
   matchIntentContext,
   pickTopIntent,
+  pickUrgentIntent,
   type IntentCandidate,
 } from './intent-engine.js';
 
@@ -136,6 +137,74 @@ describe('intent-engine 生命周期', () => {
     });
     const picked = pickTopIntent(state, { day: 2, time: '15:00', locationId: 'loc_library' });
     expect(picked?.summary).toBe('想送玩家一本书');
+  });
+
+  it('pickUrgentIntent：截止日已到或高优先级（≥70）且上下文不匹配 → 角色主动发起', () => {
+    // ① 截止日压力：latestTriggerDay=2，当前 day=2，地点不匹配 → 主动
+    let state = makeState();
+    state.run.day = 2;
+    state = formPendingIntent(state, {
+      ...candidate,
+      preferredLocations: ['loc_rooftop'],
+      latestTriggerDay: 2,
+    });
+    const byDeadline = pickUrgentIntent(state, {
+      day: 2,
+      time: '15:00',
+      locationId: 'loc_library',
+    });
+    expect(byDeadline?.summary).toBe('想继续向玩家讲述真实历史');
+
+    // ② 高优先级：priority=70，形成于 day1、评估于 day2（设计示例：前一天陪聊，次日主动出现）→ 主动
+    let state2 = makeState();
+    state2.run.day = 1;
+    state2 = formPendingIntent(state2, {
+      ...candidate,
+      priority: 70,
+      latestTriggerDay: 9,
+      preferredLocations: ['loc_rooftop'],
+    });
+    const byPriority = pickUrgentIntent(state2, {
+      day: 2,
+      time: '15:00',
+      locationId: 'loc_library',
+    });
+    expect(byPriority).toBeDefined();
+
+    // ③ 低优先级 + 未到截止 → 不主动（等待择机）
+    let state3 = makeState();
+    state3.run.day = 2;
+    state3 = formPendingIntent(state3, {
+      ...candidate,
+      priority: 50,
+      latestTriggerDay: 9,
+      preferredLocations: ['loc_rooftop'],
+    });
+    expect(
+      pickUrgentIntent(state3, { day: 2, time: '15:00', locationId: 'loc_library' }),
+    ).toBeUndefined();
+
+    // ④ 意图形成当天不主动（至少次日）
+    let state4 = makeState();
+    state4.run.day = 1;
+    state4 = formPendingIntent(state4, {
+      ...candidate,
+      priority: 70,
+      latestTriggerDay: 9,
+      preferredLocations: ['loc_rooftop'],
+    });
+    expect(
+      pickUrgentIntent(state4, { day: 1, time: '15:00', locationId: 'loc_library' }),
+    ).toBeUndefined();
+
+    // ⑤ triggered 状态不参与
+    let state5 = makeState();
+    state5.run.day = 2;
+    state5 = formPendingIntent(state5, { ...candidate, preferredLocations: ['loc_rooftop'] });
+    state5 = markIntentTriggered(state5, 'intent_001', 'event_x');
+    expect(
+      pickUrgentIntent(state5, { day: 2, time: '15:00', locationId: 'loc_library' }),
+    ).toBeUndefined();
   });
 
   it('重复 summary 的 waiting 意图不重复产生（去重）', () => {

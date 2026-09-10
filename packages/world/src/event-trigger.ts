@@ -36,6 +36,7 @@ export function commitTriggeredEvent(
     description: parsedDefinition.description,
     weight: parsedDefinition.baseWeight,
     lastTriggeredDay: parsedInstance.day,
+    origin: parsedInstance.origin,
   };
 
   next.world.activeEvents = [

@@ -8,7 +8,7 @@
 
 - **`AI_GALGAME_Master_Design_v1.0.md`** — 唯一权威设计基线（**文件名保留 v1.0，内容版本 v1.5**；§11 Life Engine、§11.11 Beat System）
 - **`DEVELOPMENT_PLAN.md`** — 主线分阶段开发计划（Phase 0.5–12，已完成）
-- **`EVENT_LIFE_PLAN.md`** — Life Engine 实现计划（P0 ✅ / P0.5 ✅ / P1 ✅ / P2–P5 待做）
+- **`EVENT_LIFE_PLAN.md`** — Life Engine 实现计划（P0 ✅ / P0.5 ✅ / P1 ✅ / P2 ✅ / P3–P5 待做）
 - **`BEAT_SYSTEM_DESIGN.md`** — Beat System 唯一实现依据：事件内连续叙事流（拍模型 / FlowController / motive 思维链机制）
 - `docs/review/known-issues.md` — 已确认问题与校准记录
 - `docs/review/` — 各阶段审计与真实 LLM 验收报告
@@ -57,7 +57,8 @@ ag-devtools acceptance
 - ✅ **P0 Transition System**：选项节点之间的过渡文段（旁白+对话）、日内时间流动、Memory 联动三件套（检索供素材→引用即强化→回想产新忆）、合并调用保持 2 次/Turn
 - ✅ **P0.5 Beat System**：事件内连续叙事流——选择 → 文段拍 → 选择点交替；FlowController 裁决节奏（预算/间隔/分支价值）；事件重要性权重（main/side/micro 决定拍数预算与数值放大）；双推进模式（▼ 手动 / 自动连播，到选项必停）；motive 思维链→扮演对象回流驱动叙事
 - ✅ **P1 Pending Intent**：角色未完成意图——事件末次 motive 思维链确定性转化为意图，同地点/时间段/条件匹配时择机触发为意图事件并完成，超时过期（Intent ≠ Memory：昨天的事影响明天）
-- ⏭️ **P2 Autonomous Event** → P3 Micro Events → P4 Relationship Narrative State → P5 Event Scheduler
+- ✅ **P2 Autonomous Event**：角色主动寻找玩家——意图紧迫（截止日/高优先级跨日）且玩家未到场时，角色主动发起事件（origin=autonomous），开场叙事从她主动出现切入并自然提及过去（"……找到你了。昨天你说的那些，我后来想了很久。"）
+- ⏭️ **P3 Micro Events** → P4 Relationship Narrative State → P5 Event Scheduler
 
 ### 已验证能力（真实 DeepSeek 长对话）
 

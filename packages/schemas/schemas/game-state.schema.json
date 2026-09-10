@@ -229,6 +229,14 @@
               "lastTriggeredDay": {
                 "type": "integer",
                 "minimum": 0
+              },
+              "origin": {
+                "type": "string",
+                "enum": [
+                  "pool",
+                  "intent",
+                  "autonomous"
+                ]
               }
             },
             "required": [
@@ -286,6 +294,14 @@
               "lastTriggeredDay": {
                 "type": "integer",
                 "minimum": 0
+              },
+              "origin": {
+                "type": "string",
+                "enum": [
+                  "pool",
+                  "intent",
+                  "autonomous"
+                ]
               }
             },
             "required": [

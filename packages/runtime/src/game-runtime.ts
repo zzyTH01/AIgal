@@ -32,6 +32,7 @@ import {
   formPendingIntent,
   markIntentTriggered,
   pickTopIntent,
+  pickUrgentIntent,
   type FlowBudgetConfig,
   type IntentCandidate,
   type RNG,
@@ -211,6 +212,8 @@ export class GameRuntime {
   private currentIntentId?: string;
   /** P1：上一事件最后出现的 Beat motive（chooseOption 会清 flow.pendingTension，此处跨事件保留）。 */
   private lastEventMotive?: string;
+  /** P2：当前事件若为角色自主发起，携带意图摘要/动机供叙事层注入 [自主发起] 指令。 */
+  private currentEventAutonomous?: { summary: string; motive?: string };
   /** P0.5 校准：上一 NarrativeBeat 的 branchPotential，供 nextStep 裁决（否则全按 mid 处理导致节奏固定）。 */
   private lastBranchPotential?: BranchPotential;
 
@@ -284,6 +287,61 @@ export class GameRuntime {
         pendingTension: this.flow?.pendingTension,
       },
       lastChoiceResolution: this.lastChoiceResolution,
+      autonomous: this.currentEventAutonomous,
+    };
+  }
+
+  /**
+   * P2 ④b：自主发起——意图紧迫（截止日已到或高优先级跨日）但被动上下文不匹配时，
+   * 角色主动寻找玩家（Master Design §11.4："角色产生意图 → 角色主动寻找玩家 → 触发事件"）。
+   * 合成 event_auto_* 事件并在叙事层注入 [自主发起] 指令；完成复用 currentIntentId 管线。
+   */
+  private selectAutonomousEvent(state: GameState):
+    | {
+        intentId: string;
+        summary: string;
+        motive?: string;
+        definition: EventDefinition;
+        instance: import('@ag/schemas').EventInstance;
+      }
+    | undefined {
+    const intent = pickUrgentIntent(state, {
+      day: state.run.day,
+      time: state.run.time,
+      locationId: state.world.currentLocationId,
+    });
+    if (!intent) return undefined;
+    const eventId = `event_auto_${intent.id}`;
+    const definition: EventDefinition = {
+      eventId,
+      type: 'social',
+      rarity: 'rare',
+      title: '不期而至',
+      description: intent.summary,
+      baseWeight: 0,
+      conditions: {},
+      cooldown: { days: 0, turns: 0 },
+      importance: intent.priority >= 70 ? 'main' : 'side',
+    };
+    const instance: import('@ag/schemas').EventInstance = {
+      instanceId: `${eventId}_${state.run.day}_${state.run.turn}`,
+      eventId,
+      runId: state.run.runId,
+      day: state.run.day,
+      turn: state.run.turn,
+      locationId: state.world.currentLocationId,
+      title: definition.title,
+      description: definition.description,
+      status: 'active',
+      createdAt: { day: state.run.day, time: state.run.time },
+      origin: 'autonomous',
+    };
+    return {
+      intentId: intent.id,
+      summary: intent.summary,
+      motive: intent.sourceMotive,
+      definition,
+      instance,
     };
   }
 
@@ -430,6 +488,7 @@ export class GameRuntime {
       description: definition.description,
       status: 'active',
       createdAt: { day: state.run.day, time: state.run.time },
+      origin: 'intent',
     };
     return { intentId: intent.id, definition, instance };
   }
@@ -448,18 +507,22 @@ export class GameRuntime {
     }
     next = this.promoteMotiveToIntent(next);
 
-    // ④ 意图择机触发：waiting 意图匹配当前 日/时/地点 → 合成意图事件（优先于事件池）
+    // ④a P1 意图择机触发：waiting 意图匹配当前 日/时/地点 → 合成意图事件（优先于事件池）
     const intentSelection = this.selectIntentEvent(next);
-    let selectedEvent = intentSelection?.instance;
-    if (intentSelection) {
-      next = markIntentTriggered(
-        next,
-        intentSelection.intentId,
-        intentSelection.definition.eventId,
-      );
-      next = commitTriggeredEvent(next, intentSelection.definition, intentSelection.instance);
-      this.currentIntentId = intentSelection.intentId;
+    // ④b P2 自主发起：意图紧迫（截止日/高优先级）但玩家未到场 → 角色主动寻找玩家
+    const autonomousSelection = intentSelection ? undefined : this.selectAutonomousEvent(next);
+    const proactive = intentSelection ?? autonomousSelection;
+    let selectedEvent = proactive?.instance;
+    if (proactive) {
+      next = markIntentTriggered(next, proactive.intentId, proactive.definition.eventId);
+      next = commitTriggeredEvent(next, proactive.definition, proactive.instance);
+      this.currentIntentId = proactive.intentId;
+      this.currentEventAutonomous =
+        proactive === autonomousSelection && autonomousSelection
+          ? { summary: autonomousSelection.summary, motive: autonomousSelection.motive }
+          : undefined;
     } else {
+      this.currentEventAutonomous = undefined;
       const pooled = this.eventPool.trySelectEvent(next, this.rng);
       selectedEvent = pooled ?? undefined;
       if (pooled) {

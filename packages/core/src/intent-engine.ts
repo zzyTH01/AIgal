@@ -90,6 +90,31 @@ export function matchIntentContext(
   return true;
 }
 
+/**
+ * P2 Autonomous Event：自主发起判定。
+ * 角色"主动寻找玩家"的确定性条件——waiting 意图、被动上下文不匹配（匹配走 P1 择机触发）、
+ * 且满足任一紧迫信号：
+ * ① 截止日已到（day >= latestTriggerDay）——意图即将过期，角色不再等待；
+ * ② 高优先级（priority >= 70）且已跨日（day > createdAt.day）——强愿望次日即主动行动。
+ * 返回最高优先级的紧迫意图；由 runtime 合成"角色主动出现"事件。
+ */
+export function pickUrgentIntent(
+  state: GameState,
+  context: { day: number; time: string; locationId: string },
+): PendingIntent | undefined {
+  const intents = Object.values(state.pendingIntents?.intents ?? {});
+  const urgent = intents.filter((intent) => {
+    if (intent.status !== 'waiting') return false;
+    // 被动匹配可触发的走 P1 择机路径，不重复判定（多角色调度归 P5）
+    if (matchIntentContext(intent, { ...context, state })) return false;
+    const deadlinePressure = context.day >= intent.latestTriggerDay;
+    const highPriorityNextDay = intent.priority >= 70 && context.day > intent.createdAt.day;
+    return deadlinePressure || highPriorityNextDay;
+  });
+  if (urgent.length === 0) return undefined;
+  return urgent.reduce((top, intent) => (intent.priority > top.priority ? intent : top));
+}
+
 /** 择机触发判定入口：返回优先级最高的匹配意图（P5 调度器将在此加权）。 */
 export function pickTopIntent(
   state: GameState,

@@ -23,6 +23,11 @@ export interface BeatContextInput extends TransitionContextInput {
   };
   /** Choice 区间结算摘要（选择后的首个文段拍必带）。 */
   lastChoiceResolution?: string;
+  /**
+   * P2 Autonomous Event：本事件由角色主动发起（玩家未到场，角色主动寻找玩家）。
+   * summary 为驱动它的意图摘要；motive 为角色内心动机。
+   */
+  autonomous?: { summary: string; motive?: string };
   /** 可选：供选项条件评估。 */
   currentState?: GameState;
 }
@@ -133,6 +138,17 @@ export function fallbackNarrativeBeat(input: BeatContextInput): NarrativeBeat {
       : input.flow.beatSummaries.length > 0
         ? '前事历历，思绪未散。'
         : '';
+  // P2：自主发起事件的 fallback 保留"角色主动出现"语义（纯文本闭环基线）。
+  if (input.autonomous) {
+    return {
+      beatId: `${input.flow.beatsUsed + 1}`.padStart(3, '0'),
+      kind: 'narrative',
+      narration: `（${input.timeChange.current}，${input.locationChange.toLocationId}）${input.npcName}主动走到你面前，神情认真。有件事她一直放在心上，此刻不想再等。`,
+      dialogues: [],
+      source: 'fallback',
+      branchPotential: 'mid',
+    };
+  }
   return {
     beatId: `${input.flow.beatsUsed + 1}`.padStart(3, '0'),
     kind: 'narrative',
@@ -242,6 +258,13 @@ function buildNarrativeRequest(
         role: 'user',
         content: [
           `【任务】为「${input.npcName}」的事件生成 ${maxBeats} 个文段拍（旁白+对话）。`,
+          ...(input.autonomous
+            ? [
+                `【自主发起】本事件由「${input.npcName}」主动发起——玩家没有去找她，是她主动来寻找玩家。开场必须从她的主动行为切入（主动出现/叫住玩家/走到面前）。`,
+                `【自主动机】她的目的是：${input.autonomous.summary}${input.autonomous.motive ? `（内心：${input.autonomous.motive}）` : ''}。`,
+                '【记忆驱动】若 [检索记忆] 中有与此相关的过去事件，让她在开场自然提及（示例语气："……等等。昨天你说的那些话，我后来想了很久。"），不要生硬复述记忆原文。',
+              ]
+            : []),
           ...(isRetry
             ? [
                 '【校正】上一次输出因与近期拍重复被拒绝。你必须选择一个与所有已列出开头完全不同的场景、动作或视角切入，不要从同一场景重新描写。',

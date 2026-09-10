@@ -24,6 +24,8 @@ interface TurnLog {
   time: string;
   locationId: string;
   eventImportance: string;
+  /** P2：事件来源（pool/intent/autonomous）。 */
+  eventOrigin: string;
   beats: BeatLog[];
   options: { label: string; text: string; actions: string[]; intent: string[]; risk: number }[];
   choice: { label: string; text: string; actions: string[] } | null;
@@ -152,6 +154,7 @@ export async function runLivePlaythrough(options: LivePlayOptions = {}): Promise
       time: result.finalState.run.time,
       locationId: result.finalState.world.currentLocationId,
       eventImportance: runtime.getFlowState()?.importance ?? 'side',
+      eventOrigin: runtime.getState().world.activeEvents[0]?.origin ?? 'pool',
       beats: beatLogs,
       options: optionLabels,
       choice: {

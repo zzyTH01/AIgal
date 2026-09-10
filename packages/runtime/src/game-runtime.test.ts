@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
-import { validateGameState } from '@ag/core';
+import { formPendingIntent, validateGameState } from '@ag/core';
 import { TestProvider } from '@ag/llm';
+import { MemorySaveRepository } from '@ag/persistence';
 import { JsonDirectorySaveRepository } from '@ag/persistence/json-directory';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -48,6 +49,42 @@ describe('GameRuntime', () => {
     expect(choice.data!.turnResult.secondaryDelta.characters?.char_asuka?.psychology).toBeDefined();
     expect(choice.data!.state.playerModel.caring).toBeGreaterThan(50);
     expect(Object.keys(choice.data!.state.memories.records).length).toBeGreaterThan(0);
+  });
+
+  it('P2 Autonomous Event：紧迫意图 + 玩家未到场 → 角色主动发起事件并注入 [自主发起]', async () => {
+    // ① 造一个含"高优先级 + 地点不匹配"waiting 意图的状态（次日起即紧迫）
+    const seeded = new GameRuntime({});
+    const base = seeded.startGame(20260910);
+    const withIntent = formPendingIntent(base, {
+      characterId: 'char_asuka',
+      summary: '想再向玩家讲述那段真实历史',
+      sourceMotive: '他愿意听，我想继续',
+      priority: 70,
+      conditions: {},
+      preferredLocations: ['loc_rooftop'],
+      preferredTimeRange: { from: '00:00', to: '23:59' },
+      latestTriggerDay: 9,
+    });
+    // 推进到次日（跨过 createdAt 当天）
+    withIntent.run.day = 2;
+    withIntent.run.time = '15:00';
+
+    const repo = new MemorySaveRepository();
+    await repo.save('auto-test', withIntent);
+    const runtime = new GameRuntime({ persistence: repo });
+    await runtime.load('auto-test');
+
+    // ② startTurn：被动择机不匹配（玩家不在 loc_rooftop）→ 角色自主发起
+    const view = await runtime.startTurn();
+    const state = runtime.getState();
+    const activeEvent = state.world.activeEvents[0];
+    expect(activeEvent?.eventId).toBe('event_auto_intent_001');
+    expect(activeEvent?.title).toBe('不期而至');
+    expect(state.pendingIntents?.intents['intent_001']?.status).toBe('triggered');
+
+    // ③ flow 已开启且事件可推进（自主事件进入正常叙事流）
+    expect(view.beat ?? view.scenario).toBeDefined();
+    expect(runtime.getFlowState()).toBeDefined();
   });
 
   it('P1 Pending Intent：事件 motive → 意图形成 → 择机触发意图事件 → 完成', async () => {
