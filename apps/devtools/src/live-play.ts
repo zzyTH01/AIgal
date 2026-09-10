@@ -53,6 +53,8 @@ export interface LivePlayReport {
   totalChoicePoints: number;
   finalRelationship: { affection: number; trust: number; stress: number };
   activeMemoryCount: number;
+  /** P1：意图生命周期计数（byStatus + 汇总）。 */
+  intents: { total: number; byStatus: Record<string, number> };
   turns: TurnLog[];
 }
 
@@ -219,6 +221,14 @@ export async function runLivePlaythrough(options: LivePlayOptions = {}): Promise
     activeMemoryCount: Object.values(finalState.memories.records).filter(
       (record) => !forgotten.has(record.id),
     ).length,
+    intents: (() => {
+      const all = Object.values(finalState.pendingIntents?.intents ?? {});
+      const byStatus: Record<string, number> = {};
+      for (const intent of all) {
+        byStatus[intent.status] = (byStatus[intent.status] ?? 0) + 1;
+      }
+      return { total: all.length, byStatus };
+    })(),
     turns,
   };
 }

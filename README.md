@@ -56,7 +56,8 @@ ag-devtools acceptance
 - ✅ **2026-08-21 审计接线修复**：ContextCache、检索强化、记忆修剪、一致性规则、重试配置接入生产路径
 - ✅ **P0 Transition System**：选项节点之间的过渡文段（旁白+对话）、日内时间流动、Memory 联动三件套（检索供素材→引用即强化→回想产新忆）、合并调用保持 2 次/Turn
 - ✅ **P0.5 Beat System**：事件内连续叙事流——选择 → 文段拍 → 选择点交替；FlowController 裁决节奏（预算/间隔/分支价值）；事件重要性权重（main/side/micro 决定拍数预算与数值放大）；双推进模式（▼ 手动 / 自动连播，到选项必停）；motive 思维链→扮演对象回流驱动叙事
-- ⏭️ **P1 Pending Intent** → P2 Autonomous Event → P3 Micro Events → P4 Relationship Narrative State → P5 Event Scheduler
+- ✅ **P1 Pending Intent**：角色未完成意图——事件末次 motive 思维链确定性转化为意图，同地点/时间段/条件匹配时择机触发为意图事件并完成，超时过期（Intent ≠ Memory：昨天的事影响明天）
+- ⏭️ **P2 Autonomous Event** → P3 Micro Events → P4 Relationship Narrative State → P5 Event Scheduler
 
 ### 已验证能力（真实 DeepSeek 长对话）
 

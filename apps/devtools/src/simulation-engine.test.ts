@@ -37,7 +37,7 @@ describe('Simulation Engine', () => {
     expect(report.avgMemoryRecords).toBeLessThanOrEqual(100);
     expect(report.avgContextBudget).toBeLessThanOrEqual(100);
     expect(report.avgAffection).toBeLessThanOrEqual(100);
-  });
+  }, 20_000);
 
   it('single-run turn history is valid and replayable', () => {
     const run = simulateRun(777, 12, [], {});

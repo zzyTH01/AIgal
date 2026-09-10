@@ -12,6 +12,7 @@ export * from './meta.js';
 export * from './rng.js';
 export * from './game-state.js';
 export * from './option.js';
+export * from './pending-intent.js';
 export * from './state-delta.js';
 export * from './event.js';
 export * from './turn-result.js';

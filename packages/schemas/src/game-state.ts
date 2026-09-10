@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { characterStateSchema } from './character.js';
 import { metaStateSchema } from './meta.js';
 import { memoryStateSchema } from './memory.js';
+import { pendingIntentStateSchema } from './pending-intent.js';
 import { playerModelSchema } from './player-model.js';
 import { flagsSchema, idSchema, schemaVersionSchema, timeStringSchema } from './primitives.js';
 import { relationshipStateSchema } from './relationship.js';
@@ -42,6 +43,8 @@ export const gameStateSchema = z
     flags: flagsSchema,
     playerModel: playerModelSchema,
     memories: memoryStateSchema,
+    /** P1 Pending Intent：角色未完成意图（optional 保证旧存档兼容）。 */
+    pendingIntents: pendingIntentStateSchema.optional(),
     meta: metaStateSchema,
     rng: rngStateSchema,
   })

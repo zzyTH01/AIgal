@@ -157,7 +157,7 @@ pnpm --filter @ag/core test && pnpm --filter @ag/narrative test && pnpm --filter
 
 # 4. Phase P1 — Pending Intent
 
-- **状态**：⬜ 未开始
+- **状态**：✅ 已完成（2026-09-10：契约/引擎/接线/测试落地，意图生命周期 意图形成→择机触发→完成 全链路可自动化验收；motive 思维链已作为意图数据源接线。真实 LLM 复验：DeepSeek V4 Flash 12 Turn 形成 11 条意图 / 10 completed + 1 triggered，见 `docs/review/v4flash-p1-verify-playtest.md`）
 
 ## 3.1 目标
 
@@ -165,11 +165,11 @@ pnpm --filter @ag/core test && pnpm --filter @ag/narrative test && pnpm --filter
 
 ## 3.2 任务清单
 
-- [ ] **PendingIntent 数据契约**：`{ id, priority, conditions, preferredLocations, preferredTime, latestTriggerDay, createdAt, status }`。
-- [ ] **意图产生**：事件/结算后，从 `PlayerModel` 更新与事件结果生成角色意图（如"想继续历史讨论"）。
-- [ ] **意图生命周期**：产生 → 等待 → 择机触发 → 执行 → 完成/取消/转化；带优先级、触发条件、最晚触发时间、适合地点/时间段。
-- [ ] **触发判断**：事件选择时，若满足条件的 Pending Intent 存在，提高对应事件权重（供 P5）。
-- [ ] **意图完成机制**：Intent 被触发执行后标记完成；超时/条件消失则取消或转化。
+- [x] **PendingIntent 数据契约**：`{ id, characterId, summary, sourceEventId?, sourceTurnId?, sourceMotive?, priority, conditions, preferredLocations, preferredTimeRange?, latestTriggerDay, createdAt, status, triggeredEventId?, resolvedAt? }`（`@ag/schemas/src/pending-intent.ts`；status: waiting/triggered/completed/cancelled/expired；GameState 挂 optional `pendingIntents`，旧存档兼容）。
+- [x] **意图产生**：事件开启时将上一事件末次 Beat motive（思维链→扮演对象）确定性转化为 waiting 意图（main=70/side=50 优先级；同角色同 summary 去重；micro 不产生）。
+- [x] **意图生命周期**：`@ag/core/src/intent-engine.ts`——formPendingIntent → markIntentTriggered → completeIntent / cancelIntent / expireStaleIntents（超过 latestTriggerDay 过期）。
+- [x] **触发判断**：每次事件开启时 `pickTopIntent` 按 日/时/地点 + 条件（复用 `evaluateConditions`）匹配最高优先级 waiting 意图 → 合成意图事件（`event_intent_*`，优先于事件池；P5 调度器可在此加权扩展）。
+- [x] **意图完成机制**：意图事件结束、下一次事件开启时自动 complete；超时过期；取消 API 已备（条件消失转化的自动化归 P2/P5）。
 
 ## 3.3 验收标准
 

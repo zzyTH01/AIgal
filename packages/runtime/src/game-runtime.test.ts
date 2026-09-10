@@ -50,6 +50,55 @@ describe('GameRuntime', () => {
     expect(Object.keys(choice.data!.state.memories.records).length).toBeGreaterThan(0);
   });
 
+  it('P1 Pending Intent：事件 motive → 意图形成 → 择机触发意图事件 → 完成', async () => {
+    // LLM 文段拍持续带 motive；选择拍/反应解析失败走确定性 fallback（不阻塞流程）。
+    const beatsResponse = JSON.stringify({
+      beats: [
+        {
+          narration: '她望着窗外，轻声说起往事。',
+          dialogues: [{ speakerId: 'char_asuka', text: '……关于那段历史，我还没说完。' }],
+          branchPotential: 'mid',
+          motive: '想再向玩家讲述那段真实历史',
+        },
+      ],
+    });
+    const runtime = new GameRuntime({ gateway: TestProvider.fromText(beatsResponse) });
+    runtime.startGame();
+
+    /** 对齐 live-play 主循环：一轮 = startTurn → advance 至选择点 → chooseOption。 */
+    async function playTurns(count: number) {
+      for (let i = 0; i < count; i += 1) {
+        const view = await runtime.startTurn();
+        let options = view.options;
+        let guard = 0;
+        while (options.length === 0 && guard < 12) {
+          const advanced = await runtime.advance();
+          options = advanced.options;
+          guard += 1;
+        }
+        if (options.length === 0) break;
+        await runtime.chooseOption(options[0]!.id);
+      }
+    }
+
+    // 第 1 轮：事件带 motive；第 2 轮开启时 motive 应转化为 waiting 意图
+    await playTurns(1);
+    expect(Object.keys(runtime.getState().pendingIntents?.intents ?? {})).toHaveLength(0);
+    await playTurns(1);
+    // 注意：第 2 轮 startTurn 时意图已形成并立即匹配上下文 → 触发为意图事件
+    const stateAfterTurn2 = runtime.getState();
+    const intents = Object.values(stateAfterTurn2.pendingIntents?.intents ?? {});
+    expect(intents).toHaveLength(1);
+    expect(intents[0]?.sourceMotive).toBe('想再向玩家讲述那段真实历史');
+    expect(intents[0]?.status).toBe('triggered');
+    expect(stateAfterTurn2.world.activeEvents[0]?.eventId).toBe('event_intent_intent_001');
+
+    // 第 3 轮开启时：意图事件的流已在上轮完成 → 意图标记 completed
+    await playTurns(1);
+    const resolved = runtime.getState().pendingIntents?.intents['intent_001'];
+    expect(resolved?.status).toBe('completed');
+  });
+
   it('beat emotionDrift only affects EmotionState, never psychology (#15 stress 归零校准)', async () => {
     // LLM 文段拍建议 stress -3：psychology.stress 不变；valence +2：emotion.valence 变化
     const provider = TestProvider.fromText(

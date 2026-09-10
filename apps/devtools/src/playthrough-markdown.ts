@@ -22,6 +22,11 @@ export function renderPlaythroughMarkdown(report: LivePlayReport, title: string)
   );
   lines.push(
     `> 终局：affection ${report.finalRelationship.affection} ｜ trust ${report.finalRelationship.trust} ｜ stress ${report.finalRelationship.stress} ｜ 活跃记忆 ${report.activeMemoryCount} 条`,
+    `> 意图（P1）：共 ${report.intents.total} 条 ｜ ${
+      Object.entries(report.intents.byStatus)
+        .map(([status, count]) => `${status} ${count}`)
+        .join(' / ') || '无'
+    } `,
     '',
     '---',
     '',

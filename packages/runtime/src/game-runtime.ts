@@ -27,7 +27,13 @@ import {
   resolveSecondaryDelta,
   startTurn as startTurnTransaction,
   updatePlayerModelFromTurn,
+  completeIntent,
+  expireStaleIntents,
+  formPendingIntent,
+  markIntentTriggered,
+  pickTopIntent,
   type FlowBudgetConfig,
+  type IntentCandidate,
   type RNG,
 } from '@ag/core';
 import { EventPool, XorShift128Rng, commitTriggeredEvent } from '@ag/world';
@@ -201,6 +207,10 @@ export class GameRuntime {
   private pendingBeats: Beat[] = [];
   private flowPhase: FlowPhase = 'awaiting-choice';
   private lastChoiceResolution?: string;
+  /** P1：当前意图事件的意图 ID（事件结束后完成该意图）。 */
+  private currentIntentId?: string;
+  /** P1：上一事件最后出现的 Beat motive（chooseOption 会清 flow.pendingTension，此处跨事件保留）。 */
+  private lastEventMotive?: string;
   /** P0.5 校准：上一 NarrativeBeat 的 branchPotential，供 nextStep 裁决（否则全按 mid 处理导致节奏固定）。 */
   private lastBranchPotential?: BranchPotential;
 
@@ -352,26 +362,122 @@ export class GameRuntime {
    * 事件选择 + 流开启 + Context 组装。
    * P0.5：当前流已结束时自动滚动到下一事件（advance 与 startTurn 共用）。
    */
+  /**
+   * P1 ③：上一个事件结束时，把 flow.pendingTension（Beat motive 思维链回流）
+   * 转化为 waiting 意图。main/side 事件产生（micro 太琐碎），优先级按重要性映射，
+   * 最晚触发日 = 明天起 2 天内，地点偏好为当前地点。
+   */
+  private promoteMotiveToIntent(state: GameState): GameState {
+    const motive = this.lastEventMotive ?? this.flow?.pendingTension;
+    if (!motive) return state;
+    this.lastEventMotive = undefined;
+    const eventId = this.flow?.eventId ?? undefined;
+    if (!eventId) return state;
+    if (this.flow?.importance === 'micro') return state;
+    const candidate: IntentCandidate = {
+      characterId: this.character.characterId,
+      summary: motive,
+      sourceEventId: eventId,
+      sourceTurnId: this.lastTurn?.turnId,
+      sourceMotive: motive,
+      priority: (this.flow?.importance ?? 'side') === 'main' ? 70 : 50,
+      conditions: {},
+      preferredLocations: [state.world.currentLocationId],
+      preferredTimeRange: { from: '00:00', to: '23:59' },
+      latestTriggerDay: state.run.day + 2,
+    };
+    return formPendingIntent(state, candidate);
+  }
+
+  /**
+   * P1 ④：择机触发——匹配当前 日/时/地点 的最高优先级 waiting 意图
+   * 合成为意图事件（EventDefinition + EventInstance），优先于事件池选择。
+   */
+  private selectIntentEvent(state: GameState):
+    | {
+        intentId: string;
+        definition: EventDefinition;
+        instance: import('@ag/schemas').EventInstance;
+      }
+    | undefined {
+    const intent = pickTopIntent(state, {
+      day: state.run.day,
+      time: state.run.time,
+      locationId: state.world.currentLocationId,
+    });
+    if (!intent) return undefined;
+    const eventId = `event_intent_${intent.id}`;
+    const importance = intent.priority >= 70 ? 'main' : 'side';
+    const definition: EventDefinition = {
+      eventId,
+      type: 'social',
+      rarity: 'uncommon',
+      title: '心中的挂念',
+      description: intent.summary,
+      baseWeight: 0,
+      conditions: {},
+      cooldown: { days: 0, turns: 0 },
+      importance,
+    };
+    const instance: import('@ag/schemas').EventInstance = {
+      instanceId: `${eventId}_${state.run.day}_${state.run.turn}`,
+      eventId,
+      runId: state.run.runId,
+      day: state.run.day,
+      turn: state.run.turn,
+      locationId: state.world.currentLocationId,
+      title: definition.title,
+      description: definition.description,
+      status: 'active',
+      createdAt: { day: state.run.day, time: state.run.time },
+    };
+    return { intentId: intent.id, definition, instance };
+  }
+
   private async prepareTurnContext(forceNewEvent = false): Promise<ModelContext> {
     const state = this.getState();
     const needOpen = forceNewEvent || !this.flow || this.flow.status === 'ended';
     if (!needOpen && this.context) return this.context;
 
-    const selectedEvent = this.eventPool.trySelectEvent(state, this.rng);
-    let next = state;
-    if (selectedEvent) {
-      next = commitTriggeredEvent(
-        state,
-        this.eventDefinitions.find((event) => event.eventId === selectedEvent.eventId)!,
-        selectedEvent,
-        this.eventPool,
+    // P1 Pending Intent 管线（事件开启时执行一次）：
+    // ① 过期清理 → ② 完成上一个意图事件的意图 → ③ 上事件 motive 转化为新意图 → ④ 意图择机触发
+    let next = expireStaleIntents(state);
+    if (this.currentIntentId) {
+      next = completeIntent(next, this.currentIntentId);
+      this.currentIntentId = undefined;
+    }
+    next = this.promoteMotiveToIntent(next);
+
+    // ④ 意图择机触发：waiting 意图匹配当前 日/时/地点 → 合成意图事件（优先于事件池）
+    const intentSelection = this.selectIntentEvent(next);
+    let selectedEvent = intentSelection?.instance;
+    if (intentSelection) {
+      next = markIntentTriggered(
+        next,
+        intentSelection.intentId,
+        intentSelection.definition.eventId,
       );
+      next = commitTriggeredEvent(next, intentSelection.definition, intentSelection.instance);
+      this.currentIntentId = intentSelection.intentId;
+    } else {
+      const pooled = this.eventPool.trySelectEvent(next, this.rng);
+      selectedEvent = pooled ?? undefined;
+      if (pooled) {
+        next = commitTriggeredEvent(
+          next,
+          this.eventDefinitions.find((event) => event.eventId === pooled.eventId)!,
+          pooled,
+          this.eventPool,
+        );
+      }
     }
     this.state = next;
 
     const importance = selectedEvent
-      ? (this.eventDefinitions.find((event) => event.eventId === selectedEvent.eventId)
-          ?.importance ?? 'side')
+      ? intentSelection
+        ? intentSelection.definition.importance
+        : (this.eventDefinitions.find((event) => event.eventId === selectedEvent!.eventId)
+            ?.importance ?? 'side')
       : (this.flow?.importance ?? 'side');
     this.flow = this.flowController.openFlow(selectedEvent?.eventId ?? null, importance, () =>
       this.rng.next(),
@@ -495,6 +601,7 @@ export class GameRuntime {
     // 思维链→扮演对象：内心动机回流为 pendingTension，驱动后续拍并作为 P1 Pending Intent 的数据源。
     if (beat.motive) {
       this.flow = { ...this.flow, pendingTension: beat.motive };
+      this.lastEventMotive = beat.motive;
     }
     this.flowPhase = 'awaiting-advance';
     this.currentOptions = [];

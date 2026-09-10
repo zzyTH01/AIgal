@@ -6,6 +6,7 @@ export const schemaVersionSchema = z.literal(SCHEMA_VERSION);
 
 /** 全项目共享 ID：非空字符串。 */
 export const idSchema = z.string().min(1);
+export type GameTimestamp = z.infer<typeof gameTimestampSchema>;
 export type ID = z.infer<typeof idSchema>;
 export type RunId = ID;
 export type TurnId = ID;

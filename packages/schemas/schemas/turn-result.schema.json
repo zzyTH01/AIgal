@@ -1069,6 +1069,175 @@
           ],
           "additionalProperties": false
         },
+        "pendingIntents": {
+          "type": "object",
+          "properties": {
+            "intents": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "characterId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "summary": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "sourceEventId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "sourceTurnId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "sourceMotive": {
+                    "type": "string",
+                    "maxLength": 200
+                  },
+                  "priority": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "conditions": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "anyOf": [
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "min": {
+                              "type": "number"
+                            },
+                            "max": {
+                              "type": "number"
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      ]
+                    }
+                  },
+                  "preferredLocations": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "preferredTimeRange": {
+                    "type": "object",
+                    "properties": {
+                      "from": {
+                        "type": "string",
+                        "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+                      },
+                      "to": {
+                        "type": "string",
+                        "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+                      }
+                    },
+                    "required": [
+                      "from",
+                      "to"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "latestTriggerDay": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "createdAt": {
+                    "type": "object",
+                    "properties": {
+                      "day": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "time": {
+                        "type": "string",
+                        "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+                      }
+                    },
+                    "required": [
+                      "day",
+                      "time"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "waiting",
+                      "triggered",
+                      "completed",
+                      "cancelled",
+                      "expired"
+                    ]
+                  },
+                  "triggeredEventId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "resolvedAt": {
+                    "type": "object",
+                    "properties": {
+                      "day": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "time": {
+                        "type": "string",
+                        "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+                      }
+                    },
+                    "required": [
+                      "day",
+                      "time"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "id",
+                  "characterId",
+                  "summary",
+                  "priority",
+                  "conditions",
+                  "preferredLocations",
+                  "latestTriggerDay",
+                  "createdAt",
+                  "status"
+                ],
+                "additionalProperties": false
+              },
+              "propertyNames": {
+                "minLength": 1
+              }
+            }
+          },
+          "required": [
+            "intents"
+          ],
+          "additionalProperties": false
+        },
         "meta": {
           "type": "object",
           "properties": {
@@ -4247,6 +4416,175 @@
             "longTermIds",
             "forgottenIds",
             "lastConsolidatedDay"
+          ],
+          "additionalProperties": false
+        },
+        "pendingIntents": {
+          "type": "object",
+          "properties": {
+            "intents": {
+              "type": "object",
+              "additionalProperties": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "characterId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "summary": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 200
+                  },
+                  "sourceEventId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "sourceTurnId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "sourceMotive": {
+                    "type": "string",
+                    "maxLength": 200
+                  },
+                  "priority": {
+                    "type": "number",
+                    "minimum": 0,
+                    "maximum": 100
+                  },
+                  "conditions": {
+                    "type": "object",
+                    "additionalProperties": {
+                      "anyOf": [
+                        {
+                          "type": "boolean"
+                        },
+                        {
+                          "type": "number"
+                        },
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "min": {
+                              "type": "number"
+                            },
+                            "max": {
+                              "type": "number"
+                            }
+                          },
+                          "additionalProperties": false
+                        }
+                      ]
+                    }
+                  },
+                  "preferredLocations": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    }
+                  },
+                  "preferredTimeRange": {
+                    "type": "object",
+                    "properties": {
+                      "from": {
+                        "type": "string",
+                        "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+                      },
+                      "to": {
+                        "type": "string",
+                        "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+                      }
+                    },
+                    "required": [
+                      "from",
+                      "to"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "latestTriggerDay": {
+                    "type": "integer",
+                    "minimum": 1
+                  },
+                  "createdAt": {
+                    "type": "object",
+                    "properties": {
+                      "day": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "time": {
+                        "type": "string",
+                        "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+                      }
+                    },
+                    "required": [
+                      "day",
+                      "time"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "waiting",
+                      "triggered",
+                      "completed",
+                      "cancelled",
+                      "expired"
+                    ]
+                  },
+                  "triggeredEventId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "resolvedAt": {
+                    "type": "object",
+                    "properties": {
+                      "day": {
+                        "type": "integer",
+                        "minimum": 0
+                      },
+                      "time": {
+                        "type": "string",
+                        "pattern": "^([01]\\d|2[0-3]):[0-5]\\d$"
+                      }
+                    },
+                    "required": [
+                      "day",
+                      "time"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "required": [
+                  "id",
+                  "characterId",
+                  "summary",
+                  "priority",
+                  "conditions",
+                  "preferredLocations",
+                  "latestTriggerDay",
+                  "createdAt",
+                  "status"
+                ],
+                "additionalProperties": false
+              },
+              "propertyNames": {
+                "minLength": 1
+              }
+            }
+          },
+          "required": [
+            "intents"
           ],
           "additionalProperties": false
         },
