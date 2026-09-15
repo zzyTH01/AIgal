@@ -2,7 +2,7 @@
 ## 总设计文档 Master Design v1.5（唯一权威基线）
 
 > 版本：v1.5 ｜ 状态：Phase 0.5–12 与 Completion Plan A–H 已完成；Life Engine（§11）P0、P0.5、P1 与 P2 已完成，**P3–P5 为已设计未实现**，规划见 `EVENT_LIFE_PLAN.md` ｜ 语言：中文
-> 变更记录：v1.5（2026-08-22）新增 **§11.11 Beat System**（事件内连续叙事流）定案；v1.4 §11.2.1 过渡表现层；v1.3 并入事件系统补充规划。
+> 变更记录：v1.6（2026-09-15）§11.11 新增叙事视角管辖权契约（双 Agent 门面：玩家第一人称「我」/角色第三人称可观察行为）；v1.5（2026-08-22）新增 **§11.11 Beat System**（事件内连续叙事流）定案；v1.4 §11.2.1 过渡表现层；v1.3 并入事件系统补充规划。
 >
 > 本文档是对此前六份 v0.1 设计文档的分析、综合与定案，是项目**唯一的权威设计基线**。
 > 旧文档已归档至 `docs/design-history/`，仅供追溯设计过程，不再作为实现依据。
@@ -860,5 +860,6 @@ BAD END 已形成完整因果链（挑衅 → conflict 上升 → BAD END → En
 - **双推进模式**：手动 ▼ 继续 / 自动连播，到选择点必停（UI 行为，Runtime 不感知差异）。
 - **事务边界不变**：Choice 区间原子提交（D1），Beat 即时展示不入档；事件收束为 summary 记忆入库，事件间传递零新通道。
 - **实现位置**：EVENT_LIFE_PLAN **P0.5**（P1 之前），T1–T8 分步落地。
+- **叙事视角管辖权（双 Agent 门面，v1.6 定案）**：生成端按管辖权二分为两个 Agent（门面模式，`packages/narrative/src/agents/`）——**玩家 Agent**（场景+选项）以玩家第一人称「我」描写所见所为，选项行动主语必须为玩家，禁写角色内心（只写可观察表现）；**角色 Agent**（文段拍+反应+过渡）写角色的可观察言行与已选行为的余波，旁白仍以「我」的视角叙述，角色内心只允许进入 motive 字段（引擎留存，不呈现给玩家），禁止描写玩家未做出的新行动。两 Agent 各自持有视角契约注入 prompt 并各自校验输出；世界真相由引擎独立计算（GameState/事件/Flow 状态），Agent 只读取信息合成 prompt，不互相协商。暂不做模型差异化入口（两 Agent 共用 RuntimeConfig 模型配置，契约预留扩展）。
 
 实现优先级（详见 `EVENT_LIFE_PLAN.md`）：**P0 Transition ✅ → P0.5 Beat System ✅ → P1 Pending Intent ✅ → P2 Autonomous Event ✅ → P3 Micro Event → P4 Relationship Narrative State → P5 Event Scheduler**。

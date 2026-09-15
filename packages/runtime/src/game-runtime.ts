@@ -42,9 +42,8 @@ import { MemorySaveRepository, type SaveRepository } from '@ag/persistence';
 import { buildContext, ContextCache, type ContextCacheStats } from '@ag/context';
 import { formMemory, consolidateMemories, reinforceMemoryRecord, pruneMemories } from '@ag/memory';
 import {
-  generateReaction,
-  generateNarrativeBeats,
-  generateChoiceBeat,
+  CharacterAgent,
+  PlayerAgent,
   type BeatContextInput,
   type CombinedGeneratorOptions,
 } from '@ag/narrative';
@@ -202,6 +201,18 @@ export class GameRuntime {
   private readonly memoryPruneLimit: number;
   private readonly consistency?: { forbiddenTopics?: string[]; allowedCharacters?: string[] };
   private lastOptionActions: string[] = [];
+  /** v1.6 双 Agent 门面：玩家 Agent（场景/引子+选项）与角色 Agent（文段拍/反应/过渡）。 */
+  private readonly playerAgent = new PlayerAgent();
+  private readonly characterAgent = new CharacterAgent();
+  /** Agent 管辖权审计：违规仅告警，不阻断生成器自身 fallback 链。 */
+  private readonly auditAgentViolation = (
+    role: 'player' | 'character',
+    violations: readonly string[],
+  ): void => {
+    if (violations.length > 0) {
+      console.warn(`[narrative-agent-audit:${role}]`, violations.join('; '));
+    }
+  };
   /** P0.5 Beat System。 */
   private readonly flowController: FlowController;
   private flow?: EventFlow;
@@ -628,9 +639,10 @@ export class GameRuntime {
     const input = this.buildBeatInput(state, context);
 
     if (step === 'choice') {
-      const result = await generateChoiceBeat(input, this.gateway, {
+      const result = await this.playerAgent.generateChoiceBeat(input, this.gateway, {
         maxAttempts: this.llmMaxAttempts,
         consistency: this.consistency,
+        onViolation: this.auditAgentViolation,
       });
       const beat: ChoiceBeat = {
         beatId: result.beatId,
@@ -647,10 +659,11 @@ export class GameRuntime {
       return { beat };
     }
 
-    const beats = await generateNarrativeBeats(input, this.gateway, {
+    const beats = await this.characterAgent.generateNarrativeBeats(input, this.gateway, {
       maxAttempts: this.llmMaxAttempts,
       consistency: this.consistency,
       maxBeats: 1,
+      onViolation: this.auditAgentViolation,
     });
     let beat = beats[0]!;
     // 情绪漂移（D4）：clamp ±3 后作用于 psychology 同名指标或 emotion 数值字段。
@@ -715,12 +728,16 @@ export class GameRuntime {
       rng: this.rng,
       impactMultiplier: impactScale,
     });
-    const reaction = await generateReaction(
+    const reaction = await this.characterAgent.generateReaction(
       this.context,
       state,
       option,
       this.gateway,
-      { maxAttempts: this.llmMaxAttempts, consistency: this.consistency },
+      {
+        maxAttempts: this.llmMaxAttempts,
+        consistency: this.consistency,
+        onViolation: this.auditAgentViolation,
+      },
       resolution,
     );
 

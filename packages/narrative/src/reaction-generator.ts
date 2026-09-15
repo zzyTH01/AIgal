@@ -82,7 +82,7 @@ function buildReactionRequest(
       {
         role: 'user',
         content: [
-          `【角色定位】你现在扮演「${npcName}」，回应玩家。不要替玩家说话，也不要描写玩家未选择的行动。`,
+          `【角色定位】你现在扮演「${npcName}」，回应玩家。不要替玩家说话，也不要描写玩家未选择的行动。反应的旁白/舞台指示以玩家第一人称「我」的视角描写「${npcName}」的可观察反应，不要描写「我」的心理活动。`,
           `玩家选择了行为：${selectedOption.behavior.actions.join('/')}（意图：${selectedOption.behavior.intent.join('/')}）。`,
           ...eventLines,
           ...memoryLines,

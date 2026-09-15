@@ -143,7 +143,7 @@ export function fallbackNarrativeBeat(input: BeatContextInput): NarrativeBeat {
     return {
       beatId: `${input.flow.beatsUsed + 1}`.padStart(3, '0'),
       kind: 'narrative',
-      narration: `（${input.timeChange.current}，${input.locationChange.toLocationId}）${input.npcName}主动走到你面前，神情认真。有件事她一直放在心上，此刻不想再等。`,
+      narration: `（${input.timeChange.current}，${input.locationChange.toLocationId}）${input.npcName}主动走到「我」面前，神情认真。有件事她一直放在心上，此刻不想再等。`,
       dialogues: [],
       source: 'fallback',
       branchPotential: 'mid',
@@ -274,7 +274,8 @@ function buildNarrativeRequest(
           ...(input.retrievedMemories.length > 0
             ? ['若检索记忆与本拍相关，在文中自然呼应。']
             : ['没有可用检索记忆时，不要虚构记忆引用。']),
-          '【职责边界】文段只写：上一选择的余波、时间/地点/环境流动、角色内心与记忆回味、张力铺垫。禁止描写任何玩家可选的具体行动，禁止替玩家做决定。',
+          `【视角契约（角色 Agent）】旁白以玩家第一人称「我」的视角叙述（galgame 主人公声音）：写「我」的所见所感、环境流动，以及「${input.npcName}」的可观察言行。她的内心活动禁止写入旁白——只允许写入 motive 字段（引擎留存，不呈现给玩家），旁白只能呈现可观察的外在流露。`,
+          '【职责边界】文段只写：上一选择的余波、时间/地点/环境流动、角色的可观察行为、张力铺垫。禁止描写玩家未做出的任何新行动，禁止替玩家做决定。',
           '【连续性】从[续写起点]自然续写；严禁复用或改写[禁止复用的开头描写]中的任何句子作为开头；每一拍必须出现新的情节细节、动作或内心变化。',
           '【思维链】先用 motive 字段写下角色此刻的内心动机（一句话，引擎留存、不呈现给玩家），再让旁白与对话成为该动机的外在流露——动机要延续[角色内心动机（延续）]并向前演化。',
           `对话 speakerId 必须使用「${input.npcId ?? input.npcName}」，不要自创角色 ID。`,

@@ -65,7 +65,8 @@ describe('combined Scenario + Options generation', () => {
       return { text: combinedJson };
     });
     await generateScenarioAndOptions(context, provider);
-    expect(captured).toContain('【角色定位】你是玩家');
+    expect(captured).toContain('【视角契约（玩家 Agent）】');
+    expect(captured).toContain('第一人称「我」');
     expect(captured).toContain('「Mio」');
     expect(captured).toContain('[检索记忆1]');
     expect(captured).toContain('玩家曾在雨天陪 Mio 整理旧报刊');

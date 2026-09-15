@@ -182,7 +182,7 @@ function buildTransitionRequest(
                 '若某条检索记忆与本过渡相关，在文段中自然呼应"回味"，并用 referencedMemoryIds 标注其 id。',
               ]
             : ['没有可用的检索记忆时，不要虚构记忆引用。']),
-          '旁白描写环境与时间流逝；对话表现角色的余波情绪（可为空数组）。',
+          '旁白以玩家第一人称「我」的视角描写环境与时间流逝（galgame 主人公声音）；对话表现角色的余波情绪（可为空数组）。不要描写角色的内心活动，只写可观察的外在表现。',
           `对话的 speakerId 必须使用「${input.npcId ?? input.npcName}」，不要自创角色 ID。`,
           '严格输出 JSON：',
           '{"narration":"旁白文段","dialogues":[{"speakerId":"char_xxx","text":"台词"}],"referencedMemoryIds":["mem_xxx"],"memoryCandidate":{"type":"episodic","content":"回想内容","importance":30,"emotionalIntensity":25,"valence":10,"tags":["care"],"relatedCharacters":["char_xxx"],"sourceTurnId":"当前 turnId"}}',

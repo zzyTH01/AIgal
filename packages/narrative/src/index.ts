@@ -9,3 +9,4 @@ export * from './combined-generator.js';
 export * from './transition-generator.js';
 export * from './beat-generator.js';
 export * from './turn-pipeline.js';
+export * from './agents/index.js';

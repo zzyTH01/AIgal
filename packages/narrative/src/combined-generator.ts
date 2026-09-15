@@ -162,7 +162,7 @@ function buildCombinedRequest(
       {
         role: 'user',
         content: [
-          `【角色定位】你是玩家，正在与「${npcName}」互动。场景用第二人称描写玩家眼前所见；所有选项必须是玩家对「${npcName}」采取的行动，不要写 NPC 对玩家或第三方的行动。`,
+          `【视角契约（玩家 Agent）】叙事以玩家第一人称「我」描写（galgame 主人公声音）：「我」正在与「${npcName}」互动，场景写「我」的所见所为。所有选项的行动主语必须是玩家（可用「我……」开头或动词短语），必须是玩家对「${npcName}」采取的行动，不要写 NPC 对玩家或第三方的行动。不要描写「${npcName}」的内心活动——旁白只能呈现可观察的外在表现。`,
           `Day ${context.day} ${context.time}，生成当前场景和 4 个行为选项。`,
           ...transitionLines,
           ...eventLines,
