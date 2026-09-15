@@ -860,6 +860,6 @@ BAD END 已形成完整因果链（挑衅 → conflict 上升 → BAD END → En
 - **双推进模式**：手动 ▼ 继续 / 自动连播，到选择点必停（UI 行为，Runtime 不感知差异）。
 - **事务边界不变**：Choice 区间原子提交（D1），Beat 即时展示不入档；事件收束为 summary 记忆入库，事件间传递零新通道。
 - **实现位置**：EVENT_LIFE_PLAN **P0.5**（P1 之前），T1–T8 分步落地。
-- **叙事视角管辖权（双 Agent 门面，v1.6 定案）**：生成端按管辖权二分为两个 Agent（门面模式，`packages/narrative/src/agents/`）——**玩家 Agent**（场景+选项）以玩家第一人称「我」描写所见所为，选项行动主语必须为玩家，禁写角色内心（只写可观察表现）；**角色 Agent**（文段拍+反应+过渡）写角色的可观察言行与已选行为的余波，旁白仍以「我」的视角叙述，角色内心只允许进入 motive 字段（引擎留存，不呈现给玩家），禁止描写玩家未做出的新行动。两 Agent 各自持有视角契约注入 prompt 并各自校验输出；世界真相由引擎独立计算（GameState/事件/Flow 状态），Agent 只读取信息合成 prompt，不互相协商。暂不做模型差异化入口（两 Agent 共用 RuntimeConfig 模型配置，契约预留扩展）。
+- **叙事视角管辖权（双 Agent 门面，v1.6 定案）**：生成端按管辖权二分为两个 Agent（门面模式，`packages/narrative/src/agents/`）——**玩家 Agent**（场景+选项）以玩家第一人称「我」描写所见所为，选项行动主语必须为玩家，禁写角色内心（只写可观察表现）；**角色 Agent**（文段拍+反应+过渡）写角色的可观察言行与已选行为的余波，旁白仍以「我」的视角叙述，角色内心只允许进入 motive 字段（引擎留存，不呈现给玩家），禁止描写玩家未做出的新行动。两 Agent 各自持有视角契约注入 prompt 并各自校验输出。两 Agent 之间存在**引擎中介的有序交流**（延续双向因果）：玩家选项经玩家选择后成为角色 Agent 的输入（余波/反应）；角色 Agent 的拍摘要（beatSummaries）与 motive（pendingTension）回流为下一选择点与后续事件的生成上下文——交流的是结构化产物而非自由对话。世界真相由引擎独立计算并独占（GameState/事件/Flow 状态），两 Agent 不直接对话协商事实。暂不做模型差异化入口（两 Agent 共用 RuntimeConfig 模型配置，契约预留扩展）。
 
 实现优先级（详见 `EVENT_LIFE_PLAN.md`）：**P0 Transition ✅ → P0.5 Beat System ✅ → P1 Pending Intent ✅ → P2 Autonomous Event ✅ → P3 Micro Event → P4 Relationship Narrative State → P5 Event Scheduler**。

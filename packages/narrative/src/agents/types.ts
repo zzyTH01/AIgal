@@ -8,8 +8,11 @@
  *   旁白以「我」视角叙述，角色内心只允许进入 motive 字段（引擎留存），
  *   禁止描写玩家未做出的新行动。
  *
- * 世界真相由引擎独立计算（GameState/事件/Flow 状态），Agent 只读取
- * 信息合成 prompt（buildSystemRules 注入契约），不互相协商。
+ * 两 Agent 之间存在引擎中介的有序交流：玩家选项经玩家选择后成为角色
+ * Agent 的输入（余波/反应）；角色 Agent 的拍摘要（beatSummaries）与
+ * motive（pendingTension）回流为下一选择点与后续事件的上下文——交流的
+ * 是结构化产物而非自由对话；世界真相由引擎独占（GameState/事件/Flow
+ * 状态），两 Agent 不直接对话协商事实。
  */
 
 /** Agent 角色。 */
