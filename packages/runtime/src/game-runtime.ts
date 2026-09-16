@@ -295,6 +295,7 @@ export class GameRuntime {
         beatsUsed: this.flow?.beatsUsed ?? 0,
         choicesUsed: this.flow?.choicesUsed ?? 0,
         beatSummaries: this.flow?.beatSummaries ?? [],
+        recentDialogues: this.flow?.recentDialogues ?? [],
         pendingTension: this.flow?.pendingTension,
       },
       lastChoiceResolution: this.lastChoiceResolution,
@@ -674,6 +675,7 @@ export class GameRuntime {
     // 保存 branchPotential 供下一次 nextStep 裁决；choice 拍后清除（下一拍重新由新文段拍建议）。
     this.lastBranchPotential = beat.branchPotential;
     this.flow = this.flowController.registerBeat(this.flow, beat, beat.narration.slice(0, 60));
+    this.recordFlowDialogues(beat);
     // 思维链→扮演对象：内心动机回流为 pendingTension，驱动后续拍并作为 P1 Pending Intent 的数据源。
     if (beat.motive) {
       this.flow = { ...this.flow, pendingTension: beat.motive };
@@ -689,6 +691,22 @@ export class GameRuntime {
     }
     this.state = state;
     return { beat };
+  }
+
+  /**
+   * #16 观察b：维护事件内滚动台词摘录（≤60 字符/条，保留最近 5 条），
+   * 作为下一拍台词级去重候选；choice 拍无台词不记。
+   */
+  private recordFlowDialogues(beat: Beat): void {
+    if (!this.flow || beat.kind !== 'narrative') return;
+    const excerpts = beat.dialogues
+      .map((dialogue) => dialogue.text.slice(0, 60))
+      .filter((text) => text.length > 0);
+    if (excerpts.length === 0) return;
+    this.flow = {
+      ...this.flow,
+      recentDialogues: [...(this.flow.recentDialogues ?? []), ...excerpts].slice(-5),
+    };
   }
 
   /**
@@ -737,6 +755,13 @@ export class GameRuntime {
         maxAttempts: this.llmMaxAttempts,
         consistency: this.consistency,
         onViolation: this.auditAgentViolation,
+        // #16 观察a：反应锚定当前拍的时空，防止跳转到事件模板场景。
+        scene: {
+          day: state.run.day,
+          time: state.run.time,
+          locationId: state.world.currentLocationId,
+          lastBeatSummary: this.flow?.beatSummaries.at(-1)?.slice(0, 60),
+        },
       },
       resolution,
     );

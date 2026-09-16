@@ -36,9 +36,10 @@
   - ②角色内心零泄露：`她想起/她心想/她感到/她试图/她暗自` 全文 0 命中；内心只出现在 motive 行（28/28 拍）。
   - ③选项主语：全部为玩家（「我……」开头或祈使动词短语）。
   - ④生成质量：文段拍/选择拍/反应 **100% llm**（旧记录 95%）；stress 45→42 不归零；终局 affection 20/trust 11/活跃记忆 11 条。
-- **遗留观察（非 POV 回归，待排期）**：
-  - (a) 第 1 轮反应场景跳变：拍在走廊（09:30）而反应锚定事件模板场景（食堂午餐）——reaction 对拍的场景 grounding 不足，仅 1/12 轮出现；旧记录同类问题（门口→吃饭）对比，范围已大幅收窄。
-  - (b) 拍间**台词级**近重复：第 1 轮三拍中两拍台词几乎相同（"早上好。你也是这所学校的学生吗/吧"）——现有相似度去重只覆盖 narration，不含 dialogues。
+- **遗留观察（非 POV 回归）—— ✅ 已修复（2026-09-16 当日，三轮真实 LLM 递进验证）**：
+  - (a) 反应场景 grounding：`ReactionGeneratorOptions.scene`（日/时/地点/最近拍摘要）注入 `[当前场景]` 行 + 禁跳转 + 冲突以场景为准；scene 提供时 `[当前事件]` 只保留标题（描述锚定力过强会拉回模板场景）。第三轮复验 12/12 轮反应与拍场景连贯（此前 11/12）。
+  - (b) 台词级去重：`EventFlow.recentDialogues`（可选，≤60 字符 ×5）滚动台词摘录进入 `BeatContextInput`；拍生成拒绝条件扩展为旁白 OR 台词（含同批次互查）；prompt 新增 `[已发生台词]` 段与校正指令。第三轮复验台词重复 0 次（此前 2–3 次）。
+  - 验证记录：`dual-agent-fixes-verify-playtest.md` / `-verify2-` / `-verify3-`（最终通过）。
 
 ### 5. 检索到的记忆未注入 LLM prompt —— ✅ 已修复（2026-08-16）
 - 位置：`packages/narrative/src/combined-generator.ts` / `reaction-generator.ts`（`build*Request` 只注入 `systemRules`）

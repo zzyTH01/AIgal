@@ -19,6 +19,8 @@ export interface BeatContextInput extends TransitionContextInput {
     beatsUsed: number;
     choicesUsed: number;
     beatSummaries: string[];
+    /** #16 观察b：近期台词摘录（≤60 字符/条）——台词级去重候选。 */
+    recentDialogues?: string[];
     pendingTension?: string;
   };
   /** Choice 区间结算摘要（选择后的首个文段拍必带）。 */
@@ -70,6 +72,10 @@ function buildBaseUserLines(input: BeatContextInput): string[] {
       : []),
     // 校准 #15：显式列出禁用开头，滚动窗口续写而非重起场景
     ...(recent.length > 0 ? [`[禁止复用的开头描写] ${recent.join(' | ')}`] : []),
+    // #16 观察b：列出近期台词，台词级去重 + 校正指令的对照面
+    ...(input.flow.recentDialogues && input.flow.recentDialogues.length > 0
+      ? [`[已发生台词] ${input.flow.recentDialogues.slice(-3).join(' | ')}`]
+      : []),
     ...(lastSummary ? [`[续写起点] ${lastSummary}`] : []),
     ...(input.lastChoiceResolution ? [`[上一选择结果] ${input.lastChoiceResolution}`] : []),
     ...(input.flow.pendingTension ? [`[角色内心动机（延续）] ${input.flow.pendingTension}`] : []),
@@ -99,8 +105,24 @@ export async function generateNarrativeBeats(
       if (issues.length > 0) throw new Error(`beat consistency: ${issues.join('; ')}`);
       // 拍间去重：开头对开头（beatSummaries 即上一拍前 60 字符；长文本全文 Jaccard 会被稀释，#15 教训）
       const recent = input.flow.beatSummaries.slice(-2);
-      if (parsed.beats.some((payload) => overlapsAny(payload.narration.slice(0, 60), recent))) {
-        throw new Error('beat repeats recent narration');
+      // #16 观察b：台词级去重——候选含历史台词摘录与同批次已接受拍的台词。
+      const recentDialogues = input.flow.recentDialogues?.slice(-4) ?? [];
+      const dialogueCandidates = [...recentDialogues];
+      const narrationCandidates = [...recent];
+      // 同批次顺序检查：先接受的拍成为后续拍的候选（批次内互查 + 历史候选）。
+      for (const payload of parsed.beats.slice(0, maxBeats)) {
+        const narrationRepeated = overlapsAny(payload.narration.slice(0, 60), narrationCandidates);
+        const dialogueRepeated = (payload.dialogues ?? []).some(
+          (dialogue) =>
+            dialogue.text.length > 0 && overlapsAny(dialogue.text.slice(0, 60), dialogueCandidates),
+        );
+        if (narrationRepeated || dialogueRepeated) {
+          throw new Error('beat repeats recent narration or dialogue');
+        }
+        narrationCandidates.push(payload.narration.slice(0, 60));
+        for (const dialogue of payload.dialogues ?? []) {
+          if (dialogue.text.length > 0) dialogueCandidates.push(dialogue.text.slice(0, 60));
+        }
       }
       return parsed.beats.slice(0, maxBeats).map((payload, index) => ({
         beatId: `${input.flow.beatsUsed + index + 1}`.padStart(3, '0'),
@@ -267,7 +289,7 @@ function buildNarrativeRequest(
             : []),
           ...(isRetry
             ? [
-                '【校正】上一次输出因与近期拍重复被拒绝。你必须选择一个与所有已列出开头完全不同的场景、动作或视角切入，不要从同一场景重新描写。',
+                '【校正】上一次输出因与近期拍的旁白或台词重复被拒绝。你必须选择一个与所有已列出开头完全不同的场景、动作或视角切入，不要从同一场景重新描写；台词不得与[已发生台词]重复或仅有微小变化。',
               ]
             : []),
           ...buildBaseUserLines(input),

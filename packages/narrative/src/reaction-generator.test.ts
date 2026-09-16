@@ -146,3 +146,52 @@ describe('ReactionGenerator', () => {
     expect(result.narrative.length).toBeGreaterThan(0);
   });
 });
+
+describe('#16 观察a：反应场景 grounding', () => {
+  const context = {
+    ...makeNarrativeContext(),
+    currentEvent: {
+      eventId: 'event_cafeteria_lunch',
+      title: '食堂的午餐',
+      description: '她在食堂大快朵颐，食物堆成小山。',
+    },
+  } as unknown as import('@ag/schemas').ModelContext;
+  const state = makeNarrativeGameState();
+  const option = {
+    behavior: { actions: ['chat'], intent: ['connect'], risk: 0.1 },
+  } as unknown as import('@ag/schemas').Option;
+
+  it('options.scene 注入 [当前场景] 行（含日/时/地点/最近拍 + 禁跳转指令）', async () => {
+    let captured = '';
+    const provider = new TestProvider((request) => {
+      captured = request.messages[1]?.content ?? '';
+      return { text: 'not-json' };
+    });
+    const result = await generateReaction(context, state, option, provider, {
+      scene: {
+        day: 1,
+        time: '10:30',
+        locationId: 'loc_corridor',
+        lastBeatSummary: '她把折角的书页抚平，抬头看我。',
+      },
+    });
+    expect(captured).toContain('[当前场景] Day 1 10:30 @ loc_corridor');
+    expect(captured).toContain('最近一拍：她把折角的书页抚平，抬头看我。');
+    expect(captured).toContain('不得跳转到其他地点或时间');
+    expect(captured).toContain('以本行为准');
+    // scene 提供时：当前事件只保留标题，描述被抑制（防地点/时间锚定拉扯）
+    expect(captured).toContain('进行中，地点/时间以 [当前场景] 为准');
+    expect(captured).not.toMatch(/\[当前事件\][^\n]*：/);
+    expect(result.source).toBe('fallback');
+  });
+
+  it('无 scene 时不注入 [当前场景] 行（向后兼容）', async () => {
+    let captured = '';
+    const provider = new TestProvider((request) => {
+      captured = request.messages[1]?.content ?? '';
+      return { text: 'not-json' };
+    });
+    await generateReaction(context, state, option, provider);
+    expect(captured).not.toContain('[当前场景]');
+  });
+});

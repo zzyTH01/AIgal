@@ -1,0 +1,194 @@
+{
+  "ratio": {
+    "narrativeBeatLlm": 1,
+    "choiceBeatLlm": 1,
+    "reaction": 1
+  },
+  "totalNarrativeBeats": 34,
+  "beats": [
+    {
+      "kind": "narrative",
+      "source": "llm"
+    },
+    {
+      "kind": "narrative",
+      "source": "llm"
+    },
+    {
+      "kind": "narrative",
+      "source": "llm"
+    },
+    {
+      "kind": "choice",
+      "source": "llm"
+    },
+    {
+      "kind": "narrative",
+      "source": "llm"
+    },
+    {
+      "kind": "narrative",
+      "source": "llm"
+    },
+    {
+      "kind": "narrative",
+      "source": "llm"
+    },
+    {
+      "kind": "choice",
+      "source": "llm"
+    },
+    {
+      "kind": "narrative",
+      "source": "llm"
+    },
+    {
+      "kind": "narrative",
+      "source": "llm"
+    },
+    {
+      "kind": "narrative",
+      "source": "llm"
+    },
+    {
+      "kind": "choice",
+      "source": "llm"
+    },
+    {
+      "kind": "narrative",
+      "source": "llm"
+    },
+    {
+      "kind": "narrative",
+      "source": "llm"
+    },
+    {
+      "kind": "choice",
+      "source": "llm"
+    },
+    {
+      "kind": "narrative",
+      "source": "llm"
+    },
+    {
+      "kind": "narrative",
+      "source": "llm"
+    },
+    {
+      "kind": "narrative",
+      "source": "llm"
+    },
+    {
+      "kind": "choice",
+      "source": "llm"
+    },
+    {
+      "kind": "narrative",
+      "source": "llm"
+    },
+    {
+      "kind": "narrative",
+      "source": "llm"
+    },
+    {
+      "kind": "choice",
+      "source": "llm"
+    },
+    {
+      "kind": "narrative",
+      "source": "llm"
+    },
+    {
+      "kind": "narrative",
+      "source": "llm"
+    },
+    {
+      "kind": "narrative",
+      "source": "llm"
+    },
+    {
+      "kind": "choice",
+      "source": "llm"
+    },
+    {
+      "kind": "narrative",
+      "source": "llm"
+    },
+    {
+      "kind": "narrative",
+      "source": "llm"
+    },
+    {
+      "kind": "narrative",
+      "source": "llm"
+    },
+    {
+      "kind": "choice",
+      "source": "llm"
+    },
+    {
+      "kind": "narrative",
+      "source": "llm"
+    },
+    {
+      "kind": "narrative",
+      "source": "llm"
+    },
+    {
+      "kind": "narrative",
+      "source": "llm"
+    },
+    {
+      "kind": "choice",
+      "source": "llm"
+    },
+    {
+      "kind": "narrative",
+      "source": "llm"
+    },
+    {
+      "kind": "narrative",
+      "source": "llm"
+    },
+    {
+      "kind": "narrative",
+      "source": "llm"
+    },
+    {
+      "kind": "choice",
+      "source": "llm"
+    },
+    {
+      "kind": "narrative",
+      "source": "llm"
+    },
+    {
+      "kind": "narrative",
+      "source": "llm"
+    },
+    {
+      "kind": "narrative",
+      "source": "llm"
+    },
+    {
+      "kind": "choice",
+      "source": "llm"
+    },
+    {
+      "kind": "narrative",
+      "source": "llm"
+    },
+    {
+      "kind": "narrative",
+      "source": "llm"
+    },
+    {
+      "kind": "narrative",
+      "source": "llm"
+    },
+    {
+      "kind": "choice",
+      "source": "llm"
+    }
+  ]
+}

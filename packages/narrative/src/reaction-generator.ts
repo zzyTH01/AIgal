@@ -18,6 +18,17 @@ export interface ReactionGeneratorOptions {
     forbiddenTopics?: string[];
     allowedCharacters?: string[];
   };
+  /**
+   * #16 观察a：当前场景 grounding——反应必须发生在该日/时/地点，
+   * 不得跳转到事件模板或其他场景（真实复验 1/12 轮出现走廊→食堂跳变）。
+   */
+  scene?: {
+    day?: number;
+    time?: string;
+    locationId?: string;
+    /** 最近一拍的旁白摘要（≤60 字符）。 */
+    lastBeatSummary?: string;
+  };
 }
 
 /**
@@ -68,7 +79,11 @@ function buildReactionRequest(
   );
   const eventLines = [
     ...(context.currentEvent
-      ? [`[当前事件] ${context.currentEvent.title}：${context.currentEvent.description}`]
+      ? options.scene
+        ? // #16 观察a：提供 scene 时事件只保留标题——描述中的地点/时间锚定力过强，
+          // 会把反应拉回事件模板场景（实测走廊拍→食堂反应），时空以 [当前场景] 为准。
+          [`[当前事件] ${context.currentEvent.title}（进行中，地点/时间以 [当前场景] 为准）`]
+        : [`[当前事件] ${context.currentEvent.title}：${context.currentEvent.description}`]
       : []),
     ...context.recentEvents.map((event) => `[近期事件] ${event.title}：${event.description}`),
   ];
@@ -83,6 +98,11 @@ function buildReactionRequest(
         role: 'user',
         content: [
           `【角色定位】你现在扮演「${npcName}」，回应玩家。不要替玩家说话，也不要描写玩家未选择的行动。反应的旁白/舞台指示以玩家第一人称「我」的视角描写「${npcName}」的可观察反应，不要描写「我」的心理活动。`,
+          ...(options.scene
+            ? [
+                `[当前场景] Day ${options.scene.day ?? '?'} ${options.scene.time ?? '?'} @ ${options.scene.locationId ?? '?'}${options.scene.lastBeatSummary ? `；最近一拍：${options.scene.lastBeatSummary}` : ''}。反应必须发生在该场景，延续最近一拍的时空，不得跳转到其他地点或时间；若 [当前事件] 的场景与本行冲突，以本行为准。`,
+              ]
+            : []),
           `玩家选择了行为：${selectedOption.behavior.actions.join('/')}（意图：${selectedOption.behavior.intent.join('/')}）。`,
           ...eventLines,
           ...memoryLines,

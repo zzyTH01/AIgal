@@ -76,6 +76,8 @@ export const eventFlowSchema = z
     status: eventFlowStatusSchema,
     /** 事件内滚动上下文：每拍压缩 1–2 句，全量进入下一选择点生成。 */
     beatSummaries: z.array(z.string()),
+    /** #16 观察b：近期台词摘录（每条 ≤60 字符，保留最近 5 条）——台词级去重候选。 */
+    recentDialogues: z.array(z.string()).optional(),
     pendingTension: z.string().optional(),
   })
   .strict();

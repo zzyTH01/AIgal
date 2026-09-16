@@ -35,6 +35,91 @@ const baseInput: BeatContextInput = {
 };
 
 describe('generateNarrativeBeats', () => {
+  it('#16 观察b：台词与 recentDialogues 重复 → 整批拒绝走 fallback', async () => {
+    const input = {
+      ...baseInput,
+      flow: {
+        ...baseInput.flow,
+        recentDialogues: ['早上好。你也是这所学校的学生吗？'],
+      },
+    };
+    const provider = new TestProvider(() => ({
+      text: JSON.stringify({
+        beats: [
+          {
+            narration: '全新的场景切入：她把书页折出一个角。',
+            dialogues: [{ speakerId: 'char_saber', text: '早上好。你也是这所学校的学生吧。' }],
+            branchPotential: 'mid',
+          },
+        ],
+      }),
+    }));
+    const beats = await generateNarrativeBeats(input, provider);
+    expect(beats[0]?.source).toBe('fallback');
+  });
+
+  it('#16 观察b：台词不重复 → 正常接受（llm）', async () => {
+    const input = {
+      ...baseInput,
+      flow: {
+        ...baseInput.flow,
+        recentDialogues: ['早上好。你也是这所学校的学生吗？'],
+      },
+    };
+    const provider = new TestProvider(() => ({
+      text: JSON.stringify({
+        beats: [
+          {
+            narration: '她把折角的书页抚平，抬头看我。',
+            dialogues: [{ speakerId: 'char_saber', text: '……你在看什么书？' }],
+            branchPotential: 'mid',
+          },
+        ],
+      }),
+    }));
+    const beats = await generateNarrativeBeats(input, provider);
+    expect(beats[0]?.source).toBe('llm');
+    expect(beats[0]?.dialogues[0]?.text).toContain('看什么书');
+  });
+
+  it('#16 观察b：同批次两拍台词互重 → 拒绝走 fallback', async () => {
+    const provider = new TestProvider(() => ({
+      text: JSON.stringify({
+        beats: [
+          {
+            narration: '第一拍：她合上书本。',
+            dialogues: [{ speakerId: 'char_saber', text: '今天风很大。' }],
+          },
+          {
+            narration: '第二拍：她望向窗外。',
+            dialogues: [{ speakerId: 'char_saber', text: '今天风很大呀。' }],
+          },
+        ],
+      }),
+    }));
+    const beats = await generateNarrativeBeats(baseInput, provider, { maxBeats: 2 });
+    expect(beats[0]?.source).toBe('fallback');
+  });
+
+  it('#16 观察b：prompt 含 [已发生台词] 段', async () => {
+    let captured = '';
+    const input = {
+      ...baseInput,
+      flow: {
+        ...baseInput.flow,
+        recentDialogues: ['……你在看什么书？', '今天风很大。'],
+      },
+    };
+    const provider = new TestProvider((request) => {
+      captured = request.messages[1]?.content ?? '';
+      return { text: 'not-json' };
+    });
+    await generateNarrativeBeats(input, provider);
+    expect(captured).toContain('[已发生台词]');
+    expect(captured).toContain('今天风很大。');
+    void captured;
+  });
+
   it('parses a batch of narrative beats with suggestions', async () => {
     const provider = new TestProvider(() => ({
       text: JSON.stringify({
