@@ -104,11 +104,30 @@
 
 ---
 
-## 修复优先级建议
+## 修复优先级建议（2026-09-16 更新）
 
-1. **🔴 #4 最优先**：POV/角色定位是核心交互的根基，改动小（prompt 补一句角色定位），修后玩家↔明日香的互动才成立。
-2. **🟠 #5 次之**：注入检索记忆，"角色真的记得你"（E-5）才有演示可能。
-3. 其余随资源/部署推进。
+> #1–#5、#14–#16 均已修复关闭；当前排序以 **Life Engine 主线（Event Life Plan P3–P5）** 为轴。
+
+### 近期：P3 前置修复（#16 遗留观察，改动小，先于 P3 落地）
+
+1. **🟠 拍间台词级去重（#16-观察b）**：相似度去重目前只覆盖 narration，不覆盖 dialogues——P3 Micro Events 会显著增加拍与台词密度，重复风险放大，须先行。
+2. **🟠 反应场景 grounding（#16-观察a）**：reaction prompt 注入当前拍场景上下文（beatSummaries 尾部 + 当前日/时/地点），消除反应跳到事件模板场景（1/12 轮实测）。
+
+### 主线：Life Engine（EVENT_LIFE_PLAN P3 → P4 → P5）
+
+3. **P3 Micro Events**：三层事件（importance 字段已就绪），Micro 池 + 模板 + 生成，填充"生活感"。
+4. **P4 Relationship Narrative State**：RelationshipState 增加 narrative 子结构（phase/impression/desire/unresolved/direction），P1/P2 意图管线直接消费。
+5. **P5 Event Scheduler**：统一调度 Main/Side/Micro/Autonomous/Transition，动态权重（World+Character+Memory+Relationship+Intent），可复现。
+
+### 部署层（主线后或并行）
+
+6. **#12 HTTP Application API**（`POST /turn/choice` 形态）。
+7. **#11 PNG 卡导入 + 真实 SillyTavern 联调**。
+8. **#9/#10 真实立绘/音频资源接入**（Player 当前 CSS 占位）。
+
+### 低优先级（随资源）
+
+9. **#6** 记忆/平衡参数校准；**#7** 真实 token 成本计量；**#8** 设计器编辑器扩展；**#13** prune 语义升级（硬删除→遗忘）。
 
 > 触发本清单的审查对应：`phase5-review.md`（#1/#2 相关 Option 契约与多样性）、`phase6-review.md`（#6）、`phase11-review.md`（#7）、`phase10-review.md`（#8）、`phase12-review.md`（#9/#10）、`phase8-review.md`（#11）、`phase9-review.md`（#12）；#3/#4/#5 来自本轮 Completion Plan 与长对话实测。
 
