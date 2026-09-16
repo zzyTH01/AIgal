@@ -6,7 +6,7 @@ This file provides guidance to Codex (Codex.ai/code) when working with code in t
 
 **AI GALGAME Framework**（tavern-gal）：一个以 SillyTavern 为可选 AI Runtime、以 GALGAME 选择式交互为表现形式、以 Game State 为核心、由 AI 动态叙事 + Roguelike 机制驱动的 AI 叙事游戏框架。
 
-当前仓库处于**Completion Plan v1.1 已执行 + 2026-08 审计修复 + Life Engine P0/P0.5/P1/P2 已完成**阶段：权威架构由 `AI_GALGAME_Master_Design_v1.0.md` 定义（**注意：文件名保留 v1.0，内容版本已是 v1.5**，其 §11"Life Engine"中 P0 Transition、P0.5 Beat System、P1 Pending Intent 与 P2 Autonomous Event 已实现，P3–P5 为已定案未实现；§11.11 Beat System 定义了事件内连续叙事流（含 motive 思维链机制）），`COMPLETION_PLAN.md` 记录 Phase A–H 补全结果。Phase 0.5–12 与补全计划已落地并通过自动化验收，但部分组件曾"实现未接线"，已于 2026-08-21 审计中接线（见 `docs/review/doc-vs-impl-audit-2026-08-21.md`）。任何实现工作开始前，必须先读权威设计文档与开发计划，不要凭推测自行发明架构。
+当前仓库处于**Completion Plan v1.1 已执行 + 2026-08 审计修复 + Life Engine P0/P0.5/P1/P2 已完成 + 双 Agent 视角管辖权（v1.6）已落地**阶段：权威架构由 `AI_GALGAME_Master_Design_v1.0.md` 定义（**注意：文件名保留 v1.0，内容版本已是 v1.6**，其 §11"Life Engine"中 P0 Transition、P0.5 Beat System、P1 Pending Intent 与 P2 Autonomous Event 已实现，P3–P5 为已定案未实现；§11.11 Beat System 定义了事件内连续叙事流（含 motive 思维链机制）），`COMPLETION_PLAN.md` 记录 Phase A–H 补全结果。Phase 0.5–12 与补全计划已落地并通过自动化验收，但部分组件曾"实现未接线"，已于 2026-08-21 审计中接线（见 `docs/review/doc-vs-impl-audit-2026-08-21.md`）。任何实现工作开始前，必须先读权威设计文档与开发计划，不要凭推测自行发明架构。
 
 ### 权威文档（唯一事实来源）
 
@@ -166,7 +166,8 @@ Option 是 Behavior Object：`presentation`（玩家看到的语言）+ `behavio
 - **Phase 11 注意事项**：`pruneMemories` 曾只接在 devtools 仿真器，2026-08-21 起已接入 `GameRuntime` 主路径（`memoryPruneLimit` 可配，默认 100）。
 - **Completion Plan 已执行**：二次结算、PlayerModel 更新、记忆触发、Bad End→Meta Progression、LLM 软多样性、一致性检查、Context Cache、天气/日历/NPC 日程、Project Policy 运行时、设计器/校准/资源接口与自动化 V1 验收均已完成。
 - **2026-08-21 审计接线修复**：此前"实现未接线"的组件已接入生产路径——`ContextCache`（含 stable summary 进 system prompt）、检索强化 `reinforceMemoryRecord`（startTurn 检索后强化）、`pruneMemories`（chooseOption 后修剪）、一致性规则 `consistency.forbiddenTopics/allowedCharacters`（RuntimeConfig 注入 Scenario+Reaction）、`llmMaxAttempts` 可配置（原写死 1）。详见 `docs/review/doc-vs-impl-audit-2026-08-21.md`。
+- **2026-09-15/16 双 Agent 视角管辖权（Master Design v1.6）+ #16 修复**：生成端重构为 PlayerAgent（玩家第一人称「我」叙事+选项）/ CharacterAgent（文段拍+反应+过渡，角色内心只进 motive）门面（`packages/narrative/src/agents/`，内部复用既有生成器，引擎仍独占世界真相）；#16 POV 人称错误修复，真实 LLM 复验四项 POV 指标全过；#16 遗留观察（拍间台词级去重 `EventFlow.recentDialogues` + 反应场景 grounding `ReactionGeneratorOptions.scene`）同日修复，第三轮 12 Turn 复验 12/12 场景连贯、台词重复 0、stress 45→43。验证记录 `docs/review/dual-agent-*-verify*.md`。
 - **仍未实现（设计已定案）**：Master Design §11 Life Engine（P0 Transition、P0.5 Beat System 与 P1 Pending Intent 及 P2 Autonomous Event 已完成——P1/P2 于 2026-09-10 落地：意图契约/引擎/触发接线 + 自主发起判定/事件合成/[自主发起] 叙事指令；真实 LLM 复验 P1 12 Turn 11 意图 10 completed、P2 种子化场景角色主动出现并提及前一天的事；known-issues #15 已于同日第四轮 DeepSeek V4 Flash 复验关闭——stress 45→43 不归零、文段拍 100% llm、high/mid 变奏成立；P3–P5 待做）；Gemini/Local Provider；HTTP Application API；PNG 卡导入；设计器多数编辑器 UI（仅 7 字段表单）；真实立绘/音频资源；成本真实 token 计量。
-- **下一步**：Life Engine P3 Micro Events（P1/P2 已完成——意图与自主发起管线就绪，`importance` 字段已提前落地可复用）；部署层 HTTP/PNG 卡/音频资源接入。注意：DeepSeek V4 Flash 等推理模型需 `LLM_THINKING=disabled`（见 `@ag/llm` provider-config）。
+- **下一步**：Life Engine P3 Micro Events（实施计划 S1 层级确认→S2 Micro 池→S3 调度接入→S4 叙事短路→S5 记忆与验收已定；P1/P2 意图与自主发起管线就绪，`importance` 字段已提前落地可复用，P3 前置修复已于 2026-09-16 完成）；随后 P4/P5 与部署层 HTTP/PNG 卡/音频资源接入。注意：DeepSeek V4 Flash 等推理模型需 `LLM_THINKING=disabled`（见 `@ag/llm` provider-config）。
 
 验收基线（Phase 2 原则）：**核心玩法的纯文本闭环能连续跑几十个 Turn 而不破坏 GameState，且不接任何 LLM，才算 Game Core 成立。**

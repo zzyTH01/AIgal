@@ -6,7 +6,7 @@
 
 ## 文档
 
-- **`AI_GALGAME_Master_Design_v1.0.md`** — 唯一权威设计基线（**文件名保留 v1.0，内容版本 v1.5**；§11 Life Engine、§11.11 Beat System）
+- **`AI_GALGAME_Master_Design_v1.0.md`** — 唯一权威设计基线（**文件名保留 v1.0，内容版本 v1.6**；§11 Life Engine、§11.11 Beat System + 叙事视角管辖权）
 - **`DEVELOPMENT_PLAN.md`** — 主线分阶段开发计划（Phase 0.5–12，已完成）
 - **`EVENT_LIFE_PLAN.md`** — Life Engine 实现计划（P0 ✅ / P0.5 ✅ / P1 ✅ / P2 ✅ / P3–P5 待做）
 - **`BEAT_SYSTEM_DESIGN.md`** — Beat System 唯一实现依据：事件内连续叙事流（拍模型 / FlowController / motive 思维链机制）
@@ -58,7 +58,8 @@ ag-devtools acceptance
 - ✅ **P0.5 Beat System**：事件内连续叙事流——选择 → 文段拍 → 选择点交替；FlowController 裁决节奏（预算/间隔/分支价值）；事件重要性权重（main/side/micro 决定拍数预算与数值放大）；双推进模式（▼ 手动 / 自动连播，到选项必停）；motive 思维链→扮演对象回流驱动叙事
 - ✅ **P1 Pending Intent**：角色未完成意图——事件末次 motive 思维链确定性转化为意图，同地点/时间段/条件匹配时择机触发为意图事件并完成，超时过期（Intent ≠ Memory：昨天的事影响明天）
 - ✅ **P2 Autonomous Event**：角色主动寻找玩家——意图紧迫（截止日/高优先级跨日）且玩家未到场时，角色主动发起事件（origin=autonomous），开场叙事从她主动出现切入并自然提及过去（"……找到你了。昨天你说的那些，我后来想了很久。"）
-- ⏭️ **P3 Micro Events** → P4 Relationship Narrative State → P5 Event Scheduler
+- ✅ **双 Agent 视角管辖权（v1.6，2026-09-16）**：PlayerAgent（玩家第一人称「我」叙事+选项）/ CharacterAgent（文段拍+反应+过渡，角色内心只进 motive）门面（`packages/narrative/src/agents/`）；真实 LLM 复验四项 POV 指标全过；#16 遗留观察（台词级去重 + 反应场景 grounding）已修复——12/12 轮反应场景连贯、台词重复 0
+- ⏭️ **P3 Micro Events**（S1–S5 实施计划已定）→ P4 Relationship Narrative State → P5 Event Scheduler
 
 ### 已验证能力（真实 DeepSeek 长对话）
 
