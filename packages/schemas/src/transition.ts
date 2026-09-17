@@ -6,6 +6,13 @@ import { idSchema, schemaVersionSchema, timeStringSchema } from './primitives.js
  * Transition System（Master Design §11.2 / Event Life Plan P0）：
  * 事件与事件、选项与选项之间的过渡。状态层（time/location/environment/余波）
  * 与表现层（旁白+对话文段）合一，由 Runtime 编排生成。
+ *
+ * ⚠️ 接线状态（2026-09-16 定案，见 `docs/review/doc-vs-impl-audit-2026-09-16.md`）：
+ * 「事件内」位置的过渡文段已由 P0.5 Beat System 的 NarrativeBeat 合法取代；
+ * 「事件之间」的过渡（本契约的消费方）**当前未接入 runtime**——P0 的 runtime 管线
+ * 随 Beat System 重构（commit f4b843d）移除。本文件属**契约预留**，按定案留到
+ * P5 Event Scheduler 统一调度时接入（EVENT_LIFE_PLAN §7.2「Transition 接入」）。
+ * P0 现存活的只有日内时间流动（`@ag/core` 的 `advanceIntradayTime`）。
  */
 
 export const transitionSpeakerSchema = z.string();

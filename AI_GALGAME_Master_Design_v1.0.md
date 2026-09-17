@@ -722,7 +722,8 @@ GameProject: project.json / characters/ / world/ / parameters/ / options/
 
 # 11. 补充设计：事件系统过渡与补充规划（Life Engine）—— P0/P0.5/P1/P2 已完成，P3–P5 已设计未实现
 
-> **状态：P0 Transition、P0.5 Beat System、P1 Pending Intent 与 P2 Autonomous Event 已实现（验收报告见 `docs/review/`；P1 复验 `v4flash-p1-verify-playtest.md`、P2 复验 `v4flash-p2-autonomous-verify.md`）；P3–P5（§11.5–§11.7）为**已定案但尚未实现**的设计承诺。
+> **状态：P0.5 Beat System、P1 Pending Intent 与 P2 Autonomous Event 已实现（验收报告见 `docs/review/`；P1 复验 `v4flash-p1-verify-playtest.md`、P2 复验 `v4flash-p2-autonomous-verify.md`）；P3–P5（§11.5–§11.7）为**已定案但尚未实现**的设计承诺。
+> **P0 Transition 为部分实现**：日内时间流动（§11.2 时间层）已实现；**过渡文段的 runtime 管线与 UI 呈现（§11.2.1 表现层）随 P0.5 Beat System 重构移除，当前未接入**——「事件内」位置的过渡文段由 Beat System 的 `NarrativeBeat` 合法取代，「事件之间」的过渡按 2026-09-16 定案留到 P5 Event Scheduler 接入（详见 `docs/review/doc-vs-impl-audit-2026-09-16.md`）。
 > 来源：`AIgal_事件系统过渡与补充规划.md`（作者补充的设计理念，v1.3 正式并入）。
 > 实现规划：`EVENT_LIFE_PLAN.md`（P0–P5 分阶段，对应本节的六个子系统）。
 
@@ -740,7 +741,7 @@ GameProject: project.json / characters/ / world/ / parameters/ / options/
 > **事件不应该是孤立的剧情节点，而应该是角色生活中的高密度时刻。**
 > 即使玩家没有主动推动剧情，时间仍流逝、角色仍活动/思考/形成记忆/产生新意图、关系仍可能发生微小变化。
 
-## 11.2 Transition System（P0）—— ✅ 已实现
+## 11.2 Transition System（P0）—— ⚠️ 部分实现（时间层 ✅ / 表现层待 P5 接入）
 
 事件结束后不直接进入下一个事件，而经过一个轻量 **Transition**：
 
@@ -753,6 +754,8 @@ Event A → State Update → Transition { 时间 / 地点 / 环境 / 情绪余�
 - **目标：消除"事件硬切"。**
 
 ### 11.2.1 过渡的表现层：旁白与对话文段（v1.4 补充）
+
+> **接线状态（2026-09-16）**：本节描述的 runtime 管线（S5）与 Player UI 过渡行（S6）**当前未接入**——P0.5 Beat System 落地时，「相邻两个选项节点之间」的叙事位置改由 `NarrativeBeat` 承担（连续叙事流比单段过渡文段更贴合该位置的使用）。本节的契约（`TransitionRecord`、`generateTransition`、合并调用内嵌）作为**预留**保留，待 P5 Event Scheduler 在「事件之间」的位置重新接入；届时需重新确认与文段拍不产生重复叙事。
 
 Transition 不只是状态量，必须有**可读的过渡文段**，在相邻两个选项节点之间自动呈现：
 
@@ -777,7 +780,7 @@ Transition 不只是状态量，必须有**可读的过渡文段**，在相邻�
 - 不应每轮都执行，需具备：**优先级、触发条件、最晚触发时间、适合地点、适合时间段、与角色状态相关的权重**。
 - **目标：让昨天发生的事情能够影响明天。**
 
-## 11.4 Character Autonomous Event（P2）—— ✅ 已实现（2026-09-10：`pickUrgentIntent` 自主判定 + `event_auto_*` 合成 + 叙事 [自主发起] 指令；复验 `v4flash-p2-autonomous-verify.md`）
+## 11.4 Character Autonomous Event（P2）—— ✅ 已实现（2026-09-10：`pickUrgentIntent` 自主判定 + `event_auto_*` 合成 + 叙事 【自主发起】 指令；复验 `v4flash-p2-autonomous-verify.md`）
 
 角色不只是"等待玩家输入的 NPC"，而是"拥有自己的行为倾向、需求、记忆和未完成目标的角色"：
 
@@ -825,6 +828,10 @@ World + Character + Relationship + Memory + Pending Intent → Event Pool → El
 权重受 trust / affection / conflict / stress / security / memory / relationship_phase / pending_intent / recent_events / time / location 共同影响。
 示例：trust 高 + 未完成倾诉意图 + 地点=图书馆 + 时间=傍晚 → **Autonomous History Event 权重显著提高**。
 
+> **P5 承担 Transition 的重新接入**：§11.2/§11.2.1 的过渡文段管线按 2026-09-16 定案留在本阶段落地——
+> 统一调度器在「事件之间」的位置调用 `generateTransition`（契约与生成器已在 `@ag/schemas` / `@ag/narrative` 就绪，
+> 当前无生产调用方）。接入时须与文段拍明确分工，避免同一位置出现两段重复叙事。
+
 ## 11.8 与 BAD END 模板的关系
 
 BAD END 已形成完整因果链（挑衅 → conflict 上升 → BAD END → Ending Archive → Knowledge → PermanentModifier → 下一局继承），**不需要推翻**。把同样的"因果链"设计扩展到正常剧情：玩家行为 → State Change → Narrative Consequence → Memory → Pending Intent → Autonomous Event → Relationship Phase → 新的行为倾向。**让 BAD END 不再是唯一拥有因果链的系统。**
@@ -860,6 +867,6 @@ BAD END 已形成完整因果链（挑衅 → conflict 上升 → BAD END → En
 - **双推进模式**：手动 ▼ 继续 / 自动连播，到选择点必停（UI 行为，Runtime 不感知差异）。
 - **事务边界不变**：Choice 区间原子提交（D1），Beat 即时展示不入档；事件收束为 summary 记忆入库，事件间传递零新通道。
 - **实现位置**：EVENT_LIFE_PLAN **P0.5**（P1 之前），T1–T8 分步落地。
-- **叙事视角管辖权（双 Agent 门面，v1.6 定案）**：生成端按管辖权二分为两个 Agent（门面模式，`packages/narrative/src/agents/`）——**玩家 Agent**（场景+选项）以玩家第一人称「我」描写所见所为，选项行动主语必须为玩家，禁写角色内心（只写可观察表现）；**角色 Agent**（文段拍+反应+过渡）写角色的可观察言行与已选行为的余波，旁白仍以「我」的视角叙述，角色内心只允许进入 motive 字段（引擎留存，不呈现给玩家），禁止描写玩家未做出的新行动。两 Agent 各自持有视角契约注入 prompt 并各自校验输出。两 Agent 之间存在**引擎中介的有序交流**（延续双向因果）：玩家选项经玩家选择后成为角色 Agent 的输入（余波/反应）；角色 Agent 的拍摘要（beatSummaries）与 motive（pendingTension）回流为下一选择点与后续事件的生成上下文——交流的是结构化产物而非自由对话。世界真相由引擎独立计算并独占（GameState/事件/Flow 状态），两 Agent 不直接对话协商事实。暂不做模型差异化入口（两 Agent 共用 RuntimeConfig 模型配置，契约预留扩展）。
+- **叙事视角管辖权（双 Agent 门面，v1.6 定案）**：生成端按管辖权二分为两个 Agent（门面模式，`packages/narrative/src/agents/`）——**玩家 Agent**（场景+选项）以玩家第一人称「我」描写所见所为，选项行动主语必须为玩家，禁写角色内心（只写可观察表现）；**角色 Agent**（文段拍+反应+过渡）写角色的可观察言行与已选行为的余波，旁白仍以「我」的视角叙述，角色内心只允许进入 motive 字段（引擎留存，不呈现给玩家），禁止描写玩家未做出的新行动。两 Agent 各自持有视角契约注入 prompt；**当前实际接入的是文段拍与反应两条路径，过渡路径待 P5 接入**（见 §11.2.1 接线状态）。**校验现状**：`validateOutput` 只做结构校验（非空、文段拍不得含 options），视角契约本身是 **prompt-only**——自动化 POV 审计见 `apps/devtools/src/pov-audit.ts`（live-verify 报告 `pov` 字段，启发式信号非硬门禁）。两 Agent 之间存在**引擎中介的有序交流**（延续双向因果）：玩家选项经玩家选择后成为角色 Agent 的输入（余波/反应）；角色 Agent 的拍摘要（beatSummaries）与 motive（pendingTension）回流为下一选择点与后续事件的生成上下文——交流的是结构化产物而非自由对话。世界真相由引擎独立计算并独占（GameState/事件/Flow 状态），两 Agent 不直接对话协商事实。暂不做模型差异化入口（两 Agent 共用 RuntimeConfig 模型配置，契约预留扩展）。
 
-实现优先级（详见 `EVENT_LIFE_PLAN.md`）：**P0 Transition ✅ → P0.5 Beat System ✅ → P1 Pending Intent ✅ → P2 Autonomous Event ✅ → P3 Micro Event → P4 Relationship Narrative State → P5 Event Scheduler**。
+实现优先级（详见 `EVENT_LIFE_PLAN.md`）：**P0 Transition ⚠️ 部分（时间层 ✅ / 表现层待 P5）→ P0.5 Beat System ✅ → P1 Pending Intent ✅ → P2 Autonomous Event ✅ → P3 Micro Event → P4 Relationship Narrative State → P5 Event Scheduler（含 Transition 表现层接入）**。

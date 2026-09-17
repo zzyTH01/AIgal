@@ -3,7 +3,7 @@
 ## 事件系统升级计划 Event Life Plan v1.4（Life Engine）
 
 > 版本：v1.4 ｜ 依据：`AI_GALGAME_Master_Design_v1.0.md` §11（v1.5）+ `AIgal_事件系统过渡与补充规划.md` + `BEAT_SYSTEM_DESIGN.md`
-> 变更记录：v1.4（2026-09-10）P2 Autonomous Event 完成标记（自主发起判定 + 事件合成 + 叙事 [自主发起] 指令 + 种子化真实 LLM 复验）；v1.3（2026-09-10）P1 Pending Intent 完成标记（契约/引擎/接线 + 真实 LLM 复验）；v1.2（2026-08-22）新增 **P0.5 Beat System**（事件内连续叙事流，设计详见 `BEAT_SYSTEM_DESIGN.md`）；v1.1（2026-08-21）P0 增补过渡表现层；v1.0 初版。
+> 变更记录：v1.4（2026-09-10）P2 Autonomous Event 完成标记（自主发起判定 + 事件合成 + 叙事 【自主发起】 指令 + 种子化真实 LLM 复验）；v1.3（2026-09-10）P1 Pending Intent 完成标记（契约/引擎/接线 + 真实 LLM 复验）；v1.2（2026-08-22）新增 **P0.5 Beat System**（事件内连续叙事流，设计详见 `BEAT_SYSTEM_DESIGN.md`）；v1.1（2026-08-21）P0 增补过渡表现层；v1.0 初版。
 >
 > 本计划是**下一阶段改进方向**：把当前已成立的 Event Engine 升级为 **Life Engine**。每阶段有目标、任务清单、验收标准与验证命令，验收通过后进入下一阶段。
 > 状态标记：⬜ 未开始 / 🔄 进行中 / ✅ 已完成。
@@ -65,7 +65,11 @@
 
 # 2. Phase P0 — Transition System
 
-- **状态**：✅ 已完成（2026-08-22，S1–S7 全部实施；验收报告见 `docs/review/life-engine-p0-report-2026-08-22.md`）
+- **状态**：⚠️ **部分完成**（2026-08-22 实施，2026-09-16 复核修正口径）
+  - 实施记录：S1–S7 全部实施，验收报告见 `docs/review/life-engine-p0-report-2026-08-22.md`（当时 7/7 通过）。
+  - **复核修正**：P0.5 Beat System 落地（commit `f4b843d`）时移除了本阶段的 **runtime 管线（S5）与 Player UI 过渡行（S6）**——「相邻选项节点之间」的叙事位置改由 `NarrativeBeat` 承担。当前**存活的是日内时间流动（S2）与契约/生成器**；过渡文段在 runtime 无调用方。
+  - **定案（2026-09-16）**：「事件内」由 Beat System 承担，「事件之间」的过渡**留到 P5 Event Scheduler 重新接入**（见 §7.2）。契约与生成器作为预留保留，不删除。
+  - 证据与逐条核实见 `docs/review/doc-vs-impl-audit-2026-09-16.md`。
 
 ## 2.1 目标
 
@@ -80,20 +84,22 @@
 
 ### B. 确定性状态层
 
-- [x] **时间推进**：Turn 结束后按契约推进日内时段与日期，与 Day/DailyProgress 联动。
-- [x] **地点迁移**：事件结束后角色/玩家移动地点；地点变化作为过渡（复用 `@ag/world` 的 `LocationState`）。
-- [x] **环境演化**：天气/光线/人流/安静喧闹在过渡中变化（复用 `evolveWeather` / `advanceCalendar`，Phase E 已就绪）。
-- [x] **上下文传递**：Transition 输出下一事件的候选上下文（地点/时间/事件/意图），供 P5 调度器消费。
+- [x] **时间推进**：Turn 结束后按契约推进日内时段与日期，与 Day/DailyProgress 联动。（**仍生效**，`@ag/core` 的 `advanceIntradayTime`）
+- [ ] **地点迁移**：事件结束后角色/玩家移动地点；地点变化作为过渡（复用 `@ag/world` 的 `LocationState`）。→ **无驱动源**：`world.currentLocationId` 在 runtime 只被读取、从未被写入，需 World/Location 系统提供迁移规则。
+- [ ] **环境演化**：天气/光线/人流/安静喧闹在过渡中变化（复用 `evolveWeather` / `advanceCalendar`，Phase E 已就绪）。→ **未接 runtime**：`evolveWorld` 目前无 runtime 调用方（与 P0 验收报告第三节遗留一致）。
+- [ ] **上下文传递**：Transition 输出下一事件的候选上下文（地点/时间/事件/意图），供 P5 调度器消费。→ 契约在，无消费方，随 P5 接入。
 
 ### C. 过渡文段生成（表现层，对齐 Master Design §11.2.1）
 
 - [x] **情绪余波（记忆驱动）**：从上一轮结果（`lastTurn.reaction / secondaryDelta / newMemories`）+ 检索 Top-K 相关记忆生成"回味"素材——回味内容必须可追溯到上一轮选择结果或某条历史记忆，禁止无因果空降。
 - [x] **generateTransition（@ag/narrative）**：输入 = 上轮摘要 + 检索记忆 + 时间/地点/环境变化；输出 = 旁白 `narration` + 角色对话 `dialogues[]`（双通道结构化校验）；无 LLM 时确定性模板 fallback（守住 §9.1 纯文本闭环验收基线），产物标记 `source: 'llm' | 'fallback'`。
 - [x] **合并调用（LLM Call Minimization）**：默认将过渡段并入下一次 Scenario 调用 prompt（要求先输出过场文段再输出场景），保持每 Turn 2 次调用不变；独立第 3 次调用仅作为可选配置项。
-- [x] **Memory 联动三件套**：① 过渡前检索 Top-K 相关记忆作素材；② 被文段实际引用的记忆触发 `reinforceMemoryRecord`；③ "回想"行为本身产出 `memoryCandidate` 经 `formMemory` 入库。
-- [x] **Runtime 接入点**：`GameRuntime.chooseOption` commit 之后、下一轮事件选择与场景生成之前执行 Transition 管线；过渡文段经 Application API 返回给 UI。
+- [ ] **Memory 联动三件套**：① 过渡前检索 Top-K 相关记忆作素材；② 被文段实际引用的记忆触发 `reinforceMemoryRecord`；③ "回想"行为本身产出 `memoryCandidate` 经 `formMemory` 入库。→ **实现后随 S5 管线一并移除**，待 P5 接入时重建。
+- [ ] **Runtime 接入点**：`GameRuntime.chooseOption` commit 之后、下一轮事件选择与场景生成之前执行 Transition 管线；过渡文段经 Application API 返回给 UI。→ **已移除**（commit `f4b843d`）；`TurnTransaction.setTransition` 与 `TurnResult.transition` 契约保留但无调用方。
 
 ## 2.3 验收标准
+
+> **2026-09-16 复核**：以下七条曾于 2026-08-22 全部通过。其中第 2、6、7 条依赖的过渡管线已随 `f4b843d` 移除，**当前不成立**——P5 重新接入时需按本节重新验收。
 
 - 连续事件之间出现可见的过渡（时间/地点/环境变化），不再是"硬切"。
 - 相邻两轮之间出现可读的过渡文段（旁白或对话）；无 LLM 时为模板 fallback 且不破坏 GameState。
@@ -190,7 +196,7 @@ pnpm --filter @ag/runtime test && pnpm --filter @ag/devtools test && pnpm test
 
 # 5. Phase P2 — Character Autonomous Event
 
-- **状态**：✅ 已完成（2026-09-10：自主发起判定 `pickUrgentIntent`（截止日/高优先级跨日）→ runtime 合成 `event_auto_*`（origin=autonomous）→ 叙事层 [自主发起]/[记忆驱动] 指令；真实 LLM 复验：种子化"玩家未到场"场景，角色主动出现并提及前一天的事（`v4flash-p2-autonomous-verify.md`，开场与设计示例 §11.4 高度一致）；另 12 Turn 常规对局 11/12 走 intent 被动触发（`v4flash-p2-verify-playtest.md`），验证 P1/P2 分层正确性）
+- **状态**：✅ 已完成（2026-09-10：自主发起判定 `pickUrgentIntent`（截止日/高优先级跨日）→ runtime 合成 `event_auto_*`（origin=autonomous）→ 叙事层 【自主发起】/【记忆驱动】 指令；真实 LLM 复验：种子化"玩家未到场"场景，角色主动出现并提及前一天的事（`v4flash-p2-autonomous-verify.md`，开场与设计示例 §11.4 高度一致）；另 12 Turn 常规对局 11/12 走 intent 被动触发（`v4flash-p2-verify-playtest.md`），验证 P1/P2 分层正确性）
 
 ## 4.1 目标
 
@@ -200,7 +206,7 @@ pnpm --filter @ag/runtime test && pnpm --filter @ag/devtools test && pnpm test
 
 - [x] **自主行为入口**：`GameRuntime.prepareTurnContext` 四步管线扩展 ④b——被动择机不匹配时 `pickUrgentIntent`（截止日已到 ∨ 高优先级≥70 跨日）判定角色主动发起；完成复用 P1 `currentIntentId` 管线。
 - [x] **AutonomousEvent 类型**：`EventInstance.origin: 'pool'|'intent'|'autonomous'`（含 WorldEventState 透传持久化）；合成 `event_auto_*`（title 不期而至）事件，优先于事件池。
-- [x] **记忆驱动自主**：`BeatContextInput.autonomous` → prompt [自主发起]/[自主动机]/[记忆驱动] 指令——开场从角色主动行为切入并自然提及 [检索记忆] 中的过去；fallback 确定性模板保留"主动走到你面前"语义（纯文本闭环基线不破坏）。
+- [x] **记忆驱动自主**：`BeatContextInput.autonomous` → prompt 【自主发起】/【自主动机】/【记忆驱动】 指令——开场从角色主动行为切入并自然提及 [检索记忆] 中的过去；fallback 确定性模板保留"主动走到你面前"语义（纯文本闭环基线不破坏）。
 - [x] **生成与呈现**：沿用双通道 LLM + fallback；live-play 轮头部新增 `来源 autonomous/intent/pool` 可观测。
 
 ## 4.3 验收标准
@@ -234,6 +240,23 @@ pnpm --filter @ag/narrative test && pnpm --filter @ag/runtime test && pnpm test
 - [ ] **Micro Event 模板**：偶遇、一句话、短暂互动、环境变化、角色独处（不推动重大剧情，只维持世界运行感）。
 - [ ] **Micro Event 生成**：可程序化（环境/位置驱动）或 LLM 生成；低权重、高频。
 - [ ] **调度区分**：P5 调度器按层级分配权重（Main 低权重高影响、Micro 高权重低影响）。
+
+## 5.2.1 实施步骤（S1–S5）
+
+> 2026-09-16 定案。P1/P2 的意图与自主发起管线已就绪，`importance` 字段已提前落地，
+> 前置修复（#16 遗留观察两项）已于同日完成，可直接进入 S1。
+
+| 步骤              | 内容                                                                                                                                                                                                     | 落点                                                     | 完成判据                                                                          |
+| ----------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- | --------------------------------------------------------------------------------- |
+| **S1 层级确认**   | 冻结三层语义边界与既有 `importance: main/side/micro` 的对应关系；确认 Micro 的拍数预算（FlowController 已按 2–3 拍）与数值影响系数（×0.75）不需改动；明确 Micro **不强制玩家选择**（可走"继续"单出口）。 | `EVENT_LIFE_PLAN` 冻结 + `@ag/core/flow-controller` 复核 | 三层语义写死为文档契约，代码侧零新增字段                                          |
+| **S2 Micro 池**   | `@ag/world` 新增 Micro 事件池与模板：偶遇 / 一句话 / 短暂互动 / 环境变化 / 角色独处；模板可程序化（环境·位置驱动）或 LLM 生成，低权重高频。                                                              | `@ag/world`                                              | 池可独立单测：给定状态可产出合法 Micro `EventDefinition`（`importance: 'micro'`） |
+| **S3 调度接入**   | Micro 事件进入 runtime 的事件选择路径，与既有 EventPool / Pending Intent 事件 / 自主发起事件的优先级关系明确（Micro 不抢占意图事件与自主发起）。                                                         | `@ag/runtime/game-runtime.ts`                            | 模拟运行事件分布出现三层；意图事件优先级不被 Micro 侵蚀                           |
+| **S4 叙事短路**   | Micro 走轻量叙事路径：不生成 2–4 选项，仅文段拍（+ 可选"继续"出口），不打断连续叙事流；与 P2 `【自主发起】` 路径互斥判定。                                                                               | `@ag/runtime` + `@ag/narrative`                          | 真实 LLM：Micro 事件全程无选择点或仅单出口，叙事流不中断                          |
+| **S5 记忆与验收** | Micro 事件产生轻量 Memory Candidate（低 importance）；`simulate` 事件分布统计含三层；真实 LLM 长对话复验"生活感"（两个 Main/Side 之间出现 Micro）。                                                      | `@ag/memory` + `apps/devtools`                           | §5.3 两条验收标准 + 真实 LLM 对局记录入库                                         |
+
+**依赖提醒**：本阶段原依赖 P0 提供的生活流。P0 的过渡表现层已定案留到 P5（见 §2 状态），
+因此 Micro 事件**不得依赖 `TransitionRecord`**——它是「事件之间」位置的填充者，与 P5 的 Transition
+接入在同一位置，开工时需与 P5 划清分工（Micro 是事件，Transition 是过场文段，二者不应在同一次事件间隙重复出现）。
 
 ## 5.3 验收标准
 
@@ -352,10 +375,10 @@ pnpm --filter @ag/world test && pnpm --filter @ag/devtools test && pnpm test
 P0 Transition → **P0.5 Beat System** → P1 Pending Intent → P2 Autonomous Event → P3 Micro Event → P4 Relationship Narrative State → P5 Event Scheduler
 ```
 
-- **P0 是基础**：没有 Transition，Autonomous/Micro 无从衔接。
+- **P0 是基础**：没有过渡层，Autonomous/Micro 无从衔接。**但 P0 的过渡表现层已定案推迟到 P5**（见 §2 状态），因此 P3 开工不得依赖 `TransitionRecord`。
 - **P0.5 是体验骨架**：事件内连续叙事流先于一切新事件类型；其 `importance` 字段即 P3 的 level，P3 直接复用。
 - **P1 → P2 依赖**：Autonomous Event 需要 Pending Intent 作为触发源。
-- **P3 依赖 P0**：Micro Event 需要 Transition 提供的生活流。
+- **P3 不再阻塞于 P0 表现层**：Micro Event 需要的是"事件之间的位置"，该位置当前为空缺（P0 过渡已移除）。P3 的 Micro 事件本身即可占据该位置填充生活感；P5 接入 Transition 时须与 Micro 划清分工（Transition 是过场文段，Micro 是事件，同一间隙不重复出现）。
 - **P4 与 P1/P2 互馈**：narrative state（desire/unresolved）驱动意图，意图反馈到叙事状态。
 - **P5 收口**：统一调度所有事件层级。
 - 每阶段验收通过才进入下一阶段；契约变更同步更新 Master Design §11 与 `docs/review/known-issues.md`。
@@ -365,6 +388,8 @@ P0 Transition → **P0.5 Beat System** → P1 Pending Intent → P2 Autonomous E
 # 12. P0 技术设计：接口、类与实现顺序
 
 > 本节是 P0 的可执行技术方案，签名与现有代码库约定对齐（Zod strict、`schemaVersion: '0.1.0'`、双通道 `source: 'llm' | 'fallback'`）。
+>
+> ⚠️ **接线状态（2026-09-16）**：§12.1–§12.4 的契约与生成器**仍然存在**；§12.5 的 Runtime 管线与 §12.6 的 UI 面板**已随 P0.5 Beat System 重构移除**，当前无调用方。本节保留为 P5 重新接入时的实现依据。
 
 ## 12.1 契约层（@ag/schemas，新文件 `src/transition.ts`）
 

@@ -78,7 +78,11 @@ export class PlayerAgent implements NarrativeAgent {
     return result;
   }
 
-  /** 场景 + 选项（合并调用路径）：注入玩家契约后调用 combined 生成器。 */
+  /**
+   * 场景 + 选项（合并调用路径）：注入玩家契约后调用 combined 生成器。
+   * ⚠️ 当前**无生产调用方**——runtime 主路径走 `generateChoiceBeat`（引子 + 选项），
+   * 本方法保留给仍使用合并调用路径的调用方（如 `@ag/narrative` 的 `runNarrativeTurn`）。
+   */
   async generateScenarioAndOptions(
     context: ModelContext,
     gateway: LLMGateway,

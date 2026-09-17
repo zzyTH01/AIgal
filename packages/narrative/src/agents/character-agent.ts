@@ -117,7 +117,11 @@ export class CharacterAgent implements NarrativeAgent {
     return result;
   }
 
-  /** 过渡文段：注入角色契约后调用 transition 生成器。 */
+  /**
+   * 过渡文段：注入角色契约后调用 transition 生成器。
+   * ⚠️ 当前**无生产调用方**——「事件内」的叙事已由 `generateNarrativeBeats` 承担，
+   * 「事件之间」的过渡按 2026-09-16 定案留到 P5 Event Scheduler 接入。
+   */
   async generateTransition(
     input: TransitionContextInput,
     gateway: LLMGateway,

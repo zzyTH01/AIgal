@@ -8,7 +8,7 @@
 
 - **`AI_GALGAME_Master_Design_v1.0.md`** — 唯一权威设计基线（**文件名保留 v1.0，内容版本 v1.6**；§11 Life Engine、§11.11 Beat System + 叙事视角管辖权）
 - **`DEVELOPMENT_PLAN.md`** — 主线分阶段开发计划（Phase 0.5–12，已完成）
-- **`EVENT_LIFE_PLAN.md`** — Life Engine 实现计划（P0 ✅ / P0.5 ✅ / P1 ✅ / P2 ✅ / P3–P5 待做）
+- **`EVENT_LIFE_PLAN.md`** — Life Engine 实现计划（P0 ⚠️ 部分完成：仅日内时间层 / P0.5 ✅ / P1 ✅ / P2 ✅ / P3–P5 待做，P3 实施步骤见 §5.2.1）
 - **`BEAT_SYSTEM_DESIGN.md`** — Beat System 唯一实现依据：事件内连续叙事流（拍模型 / FlowController / motive 思维链机制）
 - `docs/review/known-issues.md` — 已确认问题与校准记录
 - `docs/review/` — 各阶段审计与真实 LLM 验收报告
@@ -54,12 +54,13 @@ ag-devtools acceptance
 ### Life Engine（事件 → 生活流）🔄
 
 - ✅ **2026-08-21 审计接线修复**：ContextCache、检索强化、记忆修剪、一致性规则、重试配置接入生产路径
-- ✅ **P0 Transition System**：选项节点之间的过渡文段（旁白+对话）、日内时间流动、Memory 联动三件套（检索供素材→引用即强化→回想产新忆）、合并调用保持 2 次/Turn
+- ⚠️ **P0 Transition System（部分完成）**：日内时间流动（每 Turn 推进时段、跨天重置）**仍在生效**；过渡文段生成器与契约保留，但「事件之间」的 runtime 管线与 UI 面板已随 P0.5 重构移除，**定案留到 P5 Event Scheduler 重新接入**（「事件内」的叙事已由 Beat System 承担）。见 known-issues #17
 - ✅ **P0.5 Beat System**：事件内连续叙事流——选择 → 文段拍 → 选择点交替；FlowController 裁决节奏（预算/间隔/分支价值）；事件重要性权重（main/side/micro 决定拍数预算与数值放大）；双推进模式（▼ 手动 / 自动连播，到选项必停）；motive 思维链→扮演对象回流驱动叙事
 - ✅ **P1 Pending Intent**：角色未完成意图——事件末次 motive 思维链确定性转化为意图，同地点/时间段/条件匹配时择机触发为意图事件并完成，超时过期（Intent ≠ Memory：昨天的事影响明天）
 - ✅ **P2 Autonomous Event**：角色主动寻找玩家——意图紧迫（截止日/高优先级跨日）且玩家未到场时，角色主动发起事件（origin=autonomous），开场叙事从她主动出现切入并自然提及过去（"……找到你了。昨天你说的那些，我后来想了很久。"）
 - ✅ **双 Agent 视角管辖权（v1.6，2026-09-16）**：PlayerAgent（玩家第一人称「我」叙事+选项）/ CharacterAgent（文段拍+反应+过渡，角色内心只进 motive）门面（`packages/narrative/src/agents/`）；真实 LLM 复验四项 POV 指标全过；#16 遗留观察（台词级去重 + 反应场景 grounding）已修复——12/12 轮反应场景连贯、台词重复 0
-- ⏭️ **P3 Micro Events**（S1–S5 实施计划已定）→ P4 Relationship Narrative State → P5 Event Scheduler
+- ✅ **POV 自动审计（2026-09-16）**：`live-verify` 报告新增 `pov` 字段（旁白「我」开场比例 / 内心泄露命中 / 选项主语为玩家 / motive 覆盖率），使 #16 类视角回归可被 CLI 捕获（此前依赖人工读对局记录）
+- ⏭️ **P3 Micro Events**（S1–S5 实施步骤见 `EVENT_LIFE_PLAN.md` §5.2.1）→ P4 Relationship Narrative State → P5 Event Scheduler（含 Transition 表现层接入）
 
 ### 已验证能力（真实 DeepSeek 长对话）
 

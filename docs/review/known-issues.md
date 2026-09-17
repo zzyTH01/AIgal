@@ -30,6 +30,7 @@
 ### 16. Beat System 文段拍视角契约缺失（人称/管辖权混乱）—— ✅ 已修复（2026-09-15 双 Agent 门面重构）
 - **现象**：P0.5 文段拍生成器（beat-generator）为 #4 POV 修复后新增的生成路径，未继承视角契约——旁白以 NPC 第三人称限知视角直写角色内心（"她深吸一口气，试图将残梦压回记忆深处"，玩家不可能看到）；玩家动作与角色动作混写（文段拍写花瓣落在她的笔袋上，选项却是玩家把花瓣夹进笔记页）；文段拍→选择的场景状态断裂（她在教室门口→反应里在吃午饭）。
 - **修复（双 Agent 门面 + 玩家第一人称）**：①生成端按管辖权重构为两个 Agent（`packages/narrative/src/agents/`，门面模式）——**玩家 Agent**（场景+选项，内部复用 combined-generator）以玩家第一人称「我」叙事，选项主语锚定玩家，禁写角色内心；**角色 Agent**（文段拍+反应+过渡，内部复用 beat/reaction/transition generator）注入视角契约——旁白以「我」的视角叙述角色可观察言行，内心只允许进 motive 字段（引擎留存），禁止描写玩家未做出的新行动；②两 Agent 从引擎共享状态各自分流上下文（玩家：场景/进度/多样性/一致性；角色：记忆/情绪/pending intent/motive 流）并各自校验输出；③fallback 文案同步修正（"主动走到「我」面前"）。
+  - **2026-09-16 复核修正**：②的表述强于实现——**上下文未按 Agent 裁剪**（`produceBeat` 两条路径共用同一份 `buildBeatInput` 产物），**校验仅为结构校验**（非空、文段拍不得含 options），视角契约本身是 prompt-only。实际接入的是文段拍与反应两条路径，**过渡路径无调用方**（见 #17）。详见 `doc-vs-impl-audit-2026-09-16.md`。
 - **设计定案**：Master Design §11.11 叙事视角管辖权（v1.6）；#4 的"第二人称"约定由"玩家第一人称「我」"取代（galgame 主人公声音）。
 - **真实 LLM 复验（2026-09-16，DeepSeek V4 Flash + thinking disabled，12 Turn/跨 3 天，记录 `dual-agent-pov-verify-playtest.md`）——四项 POV 指标全部通过**：
   - ①旁白第一人称「我」：全文 294 处，25/30 抽样拍以「我」视角开场（旧记录为 NPC 第三人称限知）。
@@ -40,6 +41,18 @@
   - (a) 反应场景 grounding：`ReactionGeneratorOptions.scene`（日/时/地点/最近拍摘要）注入 `[当前场景]` 行 + 禁跳转 + 冲突以场景为准；scene 提供时 `[当前事件]` 只保留标题（描述锚定力过强会拉回模板场景）。第三轮复验 12/12 轮反应与拍场景连贯（此前 11/12）。
   - (b) 台词级去重：`EventFlow.recentDialogues`（可选，≤60 字符 ×5）滚动台词摘录进入 `BeatContextInput`；拍生成拒绝条件扩展为旁白 OR 台词（含同批次互查）；prompt 新增 `[已发生台词]` 段与校正指令。第三轮复验台词重复 0 次（此前 2–3 次）。
   - 验证记录：`dual-agent-fixes-verify-playtest.md` / `-verify2-` / `-verify3-`（最终通过）。
+
+### 17. P0 Transition 的 runtime 管线与 UI 面板未接入 —— ⚠️ 已定案推迟到 P5（2026-09-16）
+- **现象**：`EVENT_LIFE_PLAN` P0 与 Master Design §11.2/§11.2.1 曾记为"已完成"，但 S5（`GameRuntime` 的 `pendingTransition` 管线）与 S6（Player UI 过渡行）**已随 P0.5 Beat System 重构（commit `f4b843d`）移除**。当前 `packages/runtime/src/` 内零 transition 痕迹：`TurnTransaction.setTransition` 与 `TurnResult.transition` 契约保留但**无生产调用方**，`CharacterAgent.generateTransition` 同样无调用方；Player UI 里的 `kind: 'transition'` 指的是文段拍，不再是 `TransitionRecord`。P0 存活的只有 **S2 日内时间流动**（`advanceIntradayTime`）。此外 B 组的地点迁移**无驱动源**（`world.currentLocationId` 只被读、从未被写）、环境演化（`evolveWorld`）**无 runtime 调用方**。
+- **影响**：事件之间仍是硬切；P3 原本声明"依赖 P0 的生活流"、P5 §7.2 有"Transition 接入"任务，按原文档口径开工会在两处踩空。
+- **定案（2026-09-16）**：「事件内」位置的过渡文段由 Beat System 的 `NarrativeBeat` 合法取代（连续叙事流比单段过场更贴合该位置）；「事件之间」的过渡**留到 P5 Event Scheduler 统一调度时接入**，契约与生成器作为预留保留、不删除。P3 不再阻塞于 P0 表现层。
+- **已同步**：Master Design §11 头部/§11.2/§11.2.1/§11.7/§11.11、`EVENT_LIFE_PLAN` §2/§5.2.1/§11/§12、CLAUDE.md/AGENTS.md/README，代码侧 4 处加注。
+- 逐条核实证据见 `docs/review/doc-vs-impl-audit-2026-09-16.md`。
+
+### 18. 视角契约（POV）此前只有 prompt 保障，无自动化校验 —— ⚠️ 已补审计（2026-09-16）
+- **现象**：#16 的复验结论（四项 POV 指标）此前依赖**人工分析对局 Markdown**，CLI 不可复现——而 `PlayerAgent.validateOutput` / `CharacterAgent.validateOutput` 只做**结构校验**（非空、文段拍不得含 options），视角契约本身是 **prompt-only**，违规仅 `console.warn`（`game-runtime.ts` 的 `auditAgentViolation`）。#16 正是 POV 回归，意味着同类回归下次仍只会静默发生。
+- **已补**：`apps/devtools/src/pov-audit.ts`（纯函数 + 单测）把四项指标做成 `live-verify` 报告的 `pov` 字段——旁白「我」开场比例、内心泄露命中数（含跨逗号写法）、选项主语为玩家占比、motive 覆盖率。
+- **已知局限（保持诚实）**：启发式信号非硬门禁——漏报改写措辞、误报跨小句主体（如「我看着她，明白了一些事」记为「她，明白」），报告中保留命中片段供人工复核；只审计旁白（对话中角色说「我知道」是合法台词）；**Demo 模式因模板旁白无「我」而恒为 0，指标仅在真实 LLM 运行下有意义**。
 
 ### 5. 检索到的记忆未注入 LLM prompt —— ✅ 已修复（2026-08-16）
 - 位置：`packages/narrative/src/combined-generator.ts` / `reaction-generator.ts`（`build*Request` 只注入 `systemRules`）
@@ -105,30 +118,35 @@
 
 ---
 
-## 修复优先级建议（2026-09-16 更新）
+## 修复优先级建议（2026-09-16 复核后更新）
 
-> #1–#5、#14–#16 均已修复关闭；当前排序以 **Life Engine 主线（Event Life Plan P3–P5）** 为轴。
+> #1–#5、#14–#16 均已修复关闭（含 #16 的两项遗留观察，同日三轮真实 LLM 递进验证通过）；
+> 当前排序以 **Life Engine 主线（Event Life Plan P3–P5）** 为轴。
 
-### 近期：P3 前置修复（#16 遗留观察，改动小，先于 P3 落地）
+### 前置决策（已定案，无待办）
 
-1. **🟠 拍间台词级去重（#16-观察b）**：相似度去重目前只覆盖 narration，不覆盖 dialogues——P3 Micro Events 会显著增加拍与台词密度，重复风险放大，须先行。
-2. **🟠 反应场景 grounding（#16-观察a）**：reaction prompt 注入当前拍场景上下文（beatSummaries 尾部 + 当前日/时/地点），消除反应跳到事件模板场景（1/12 轮实测）。
+- **#17 P0 Transition 表现层接入位置**：已定案「事件内由 Beat System 承担、事件之间留到 P5」——
+  文档口径已同步，代码侧契约保留并加注。**开工 P5 前无需再决策**。
 
 ### 主线：Life Engine（EVENT_LIFE_PLAN P3 → P4 → P5）
 
-3. **P3 Micro Events**：三层事件（importance 字段已就绪），Micro 池 + 模板 + 生成，填充"生活感"。
-4. **P4 Relationship Narrative State**：RelationshipState 增加 narrative 子结构（phase/impression/desire/unresolved/direction），P1/P2 意图管线直接消费。
-5. **P5 Event Scheduler**：统一调度 Main/Side/Micro/Autonomous/Transition，动态权重（World+Character+Memory+Relationship+Intent），可复现。
+1. **P3 Micro Events**：三层事件（`importance` 字段已就绪），Micro 池 + 模板 + 生成，填充"生活感"。
+   实施步骤 S1–S5 已写入 `EVENT_LIFE_PLAN.md` §5.2.1。**不依赖 `TransitionRecord`**（见 #17）。
+2. **P4 Relationship Narrative State**：RelationshipState 增加 narrative 子结构（phase/impression/desire/unresolved/direction），P1/P2 意图管线直接消费。
+3. **P5 Event Scheduler**：统一调度 Main/Side/Micro/Autonomous/Transition，动态权重（World+Character+Memory+Relationship+Intent），可复现。
+   **含 #17 的 Transition 表现层重新接入**（§12.5 管线与 §12.6 UI 面板），接入时须与 Micro 事件划清分工。
 
 ### 部署层（主线后或并行）
 
-6. **#12 HTTP Application API**（`POST /turn/choice` 形态）。
-7. **#11 PNG 卡导入 + 真实 SillyTavern 联调**。
-8. **#9/#10 真实立绘/音频资源接入**（Player 当前 CSS 占位）。
+4. **#12 HTTP Application API**（`POST /turn/choice` 形态）。
+5. **#11 PNG 卡导入 + 真实 SillyTavern 联调**。
+6. **#9/#10 真实立绘/音频资源接入**（Player 当前 CSS 占位）。
 
 ### 低优先级（随资源）
 
-9. **#6** 记忆/平衡参数校准；**#7** 真实 token 成本计量；**#8** 设计器编辑器扩展；**#13** prune 语义升级（硬删除→遗忘）。
+7. **#6** 记忆/平衡参数校准；**#7** 真实 token 成本计量；**#8** 设计器编辑器扩展；**#13** prune 语义升级（硬删除→遗忘）。
+8. **#18 POV 审计升级**：当前为启发式信号（代词/动词表 + 开头窗口），漏报改写措辞、误报跨小句主体；
+   如需硬门禁需引入更强的判定（如生成端自检或第二模型复核）。
 
 > 触发本清单的审查对应：`phase5-review.md`（#1/#2 相关 Option 契约与多样性）、`phase6-review.md`（#6）、`phase11-review.md`（#7）、`phase10-review.md`（#8）、`phase12-review.md`（#9/#10）、`phase8-review.md`（#11）、`phase9-review.md`（#12）；#3/#4/#5 来自本轮 Completion Plan 与长对话实测。
 

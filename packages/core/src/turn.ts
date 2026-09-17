@@ -181,7 +181,11 @@ export class TurnTransaction {
     this.reaction = npcReactionSchema.parse(reaction);
   }
 
-  /** P0：写入本 Turn 的开场过场（由 Runtime 在 startTurn 阶段组装）。 */
+  /**
+   * P0：写入本 Turn 的开场过场（由 Runtime 在 startTurn 阶段组装）。
+   * ⚠️ 当前**无生产调用方**——过渡的 runtime 管线随 Beat System 重构移除，
+   * 契约预留给 P5 Event Scheduler 接入（见 `@ag/schemas/src/transition.ts` 状态说明）。
+   */
   setTransition(record: TransitionRecord): void {
     this.transition = transitionRecordSchema.parse(record);
   }
