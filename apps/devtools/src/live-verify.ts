@@ -1,5 +1,6 @@
 import { GameRuntime } from '@ag/runtime';
 import type { Beat } from '@ag/schemas';
+import { auditPov, type PovAuditReport } from './pov-audit.js';
 
 export interface LiveVerifyOptions {
   turns?: number;
@@ -57,6 +58,8 @@ export interface LiveVerifyReport {
     saturationRatio: number;
   };
   finalRelationship: { affection: number; trust: number; stress: number };
+  /** #16 视角管辖权审计（Master Design §11.11）：让 POV 回归可被 CLI 捕获，无需人工读对局记录。 */
+  pov: PovAuditReport;
   perTurn: LiveTurnMetric[];
 }
 
@@ -127,6 +130,10 @@ export async function runLiveVerification(
   let totalNarrativeBeats = 0;
   let narrativeBeatLlm = 0;
   let formedTotal = 0;
+  const povNarrations: string[] = [];
+  const povOptions: string[] = [];
+  let povNarrativeBeats = 0;
+  let povBeatsWithMotive = 0;
 
   for (let index = 0; index < turnsRequested; index += 1) {
     const startView = await runtime.startTurn();
@@ -149,16 +156,28 @@ export async function runLiveVerification(
     for (const beat of allBeats) {
       if (beat.kind === 'narrative') {
         totalNarrativeBeats += 1;
-        if (beat.source === 'llm') narrativeBeatLlm += 1;
+        if (beat.source === 'llm') {
+          narrativeBeatLlm += 1;
+          // POV 审计只取 llm 文本：fallback 是合规模板，计入会稀释信号。
+          povNarrations.push(beat.narration);
+          povNarrativeBeats += 1;
+          if (beat.motive) povBeatsWithMotive += 1;
+        }
+      } else if (beat.source === 'llm' && beat.intro) {
+        povNarrations.push(beat.intro);
       }
     }
+    povOptions.push(...optionList.map((option) => option.presentation.text));
 
     const option = optionList[index % Math.max(1, optionList.length)]!;
     const choice = await runtime.chooseOption(option.id);
     const reactionIsFallback =
       choice.turnResult.reaction.narrative === FALLBACK_REACTION ||
       choice.reactionText === FALLBACK_REACTION;
-    if (!reactionIsFallback) reactionLlm += 1;
+    if (!reactionIsFallback) {
+      reactionLlm += 1;
+      povNarrations.push(choice.turnResult.reaction.narrative);
+    }
 
     formedTotal += choice.turnResult.newMemories.length;
     const stats = memoryStats(choice.state);
@@ -222,6 +241,13 @@ export async function runLiveVerification(
       trust: finalSnapshot.trust,
       stress: finalSnapshot.stress,
     },
+    pov: auditPov({
+      narrations: povNarrations,
+      options: povOptions,
+      npcName: runtime.character.identity.name,
+      beatsWithMotive: povBeatsWithMotive,
+      narrativeBeatCount: povNarrativeBeats,
+    }),
     perTurn,
   };
 }

@@ -4,3 +4,4 @@ export * from './inspectors.js';
 export * from './turn-debugger.js';
 export * from './golden-test.js';
 export * from './acceptance.js';
+export * from './pov-audit.js';
