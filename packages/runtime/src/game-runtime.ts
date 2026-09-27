@@ -12,6 +12,7 @@ import {
   type FinalStateDelta,
   type ProjectPolicy,
   type TurnResult,
+  type MemoryCandidate,
 } from '@ag/schemas';
 import {
   applyBadEndPunishment,
@@ -37,7 +38,13 @@ import {
   type IntentCandidate,
   type RNG,
 } from '@ag/core';
-import { EventPool, XorShift128Rng, commitTriggeredEvent } from '@ag/world';
+import {
+  EventPool,
+  MicroEventPool,
+  XorShift128Rng,
+  commitTriggeredEvent,
+  type MicroEventSelection,
+} from '@ag/world';
 import { MemorySaveRepository, type SaveRepository } from '@ag/persistence';
 import { buildContext, ContextCache, type ContextCacheStats } from '@ag/context';
 import { formMemory, consolidateMemories, reinforceMemoryRecord, pruneMemories } from '@ag/memory';
@@ -79,6 +86,8 @@ export interface RuntimeConfig {
   };
   /** P0.5 Beat System 节奏预算（缺省 DEFAULT_FLOW_BUDGET）。 */
   flowBudget?: FlowBudgetConfig;
+  /** P3 S3：无意图/自主事件时 Micro 事件的概率门（0–1，缺省 0.35）。 */
+  microEventProbability?: number;
 }
 
 export type FlowPhase = 'awaiting-advance' | 'awaiting-choice';
@@ -204,6 +213,12 @@ export class GameRuntime {
   /** v1.6 双 Agent 门面：玩家 Agent（场景/引子+选项）与角色 Agent（文段拍/反应/过渡）。 */
   private readonly playerAgent = new PlayerAgent();
   private readonly characterAgent = new CharacterAgent();
+  /** P3 S2/S3：Micro 事件池与当前 Micro 事件（叙事短路用）。 */
+  private readonly microEventPool = new MicroEventPool();
+  private readonly microEventProbability: number;
+  private currentMicro?: MicroEventSelection;
+  private currentMicroBeats: string[] = [];
+  private lastMicroTemplateId?: string;
   /** Agent 管辖权审计：违规仅告警，不阻断生成器自身 fallback 链。 */
   private readonly auditAgentViolation = (
     role: 'player' | 'character',
@@ -242,6 +257,7 @@ export class GameRuntime {
     this.policy = config.policy;
     this.llmMaxAttempts = config.llmMaxAttempts ?? 1;
     this.memoryPruneLimit = config.memoryPruneLimit ?? 100;
+    this.microEventProbability = config.microEventProbability ?? 0.35;
     this.consistency = config.consistency;
     this.flowController = new FlowController(config.flowBudget ?? DEFAULT_FLOW_BUDGET);
     this.configuredRng = config.rng;
@@ -509,6 +525,9 @@ export class GameRuntime {
     const state = this.getState();
     const needOpen = forceNewEvent || !this.flow || this.flow.status === 'ended';
     if (!needOpen && this.context) return this.context;
+    // P3 S3：开启新事件时清空上一 Micro 事件状态
+    this.currentMicro = undefined;
+    this.currentMicroBeats = [];
 
     // P1 Pending Intent 管线（事件开启时执行一次）：
     // ① 过期清理 → ② 完成上一个意图事件的意图 → ③ 上事件 motive 转化为新意图 → ④ 意图择机触发
@@ -535,15 +554,34 @@ export class GameRuntime {
           : undefined;
     } else {
       this.currentEventAutonomous = undefined;
-      const pooled = this.eventPool.trySelectEvent(next, this.rng);
-      selectedEvent = pooled ?? undefined;
-      if (pooled) {
-        next = commitTriggeredEvent(
-          next,
-          this.eventDefinitions.find((event) => event.eventId === pooled.eventId)!,
-          pooled,
-          this.eventPool,
-        );
+      // P3 S3：Micro 不抢占意图/自主发起事件（此分支即无 proactive），
+      // 概率门内先试 Micro；未命中再落常规池——Micro 填充大事件之间的生活感。
+      const micro = this.microEventPool.trySelect({
+        state: next,
+        rng: this.rng,
+        characterId: this.character.characterId,
+        characterName: this.character.identity.name,
+        probability: this.microEventProbability,
+        excludeTemplateIds: this.lastMicroTemplateId ? [this.lastMicroTemplateId] : [],
+      });
+      if (micro) {
+        this.currentMicro = micro;
+        this.lastMicroTemplateId = micro.templateId;
+        selectedEvent = micro.instance;
+        // Micro 定义不注册进常规池（避免池.recordTriggered 未知事件报错）；
+        // 防重复由 lastMicroTemplateId 滚动维护。
+        next = commitTriggeredEvent(next, micro.definition, micro.instance);
+      } else {
+        const pooled = this.eventPool.trySelectEvent(next, this.rng);
+        selectedEvent = pooled ?? undefined;
+        if (pooled) {
+          next = commitTriggeredEvent(
+            next,
+            this.eventDefinitions.find((event) => event.eventId === pooled.eventId)!,
+            pooled,
+            this.eventPool,
+          );
+        }
       }
     }
     this.state = next;
@@ -551,8 +589,10 @@ export class GameRuntime {
     const importance = selectedEvent
       ? intentSelection
         ? intentSelection.definition.importance
-        : (this.eventDefinitions.find((event) => event.eventId === selectedEvent!.eventId)
-            ?.importance ?? 'side')
+        : this.currentMicro
+          ? this.currentMicro.definition.importance
+          : (this.eventDefinitions.find((event) => event.eventId === selectedEvent!.eventId)
+              ?.importance ?? 'side')
       : (this.flow?.importance ?? 'side');
     this.flow = this.flowController.openFlow(selectedEvent?.eventId ?? null, importance, () =>
       this.rng.next(),
@@ -634,6 +674,11 @@ export class GameRuntime {
       return { beat: closing };
     }
 
+    // P3 S4：Micro 事件走叙事短路——纯程序化文段拍，无 LLM、无选择点。
+    if (this.currentMicro) {
+      return this.produceMicroBeat(state);
+    }
+
     const step = this.flowController.nextStep(this.flow, {
       branchPotential: this.lastBranchPotential,
     });
@@ -691,6 +736,87 @@ export class GameRuntime {
     }
     this.state = state;
     return { beat };
+  }
+
+  /**
+   * P3 S4：Micro 事件叙事短路——程序化文段拍（无 LLM、无选择点）。
+   * 模板旁白按「。」切分为 1–N 拍；拍数用尽或预算耗尽即收束事件并落轻量记忆（S5）。
+   */
+  private produceMicroBeat(state: GameState): { beat: Beat } {
+    if (!this.flow || !this.currentMicro) throw new Error('Micro flow not initialized');
+
+    if (this.currentMicroBeats.length === 0) {
+      this.currentMicroBeats = this.currentMicro.narration
+        .split(/(?<=。)/)
+        .map((piece: string) => piece.trim())
+        .filter((piece: string) => piece.length > 0);
+    }
+
+    const text = this.currentMicroBeats.shift();
+    if (!text) {
+      // 拍文本耗尽 → 收束（与常规预算耗尽路径一致）
+      this.flow = { ...this.flow, status: 'ended' };
+      this.flowPhase = 'awaiting-advance';
+      this.currentOptions = [];
+      state = this.formMicroMemory(state);
+      this.state = state;
+      this.currentMicro = undefined;
+      const closing: Beat = {
+        beatId: `${this.flow.beatsUsed + 1}`.padStart(3, '0'),
+        kind: 'narrative',
+        narration: `（${state.run.time}）这样的片刻很快就过去了。`,
+        dialogues: [],
+        source: 'fallback',
+        branchPotential: 'low',
+      };
+      this.pendingBeats.push(closing);
+      return { beat: closing };
+    }
+
+    const beat: Beat = {
+      beatId: `${this.flow.beatsUsed + 1}`.padStart(3, '0'),
+      kind: 'narrative',
+      narration: text,
+      dialogues: [],
+      source: 'fallback',
+      branchPotential: 'low',
+    };
+    this.flow = this.flowController.registerBeat(this.flow, beat, beat.narration.slice(0, 60));
+    this.currentOptions = [];
+    this.currentScenario = { narrative: beat.narration, source: beat.source };
+    this.pendingBeats.push(beat);
+    this.flowPhase = 'awaiting-advance';
+    this.lastBranchPotential = 'low';
+
+    if (this.currentMicroBeats.length === 0 || this.flow.beatsUsed >= this.flow.maxBeats) {
+      this.flow = { ...this.flow, status: 'ended' };
+      state = this.formMicroMemory(state);
+      this.currentMicro = undefined;
+    }
+    this.state = state;
+    return { beat };
+  }
+
+  /**
+   * P3 S5：Micro 事件轻量记忆——低 importance（15）、由角色认知承载，
+   * 走常规 formMemory 管线（零新通道）。
+   */
+  private formMicroMemory(state: GameState): GameState {
+    const micro = this.currentMicro;
+    if (!micro) return state;
+    const cognition = state.characters[this.character.characterId]?.cognition;
+    if (!cognition) return state;
+    const candidate: MemoryCandidate = {
+      type: 'episodic',
+      content: micro.memoryContent,
+      importance: 15,
+      emotionalIntensity: 8,
+      valence: 5,
+      tags: ['micro'],
+      relatedCharacters: [this.character.characterId],
+      sourceTurnId: `${state.run.runId}/day_${state.run.day}/turn_${state.run.turn}`,
+    };
+    return formMemory(state, candidate, cognition).state;
   }
 
   /**

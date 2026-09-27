@@ -13,7 +13,7 @@ import {
   startTurn,
   type RNG,
 } from '@ag/core';
-import { EventPool, XorShift128Rng, commitTriggeredEvent } from '@ag/world';
+import { EventPool, MicroEventPool, XorShift128Rng, commitTriggeredEvent } from '@ag/world';
 import { renderOptions, planDiverseOptions } from '@ag/option';
 import { consolidateMemories, formMemory, pruneMemories } from '@ag/memory';
 import { buildContext } from '@ag/context';
@@ -123,6 +123,8 @@ export function simulateRun(
   const eventDefinitions = options.eventDefinitions ?? demoEvents;
   const pool = new EventPool(eventDefinitions);
   const selectedEventIds: string[] = [];
+  const microPool = new MicroEventPool();
+  let lastMicroTemplateId: string | undefined;
   const selectedOptionIds: string[] = [];
   const turnResults: TurnResult[] = [];
   const contextBudgetSamples: number[] = [];
@@ -140,17 +142,36 @@ export function simulateRun(
   state.rng = rng.save();
 
   for (let turnIndex = 0; turnIndex < turnsPerRun; turnIndex += 1) {
-    const selectedEvent = pool.trySelectEvent(state, rng);
-    if (selectedEvent) {
-      selectedEventIds.push(selectedEvent.eventId);
-      state = commitTriggeredEvent(
+    // P3 S3：Micro 概率门（0.5，仿真高频采样三层分布）——不抢占常规池语义保持一致。
+    let microNarration: string | undefined;
+    if (rng.next() < 0.5) {
+      const micro = microPool.trySelect({
         state,
-        eventDefinitions.find((event) => event.eventId === selectedEvent.eventId)!,
-        selectedEvent,
-        pool,
-      );
+        rng,
+        characterId: demoCharacter.characterId,
+        characterName: demoCharacter.identity.name,
+        probability: 1,
+        excludeTemplateIds: lastMicroTemplateId ? [lastMicroTemplateId] : [],
+      });
+      if (micro) {
+        lastMicroTemplateId = micro.templateId;
+        microNarration = micro.narration;
+        selectedEventIds.push(micro.definition.eventId);
+        state = commitTriggeredEvent(state, micro.definition, micro.instance);
+      }
     }
-
+    if (!microNarration) {
+      const selectedEvent = pool.trySelectEvent(state, rng);
+      if (selectedEvent) {
+        selectedEventIds.push(selectedEvent.eventId);
+        state = commitTriggeredEvent(
+          state,
+          eventDefinitions.find((event) => event.eventId === selectedEvent.eventId)!,
+          selectedEvent,
+          pool,
+        );
+      }
+    }
     const option = optionsList[turnIndex % optionsList.length]!;
     selectedOptionIds.push(option.id);
     const transaction = startTurn(state);

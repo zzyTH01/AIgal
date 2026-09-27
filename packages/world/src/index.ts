@@ -6,3 +6,4 @@ export * from './event-pool.js';
 export * from './event-trigger.js';
 export * from './weather-calendar-schedule.js';
 export * from './world-tick.js';
+export * from './micro-event-pool.js';

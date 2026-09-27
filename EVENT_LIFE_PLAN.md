@@ -228,7 +228,7 @@ pnpm --filter @ag/narrative test && pnpm --filter @ag/runtime test && pnpm test
 
 # 6. Phase P3 — Micro Events / Life Events
 
-- **状态**：⬜ 未开始
+- **状态**：🟨 代码完成（2026-09-27）。S1 层级确认 ✅（预算 2–3 拍/选择 0–1/系数 ×0.75 均已在位，零新增字段）；S2 Micro 池 ✅（`@ag/world/micro-event-pool`，5 类 8 模板程序化渲染，v1.6 视角契约）；S3 调度接入 ✅（runtime 概率门缺省 0.35，不抢占意图/自主）；S4 叙事短路 ✅（`produceMicroBeat` 纯程序化拍，无 LLM 无选择点）；S5 记忆 ✅（importance 15 走 formMemory）+ simulate 三层分布 ✅（30 Run 592 次 micro）。**遗留**：真实对局中 micro 被 P1/P2 意图密度挤压（demo 11/12 轮 intent），出现频率的动态权重平衡归 P5 调度器（即 §7.2 既定范围）。验证记录 `docs/review/p3-micro-verify-playtest.md`。
 
 ## 5.1 目标
 
